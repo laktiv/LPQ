@@ -177,7 +177,7 @@ Text.PowerTrim = ((text as text, optional char_to_trim as text) =>
         Text.Combine(removeblanks, char)
 ),
 
-Text.ReplaceByList = (try (txt as text, replacementLists as list) as text => List.Accumulate(replacementList, txt, (s,x) => Text.Replace(s,x{0},x{1})) otherwise null),
+Text.ReplaceByList = (try (txtÂ asÂ text,Â replacementListsÂ asÂ list)Â asÂ textÂ =>Â List.Accumulate(replacementList, txt, (s,x)Â =>Â Text.Replace(s,x{0},x{1})) otherwise null),
 
 Text.RegexMatch = ((txt as text, regex as text, delim as text) => try 
     Web.Page("<script>var x='"&txt&"';var delim='"&delim&"';var regex=/"&regex&"/gi;var result=x.match(regex).join(delim);document.write(result);</script>")[Data]{0}[Children]{0}[Children]{1}[Text]{0}
