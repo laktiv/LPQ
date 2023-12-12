@@ -1,6 +1,6 @@
 /**
 *  Inspired by Power-BI-Desktop-Query-Extensions - https://github.com/tnclark8012/Power-BI-Desktop-Query-Extensions
-*  Expression.Evaluate(Text.FromBinary(Web.Contents("https://raw.githubusercontent.com/tnclark8012/Power-BI-Desktop-Query-Extensions/master/power-query-extensions.pq")),#shared)
+*  Expression.Evaluate(Text.FromBinary(Web.Contents("https://raw.githubusercontent.com/laktiv/LPQ_Extensions/main/l-pq-extensions.pq?token=GHSAT0AAAAAACI72RZ2G7TJGDOWJV7W4XA4ZLY4GTA")),#shared)
 *
 **/
 
@@ -120,8 +120,6 @@ TestUtils = [
         in
             if not Value.Is(actualType, Value.Type(expectedType)) then 
                 error "Expected type " & typeAsText(expectedType) & " does not match actual type " & typeAsText(actualType) 
-//            else if expected is list then
-//                List.Count(
             else if expected = actual then 
                 true
             else if expectedAsText = actualAsText then error "Cannot provide accurate failure message! Text versions of expected and actual are identical, but they failed the equality test!"
@@ -145,7 +143,6 @@ _extensionLibrary = [
 
 
 
-
 /////////////////////////
 // Number              //
 /////////////////////////
@@ -164,6 +161,55 @@ Number.ProperNumber = Document(
     in 
         if text is null then null else Number.Round(Text.FromList(numberSeries), after)
 ),
+
+
+
+///////////////////////// 
+// Text                //
+/////////////////////////
+
+Text.PowerTrim = ((text as text, optional char_to_trim as text) =>
+    let 
+        char = if char_to_trim = null then " " else char_to_trim,
+		split = Text.Split(text, char),
+		removeblanks = List.Select(split, each _ <> "")
+	in  
+        Text.Combine(removeblanks, char)
+),
+
+Text.ReplaceByList = (try (txt as text, replacementLists as list) as text => List.Accumulate(replacementList, txt, (s,x) => Text.Replace(s,x{0},x{1})) otherwise null),
+
+Text.RegexMatch = ((txt as text, regex as text, delim as text) => try 
+    Web.Page("<script>var x='"&txt&"';var delim='"&delim&"';var regex=/"&regex&"/gi;var result=x.match(regex).join(delim);document.write(result);</script>")[Data]{0}[Children]{0}[Children]{1}[Text]{0}
+    otherwise null
+),
+
+// Code                //
+Text.RemoveHtmlTags = (let func = (HTML) =>
+    let
+        Check = if Value.Is(Value.FromText(HTML), type text) then HTML else "",
+        Source = Text.From(Check),
+        SplitAny = Text.SplitAny(Source,"<>"),
+        ListAlternate = List.Alternate(SplitAny,1,1,1),
+        ListSelect = List.Select(ListAlternate, each _<>""),
+        TextCombine = Text.Combine(ListSelect, "")
+    in
+        TextCombine, documentation = [
+            Documentation.Name =  " Text.RemoveHtmlTags"
+            , Documentation.Description = "Remove Html Tags"
+            , Documentation.LongDescription = " Removes all Html tags from a text"
+            , Documentation.Category = " Text.Modification"
+            , Documentation.Source = " Inspired by a solution from Bill Szysz"
+            , Documentation.Author = " Imke Feldmann: www.TheBIccountant.com & Mike Carlo: PowerBI.Tips"
+            , Documentation.Examples = {[
+                Description = "Function that enables one to pass in a column that has HTML tags."
+                , Code = "<div>my bit of text</div>"
+                , Result = "my bit of text "]}]
+    in
+        Value.ReplaceType(func, Value.ReplaceMetadata(Value.Type(func), documentation))
+)
+
+
 
 
 ],
