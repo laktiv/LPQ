@@ -139,10 +139,20 @@ TestResults =
     in 
         if List.IsEmpty(failedTests) then "All " & Text.From(List.Count(Tests)) & " tests passed! :)" else failedTests,
 
+
 _extensionLibrary = [
 
-
-
+Document = (name as text, description as text, valueOrExample as any, optional valueIfExample as any) =>
+    let
+        value = if valueIfExample is null then valueOrExample else valueIfExample,
+        examples = if valueIfExample is null then {} else valueOrExample
+    in
+        Value.ReplaceType(value, Value.Type(value) meta [
+            Documentation.Name = name, 
+            Documentation.Description = description,  
+            // [Description = "", Code="", Result =""]
+            Documentation.Examples = examples
+        ]),
 /////////////////////////
 // Number              //
 /////////////////////////
@@ -212,7 +222,31 @@ Text.RemoveHtmlTags = (let func = (HTML) =>
 
 
 
+///////////////////////// 
+// Value               //
+/////////////////////////
+Value.TypeText = (value as any) => 
+    if value is binary then "binary" else
+    if value is date then "date" else
+    if value is datetime then "datetime" else
+    if value is datetimezone then "datetimezone" else
+    if value is duration then "duration" else
+    if value is function then "function" else
+    if value is list then "list" else
+    if value is logical then "logical" else
+    if value is none then "none" else
+    if value is null then "null" else
+    if value is number then "number" else
+    if value is record then "record" else
+    if value is table then "table" else
+    if value is text then "text" else
+    if value is time then "time" else
+    if value is type then "type" else
+    if value is any then "any"
+    else error "unknown -- not a primitive type!"
+
 ],
 Result = _extensionLibrary
+
 in
   Result

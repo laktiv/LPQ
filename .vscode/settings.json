@@ -1,0 +1,11 @@
+{
+   "files.exclude": {
+      "**/.vscode": true,
+      "LICENCE": true,
+      "settings.json": true
+   },
+   "explorer.excludeGitIgnore": true,
+   "explorer.fileNesting.enabled": true,
+   "apps-sdk.timezone": "Europe/Kyiv",
+   "extensions.ignoreRecommendations": true
+}
