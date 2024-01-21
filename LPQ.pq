@@ -394,7 +394,6 @@ Text.RemoveHtmlTags = Document(
 /////////////////////////
 ImportPq.FromFile = Document(
     "ImportPq.FromFile",
-    //"Function to import an external .pq script",
     {[
         Description = "Function to import an external .pq script",
         Code = "ImportPq.FromFile(""C:\docs\external-script.pq"")",
@@ -408,8 +407,7 @@ ImportPq.FromFile = Document(
             eval = Expression.Evaluate( rawText, #shared )
         in  eval
 ),
-
-ImportPq.GitPQRaw = (URL as text) => Expression.Evaluate(Text.FromBinary(Web.Contents(URL)),#shared)
+ImportPq.GitPQRaw = (URL as text) as any => try Expression.Evaluate(Text.FromBinary(Web.Contents(URL)), #shared) otherwise null,
 
 
 /////////////////////////
