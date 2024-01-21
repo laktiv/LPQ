@@ -6,91 +6,91 @@
 
 let
 
-MissingTests = List.Select(Record.FieldNames(_extensionLibrary), each not 
+MissingTests = List.Select(Record.FieldNames(_extensionLibrary), each not
     List.MatchesAny(Tests, (testRecord as record) => Text.Contains(testRecord[CaseName], _))),
 MissingDocumentation = List.Select(Record.FieldNames(_extensionLibrary), each not
     Record.HasFields(Value.Metadata(Value.Type(Record.Field(_extensionLibrary, _))), "Documentation.Examples")),
 Tests = {
-    [ 
-        CaseName = "List.From", 
-        Test = (library as record) => 
+    [
+        CaseName = "List.From",
+        Test = (library as record) =>
             TestUtils[AssertEqual](
-                {"A", "B", "C"}, 
+                {"A", "B", "C"},
                 library[List.From]("{A, B, C}"),
                 "Text should be split on ,")
     ],
-    [ 
-        CaseName = "List.From - no braces", 
-        Test = (library as record) => 
+    [
+        CaseName = "List.From - no braces",
+        Test = (library as record) =>
             TestUtils[AssertEqual](
-                {"A", "B", "C"}, 
+                {"A", "B", "C"},
                 library[List.From]("A, B, C"),
                 "Text should be split on ,")
     ],
-    [ 
-        CaseName = "List.Flatten", 
-        Test = (library as record) => 
+    [
+        CaseName = "List.Flatten",
+        Test = (library as record) =>
             TestUtils[AssertEqual](
-                { 1, 2, Table.FromRecords({[x=1]}), 3, 4, 5}, 
+                { 1, 2, Table.FromRecords({[x=1]}), 3, 4, 5},
                 library[List.Flatten]({ 1, 2, Table.FromRecords({[x=1]}), {3, 4, 5} }),
                 "Flattened list")
     ],
-    [ 
-        CaseName = "Number.ToLetters", 
-        Test = (library as record) => 
+    [
+        CaseName = "Number.ToLetters",
+        Test = (library as record) =>
             TestUtils[AssertEqual](
-                { "A", "BC", "BAD" }, 
-                { 
+                { "A", "BC", "BAD" },
+                {
                     library[Number.ToLetters](1),
                     library[Number.ToLetters](55),
                     library[Number.ToLetters](1382)
                 },
                 "1, 2, and 3 letter translations")
     ],
-    [ 
-        CaseName = "Table.RenameColumn", 
-        Test = (library as record) => 
+    [
+        CaseName = "Table.RenameColumn",
+        Test = (library as record) =>
             TestUtils[AssertEqual](
-                {"NewName", "NumberCol"}, 
+                {"NewName", "NumberCol"},
                 Table.ColumnNames(library[Table.RenameColumn](TestUtils[SimpleTable], "TextCol", "NewName")),
                 "Column should have new name")
     ],
     [
         CaseName = "Text.Until",
-        Test = (library as record) => 
+        Test = (library as record) =>
             TestUtils[AssertEqual](
-                "abc ", 
+                "abc ",
                 library[Text.Until]("abc 123", "1"),
                 "Proper substring should be found")
     ],
     [
         CaseName = "Text.Substring - infer end",
-        Test = (library as record) => 
+        Test = (library as record) =>
             TestUtils[AssertEqual](
-                "BI Rules!", 
+                "BI Rules!",
                 library[Text.Substring]("Power BI Rules!", 6),
                 "Text.Substring('Power BI Rules', 6)")
     ],
     [
         CaseName = "Switch case pairs",
-        Test = (library as record) => 
+        Test = (library as record) =>
             TestUtils[AssertEqual](
-                2, 
+                2,
                 library[Switch]("B", {{"A", 1}, {"B", 2}, {"C", 3}}),
                 "B is second case")
     ],
     [
         CaseName = "Switch separate case and result",
-        Test = (library as record) => 
+        Test = (library as record) =>
             TestUtils[AssertEqual](
-                4, 
+                4,
                 library[Switch]("TE", {"QB", "RB", "WR", "TE", "K", "D/ST"}, {1, 2, 3, 4, 5, 6}),
                 "TE is 4th case")
     ]
 },
 
-TestUtils = [ 
-    AssertEqual = (expected as any, actual as any, description as text) => 
+TestUtils = [
+    AssertEqual = (expected as any, actual as any, description as text) =>
         let
             expectedType = Value.Type(expected),
             actualType = Value.Type(actual),
@@ -98,7 +98,7 @@ TestUtils = [
                 "{" & Text.Range(List.Accumulate(expected, "", (state, current) => state & ", " & Text.From(current)), 1) & " }",
             expectedAsText = if expected is list then listAsText(expected) else Text.From(expected),
             actualAsText = if expected is list then listAsText(actual) else Text.From(actual),
-            typeAsText = (value as any) => 
+            typeAsText = (value as any) =>
                 if value is binary then "binary" else
                 if value is date then "date" else
                 if value is datetime then "datetime" else
@@ -118,25 +118,25 @@ TestUtils = [
                 if value is any then "any"
                 else "unknown -- not a primitive type!"
         in
-            if not Value.Is(actualType, Value.Type(expectedType)) then 
-                error "Expected type " & typeAsText(expectedType) & " does not match actual type " & typeAsText(actualType) 
-            else if expected = actual then 
+            if not Value.Is(actualType, Value.Type(expectedType)) then
+                error "Expected type " & typeAsText(expectedType) & " does not match actual type " & typeAsText(actualType)
+            else if expected = actual then
                 true
             else if expectedAsText = actualAsText then error "Cannot provide accurate failure message! Text versions of expected and actual are identical, but they failed the equality test!"
             else error "Expected: " & expectedAsText & "; Actual: " & actualAsText & "; Reason: " & description,
     SimpleTable = Table.FromRecords({[TextCol = "A", NumberCol = "1"], [TextCol = "B", NumberCol = 2], [TextCol = "C", NumberCol = 3]})
 ],
 
-TestResults = 
-    let 
+TestResults =
+    let
         failedTests = List.Select(
-            List.Transform(Tests, (suite as record) => 
-                let 
+            List.Transform(Tests, (suite as record) =>
+                let
                     testResult = try suite[Test](_extensionLibrary)
                 in
-                    if testResult[HasError] then Error.Record(suite[CaseName], testResult[Error][Message], null) else true), 
-            each _ <> true) 
-    in 
+                    if testResult[HasError] then Error.Record(suite[CaseName], testResult[Error][Message], null) else true),
+            each _ <> true)
+    in
         if List.IsEmpty(failedTests) then "All " & Text.From(List.Count(Tests)) & " tests passed! :)" else failedTests,
 
 
@@ -148,8 +148,8 @@ Document = (name as text, description as text, valueOrExample as any, optional v
         examples = if valueIfExample is null then {} else valueOrExample
     in
         Value.ReplaceType(value, Value.Type(value) meta [
-            Documentation.Name = name, 
-            Documentation.Description = description,  
+            Documentation.Name = name,
+            Documentation.Description = description,
             // [Description = "", Code="", Result =""]
             Documentation.Examples = examples
         ]),
@@ -170,7 +170,7 @@ List.Flatten = Document(
     )
 ),
 List.From = Document(
-    "List.From", 
+    "List.From",
     "Converts a text representation of a list into a list of the elements. Items are considered to be split by ,",
     { [ Description = "Convert a text list", Code = "List.From(""{A, B, C}"")", Result = "{ ""A"", ""B"", ""C"" }"] },
     (simpleTextList as text) =>
@@ -189,7 +189,6 @@ List.ToText = Document(
             List.Accumulate(list, "{", (state, current) => current & Text.From(current)) & "}"
 ),
 
-
 /////////////////////////
 // Number              //
 /////////////////////////
@@ -198,30 +197,30 @@ Number.ParseText = Document(
     "Number.ParseText",
     "Returns the first number (1+ consecutive digits) in the given text. Optionally, provide allowed characters to ignore them",
     {[ Description = "Allow commas", Code="PBI[Number.ParseText](""It's over 9,000!"", 0, {"",""})", Result = "9000" ]},
-    (text as text, optional startIndex as number, optional allowCharacters as list) => 
+    (text as text, optional startIndex as number, optional allowCharacters as list) =>
         let
-            consider = if startIndex is null then text else Text.Range(text,startIndex), 
+            consider = if startIndex is null then text else Text.Range(text,startIndex),
             _allowCharacters = if allowCharacters is null then {} else allowCharacters,
             numberSeries = List.FirstN(List.Skip(Text.ToList(consider), each not Text.IsNumber(_)), each Text.IsNumber(_) or List.Contains(_allowCharacters, _))
-        in 
+        in
             if text is null then null else Text.FromList(numberSeries)
 ),
 Number.ToLetters = Document(
         "Number.ToLetters",
         "Converts a number  (starting at 1) to an alphabet representation. Works like column headers in Excel.",
-        {[ 
-            Description = "Column 27", 
-            Code = "PBI[Number.ToLetters](27)", 
+        {[
+            Description = "Column 27",
+            Code = "PBI[Number.ToLetters](27)",
             Result = "AB"
         ]},
         (value as number) =>
             let
-                GetLetter = (num as number) => 
-                    let 
+                GetLetter = (num as number) =>
+                    let
                         number = Number.Mod(num, 26),
                         val = if number = 0 then 26 else number,
-                        valid = number < 26 and number > 0 
-                    in 
+                        valid = number < 26 and number > 0
+                    in
                         if valid then Text.At(Text.Alphabet, val - 1) else error "Can't get letter for " & Text.From(num),
                 func = (value as number, factor as number) =>
                     let
@@ -238,18 +237,18 @@ Number.ProperNumber = Document(
         "Number.ProperNumber",
         "Concerts text as number to proper number type. Also will erase inconvinient thouthands and decimal symbols to regular format. <br>" &
         "In case of error will return input text",
-        {[ 
-            Description = "Allow commas", 
-            Code = "LPQ[Number.ProperNumber](""It's over 9,000!"", null, {"",""}, 0)", 
+        {[
+            Description = "Allow commas",
+            Code = "LPQ[Number.ProperNumber](""It's over 9,000!"", null, {"",""}, 0)",
             Result = "9000"
         ]},
-        (text as text, optional digitsAfter as number, optional allowCharacters as list, optional startIndex as number) => 
+        (text as text, optional digitsAfter as number, optional allowCharacters as list, optional startIndex as number) =>
         let
             after = if digitsAfter is null then 0 else digitsAfter,
-            consider = if startIndex is null then text else Text.Range(text,startIndex), 
+            consider = if startIndex is null then text else Text.Range(text,startIndex),
             _allowCharacters = if allowCharacters is null then {} else allowCharacters,
             numberSeries = List.FirstN(List.Skip(Text.ToList(consider), each not Text.IsNumber(_)), each Text.IsNumber(_) or List.Contains(_allowCharacters, _))
-        in 
+        in
             if text is null then null else Number.Round(Text.FromList(numberSeries), after)
     ),
 
@@ -266,48 +265,48 @@ Splitter.SplitTextByNonAlpha = Document(
 Splitter.SplitTextByNotIn = Document(
     "Splitter.SplitTextByNotIn",
     "Splits text on any characters that aren't the provided 'safe' characters",
-    {[ Description = "Split on non-alphanumeric", Code = "LPQ[Splitter.SplitTextByNotIn](LPQ[Text.Alphanumeric])(""Power BI is #1"")", Result = "{""Power BI is "", ""1""}"]},
+    {[ Description = "Split on non-alphanumeric", Code = "LPQ[Splitter.SplitTextByNotIn](LPQ[Text.AlphaNumeric])(""Power BI is #1"")", Result = "{""Power BI is "", ""1""}"]},
     (safeCharacters as text) => (line as nullable text) =>
-        if line is null then 
-            {} 
+        if line is null then
+            {}
         else
-            List.Accumulate(Text.ToList(line), {null} , (state, current) => 
+            List.Accumulate(Text.ToList(line), {null} , (state, current) =>
             let
                 doSkip = not Text.Contains(safeCharacters, current),
                 lastItem = List.Last(state),
                 appendLast = lastItem<>null
             in
-                if doSkip then 
-                    if lastItem is null then 
-                        state 
-                    else 
+                if doSkip then
+                    if lastItem is null then
+                        state
+                    else
                       List.Combine({state, {null}})
                 else if appendLast then
                     List.Combine({List.RemoveLastN(state, 1), {lastItem & current}})
-                else  
+                else
                     List.Combine({List.RemoveLastN(state, 1), {current}}))
 ),
 /////////////////////////
 // Switch             //
 ////////////////////////
 Switch = Document(
-        "Switch", 
+        "Switch",
         "Given a value, find it's paired item <br>"&
             "Switch(value as any, cases as list, results as list, optional default as any) <br>" &
             "Switch(value as any, pairs as list, optional default as any)",
-        { 
+        {
             [ Description = "Using separate lists", Code = "Switch(1, {1, 2, 3}, {""A"", ""B"", ""C""})", Result = "A"],
             [ Description = "Using one paired list", Code = "Switch(1, {{1, ""A""}, {2, ""B""}, {3, ""C""}})", Result = "A"]
         },
         (value as any, casesOrPairs as list, optional resultsOrDefault as any, optional default as any) =>
             let
                hasPairs = List.First(casesOrPairs) is list,
-               usingPairs = 
+               usingPairs =
                    let
                        targetPosition = List.PositionOf(casesOrPairs, value, Occurrence.First, (case, theValue) => theValue = case{0})
                    in
                        if targetPosition = -1 then resultsOrDefault else casesOrPairs{targetPosition}{1},
-               usingCases = 
+               usingCases =
                    let
                        cases = casesOrPairs,
                        results = resultsOrDefault
@@ -317,33 +316,33 @@ Switch = Document(
                 if hasPairs then usingPairs else usingCases
     ),
 
-///////////////////////// 
+/////////////////////////
 // Table               //
 /////////////////////////
 Table.RenameColumn = (table as table, column as text, newName as text) => Table.RenameColumns(table, {{column, newName}}),
 
 
-///////////////////////// 
+/////////////////////////
 // Text                //
 /////////////////////////
 Text.Alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz" & "АБВГДЕЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯабвгдежзийклмнопрстуфхцчшщъыьэюя",
 Text.AlphaNumeric = Text.Alphabet & "0123456789",
 Text.FromList = (list as list) => List.Accumulate(list, "", (state, current) => state & Text.From(current)),
-Text.Substring = (text as text, start as number, optional count as number) => 
-   let 
+Text.Substring = (text as text, start as number, optional count as number) =>
+   let
       start = if start >= 0 then start else error "start index should be >= 0",
       end = if count = null then Text.Length(text) else if count <= Text.Length(text) then count else error "count should be <= text length",
       textList = Text.ToList(text),
       substr = Text.FromList(List.FirstN(List.Skip(textList, start), end - start))
    in substr,
 Text.IsNumber = (text as text) => try Number.FromText(text) is number otherwise false,
-Text.PositionAfter = (text as nullable text, substring as text) => 
-    let 
+Text.PositionAfter = (text as nullable text, substring as text) =>
+    let
         firstIndex = Text.PositionOf(text, substring),
         indexAfter = if firstIndex >=0 then firstIndex + Text.Length(substring) else -1
     in
         if text is null then -1 else if indexAfter >= 0 and indexAfter < Text.Length(text) then indexAfter else -1,
-Text.Until = (text as text, endDelimiter as text, optional startIndex as number) => 
+Text.Until = (text as text, endDelimiter as text, optional startIndex as number) =>
     let
         start = if startIndex = null then 0 else startIndex,
         textFromStart = Text.Substring(text, start),
@@ -355,16 +354,16 @@ Text.Until = (text as text, endDelimiter as text, optional startIndex as number)
 
 
 Text.PowerTrim = (text as text, optional char_to_trim as text) =>
-    let 
+    let
         char = if char_to_trim = null then " " else char_to_trim,
 		split = Text.Split(text, char),
 		removeblanks = List.Select(split, each _ <> "")
-	in  
+	in
         Text.Combine(removeblanks, char),
 
 Text.ReplaceByList = try (txt as text, replacementLists as list) as text => List.Accumulate(replacementLists, txt, (s,x) => Text.Replace(s,x{0},x{1})) otherwise null,
 
-Text.RegexMatch = (txt as text, regex as text, delim as text) => try 
+Text.RegexMatch = (txt as text, regex as text, delim as text) => try
     Web.Page("<script>var x='"&txt&"';var delim='"&delim&"';var regex=/"&regex&"/gi;var result=x.match(regex).join(delim);document.write(result);</script>")[Data]{0}[Children]{0}[Children]{1}[Text]{0}
     otherwise null,
 
@@ -373,8 +372,8 @@ Text.RemoveHtmlTags = Document(
     "Text.RemoveHtmlTags",
     "Function that enables one to pass in a column that has HTML tags.",
     {[
-        Description = "Removes all Html tags from a text", 
-        Code = "LPQ[Text.RemoveHtmlTags](""<div>my bit of text</div>"")", 
+        Description = "Removes all Html tags from a text",
+        Code = "LPQ[Text.RemoveHtmlTags](""<div>my bit of text</div>"")",
         Result = "my bit of text"
     ]},
     (HTML) =>
@@ -390,12 +389,31 @@ Text.RemoveHtmlTags = Document(
     ),
 
 
+/////////////////////////
+// Import              //
+/////////////////////////
+ImportPq.FromFile = Document(
+    "ImportPq.FromFile",
+    //"Function to import an external .pq script",
+    {[
+        Description = "Function to import an external .pq script",
+        Code = "ImportPq.FromFile(""C:\docs\external-script.pq"")",
+        Result = "code from .pq file"
+    ]},
+    (Filepath) =>
+        let bytes = File.Contents(Filepath),
+            rawText = Text.FromBinary( bytes, (encoding ?? TextEncoding.Utf8) ),
+            // or = Expression.Evaluate( rawText, #sections[Section1] )
+            eval = Expression.Evaluate( rawText, #shared )
+        in  eval
+),
 
 
-///////////////////////// 
+
+/////////////////////////
 // Value               //
 /////////////////////////
-Value.TypeText = (value as any) => 
+Value.TypeText = (value as any) =>
     if value is binary then "binary" else
     if value is date then "date" else
     if value is datetime then "datetime" else
