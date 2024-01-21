@@ -402,7 +402,7 @@ ImportPq.FromFile = Document(
     ]},
     (Filepath) =>
         let bytes = File.Contents(Filepath),
-            rawText = Text.FromBinary( bytes, (TextEncoding.Utf8) ),
+            rawText = Text.FromBinary( bytes ),
             // rawText = Text.FromBinary( bytes, (encoding ?? TextEncoding.Utf8) ),
             // or = Expression.Evaluate( rawText, #sections[Section1] )
             eval = Expression.Evaluate( rawText, #shared )
