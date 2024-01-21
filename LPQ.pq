@@ -1,6 +1,6 @@
 /**
 *  Inspired by Power-BI-Desktop-Query-Extensions - https://github.com/tnclark8012/Power-BI-Desktop-Query-Extensions
-*  Expression.Evaluate(Text.FromBinary(Web.Contents("https://raw.githubusercontent.com/laktiv/LPQ_Extensions/main/l-pq-extensions.pq?token=GHSAT0AAAAAACI72RZ2G7TJGDOWJV7W4XA4ZLY4GTA")),#shared)
+*  Expression.Evaluate(Text.FromBinary(Web.Contents("https://raw.githubusercontent.com/laktiv/LPQ/main/LPQ.pq?token=GHSAT0AAAAAACI72RZ3KL2S5TZVMUGTD76GZNNNE2A")),#shared)
 *
 **/
 
@@ -400,15 +400,16 @@ ImportPq.FromFile = Document(
         Code = "ImportPq.FromFile(""C:\docs\external-script.pq"")",
         Result = "code from .pq file"
     ]},
-    (Filepath) =>
+    (Filepath as text) =>
         let bytes = File.Contents(Filepath),
-            rawText = Text.FromBinary( bytes ),
+            rawText = Text.FromBinary( bytes, TextEncoding.Utf8 ),
             // rawText = Text.FromBinary( bytes, (encoding ?? TextEncoding.Utf8) ),
             // or = Expression.Evaluate( rawText, #sections[Section1] )
             eval = Expression.Evaluate( rawText, #shared )
         in  eval
 ),
 
+ImportPq.GitPQRaw = (URL as text) => Expression.Evaluate(Text.FromBinary(Web.Contents(URL)),#shared)
 
 
 /////////////////////////
