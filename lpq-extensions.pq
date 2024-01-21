@@ -254,6 +254,40 @@ Number.ProperNumber = Document(
     ),
 
 /////////////////////////
+// Splitters           //
+/////////////////////////
+Splitter.SplitTextByNonAlpha = Document(
+    "Splitter.SplitTextByNonAlpha",
+    "Splits text by characters that aren't [A-Za-z]",
+    {[ Description = "Split text", Code="LPQ[Splitter.SplitTextByNonAlpha](""A1B,C"")", Result = "{ ""A"", ""B"", ""C"" }"]},
+    (line as text) => Splitter.SplitTextByNotIn(Text.Alphabet)
+),
+
+Splitter.SplitTextByNotIn = Document(
+    "Splitter.SplitTextByNotIn",
+    "Splits text on any characters that aren't the provided 'safe' characters",
+    {[ Description = "Split on non-alphanumeric", Code = "LPQ[Splitter.SplitTextByNotIn](LPQ[Text.Alphanumeric])(""Power BI is #1"")", Result = "{""Power BI is "", ""1""}"]},
+    (safeCharacters as text) => (line as nullable text) =>
+        if line is null then 
+            {} 
+        else
+            List.Accumulate(Text.ToList(line), {null} , (state, current) => 
+            let
+                doSkip = not Text.Contains(safeCharacters, current),
+                lastItem = List.Last(state),
+                appendLast = lastItem<>null
+            in
+                if doSkip then 
+                    if lastItem is null then 
+                        state 
+                    else 
+                      List.Combine({state, {null}})
+                else if appendLast then
+                    List.Combine({List.RemoveLastN(state, 1), {lastItem & current}})
+                else  
+                    List.Combine({List.RemoveLastN(state, 1), {current}}))
+),
+/////////////////////////
 // Switch             //
 ////////////////////////
 Switch = Document(
@@ -292,7 +326,7 @@ Table.RenameColumn = (table as table, column as text, newName as text) => Table.
 ///////////////////////// 
 // Text                //
 /////////////////////////
-Text.Alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz",
+Text.Alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz" & "АБВГДЕЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯабвгдежзийклмнопрстуфхцчшщъыьэюя",
 Text.AlphaNumeric = Text.Alphabet & "0123456789",
 Text.FromList = (list as list) => List.Accumulate(list, "", (state, current) => state & Text.From(current)),
 Text.Substring = (text as text, start as number, optional count as number) => 
