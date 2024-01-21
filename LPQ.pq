@@ -399,11 +399,9 @@ ImportPq.FromFile = Document(
         Code = "ImportPq.FromFile(""C:\docs\external-script.pq"")",
         Result = "code from .pq file"
     ]},
-    (filepath as text) as any => 
-        try Expression.Evaluate(Text.FromBinary(File.Contents(filepath)), TextEncoding.Utf8), #shared) 
-        otherwise null
+    (filepath as text) as any => try Expression.Evaluate(Text.FromBinary(File.Contents(filepath)), #shared) otherwise null
 ),
-ImportPq.GitHubRaw = (URL as text) as any => try Expression.Evaluate(Text.FromBinary(Web.Contents(URL)), #shared) otherwise null,
+ImportPq.GitHubRaw = (url as text) as any => try Expression.Evaluate(Text.FromBinary(Web.Contents(url)), #shared) otherwise null,
 
 
 /////////////////////////
