@@ -349,7 +349,13 @@ Text.Until = (text as text, endDelimiter as text, optional startIndex as number)
         delimPosition = if Text.PositionOf(textFromStart, endDelimiter) >= 0 then Text.PositionOf(textFromStart, endDelimiter) else Text.Length(textFromStart)
     in
         if text is null then null else Text.Range(textFromStart, 0, delimPosition),
-
+Text.GetMatch = (Text as text, Lookup as text) => 
+    try
+        List.Select(
+            Text.Split(Text, " "),
+            each List.ContainsAny(List.LastN(Text.Split(_," "), 1), Lookup, (x,y)=> Text.Contains(x,y,Comparer.OrdinalIgnoreCase))
+        ){0} 
+    otherwise null,
 
 
 
@@ -399,9 +405,11 @@ ImportPq.FromFile = Document(
         Code = "ImportPq.FromFile(""C:\docs\external-script.pq"")",
         Result = "code from .pq file"
     ]},
-    (filepath as text) as any => try Expression.Evaluate(Text.FromBinary(File.Contents(filepath)), #shared) otherwise null
+    (filepath as text) as any => 
+        try Expression.Evaluate(Text.FromBinary(File.Contents(filepath)), TextEncoding.Utf8), #shared) 
+        otherwise null
 ),
-ImportPq.GitHubRaw = (url as text) as any => try Expression.Evaluate(Text.FromBinary(Web.Contents(url)), #shared) otherwise null,
+ImportPq.GitHubRaw = (URL as text) as any => try Expression.Evaluate(Text.FromBinary(Web.Contents(URL)), #shared) otherwise null,
 
 
 /////////////////////////
