@@ -329,10 +329,8 @@ Table.RenameColumn = (table as table, column as text, newName as text) => Table.
 // Replaces a value if it matches a predicate
 Table.ReplaceValueIf = (table as table, replaceIf as function, after as any, columnNameOrList as any) => 
     Table.ReplaceValue(table, null,after, (text, old, new)=>if replaceIf(text) then new else text, if columnNameOrList is list then columnNameOrList else {columnNameOrList}),
-
 // Splits camelCased and PascalCased column names. 
 Table.SplitColumnNames = (table as table) => Table.RenameColumns(table, List.Transform(Table.ColumnNames(table), each {_, Text.SplitCamelCase(_)})), 
-
 // Splits camelCased and PascalCased text in a column. 
 Table.SplitColumnText = (table as table, columns as list) => if List.Count(columns) = 0 then table else Table.TransformColumns(@Table.SplitColumnText(table, List.Skip(columns, 1)), {{List.First(columns), Text.SplitCamelCase}}),
 
@@ -364,7 +362,8 @@ Text.SplitCamelCase = (text as nullable text) => if text is null then null else 
          Text.IsUpperCase(current)
        then
          " " else "" ) &
-      current),
+      current
+),
 
 Text.Substring = (text as text, start as number, optional count as number) =>
    let
