@@ -234,23 +234,23 @@ Number.ToLetters = Document(
 
 // MY
 Number.ProperNumber = Document(
-        "Number.ProperNumber",
-        "Concerts text as number to proper number type. Also will erase inconvinient thouthands and decimal symbols to regular format. <br>" &
-        "In case of error will return input text",
-        {[
-            Description = "Allow commas",
-            Code = "LPQ[Number.ProperNumber](""It's over 9,000!"", null, {"",""}, 0)",
-            Result = "9000"
-        ]},
-        (text as text, optional digitsAfter as number, optional allowCharacters as list, optional startIndex as number) =>
-        let
-            after = if digitsAfter is null then 0 else digitsAfter,
-            consider = if startIndex is null then text else Text.Range(text,startIndex),
-            _allowCharacters = if allowCharacters is null then {} else allowCharacters,
-            numberSeries = List.FirstN(List.Skip(Text.ToList(consider), each not Text.IsNumber(_)), each Text.IsNumber(_) or List.Contains(_allowCharacters, _))
-        in
-            if text is null then null else Number.Round(Text.FromList(numberSeries), after)
-    ),
+    "Number.ProperNumber",
+    "Concerts text as number to proper number type. Also will erase inconvinient thouthands and decimal symbols to regular format. <br>" &
+    "In case of error will return input text",
+    {[
+        Description = "Allow commas",
+        Code = "LPQ[Number.ProperNumber](""It's over 9,000!"", null, {"",""}, 0)",
+        Result = "9000"
+    ]},
+    (text as text, optional digitsAfter as number, optional allowCharacters as list, optional startIndex as number) =>
+    let
+        after = if digitsAfter is null then 0 else digitsAfter,
+        consider = if startIndex is null then text else Text.Range(text,startIndex),
+        _allowCharacters = if allowCharacters is null then {} else allowCharacters,
+        numberSeries = List.FirstN(List.Skip(Text.ToList(consider), each not Text.IsNumber(_)), each Text.IsNumber(_) or List.Contains(_allowCharacters, _))
+    in
+        if text is null then null else Number.Round(Text.FromList(numberSeries), after)
+),
 
 /////////////////////////
 // Splitters           //
@@ -265,7 +265,11 @@ Splitter.SplitTextByNonAlpha = Document(
 Splitter.SplitTextByNotIn = Document(
     "Splitter.SplitTextByNotIn",
     "Splits text on any characters that aren't the provided 'safe' characters",
-    {[ Description = "Split on non-alphanumeric", Code = "LPQ[Splitter.SplitTextByNotIn](LPQ[Text.AlphaNumeric])(""Power BI is #1"")", Result = "{""Power BI is "", ""1""}"]},
+    {[ 
+        Description = "Split on non-alphanumeric", 
+        Code = "LPQ[Splitter.SplitTextByNotIn](LPQ[Text.AlphaNumeric])(""Power BI is #1"")", 
+        Result = "{""Power BI is "", ""1""}"
+    ]},
     (safeCharacters as text) => (line as nullable text) =>
         if line is null then
             {}
@@ -280,46 +284,61 @@ Splitter.SplitTextByNotIn = Document(
                     if lastItem is null then
                         state
                     else
-                      List.Combine({state, {null}})
+                        List.Combine({state, {null}})
                 else if appendLast then
                     List.Combine({List.RemoveLastN(state, 1), {lastItem & current}})
                 else
                     List.Combine({List.RemoveLastN(state, 1), {current}}))
 ),
+
 /////////////////////////
 // Switch             //
 ////////////////////////
 Switch = Document(
-        "Switch",
-        "Given a value, find it's paired item <br>"&
-            "Switch(value as any, cases as list, results as list, optional default as any) <br>" &
-            "Switch(value as any, pairs as list, optional default as any)",
-        {
-            [ Description = "Using separate lists", Code = "Switch(1, {1, 2, 3}, {""A"", ""B"", ""C""})", Result = "A"],
-            [ Description = "Using one paired list", Code = "Switch(1, {{1, ""A""}, {2, ""B""}, {3, ""C""}})", Result = "A"]
-        },
-        (value as any, casesOrPairs as list, optional resultsOrDefault as any, optional default as any) =>
-            let
-               hasPairs = List.First(casesOrPairs) is list,
-               usingPairs =
-                   let
-                       targetPosition = List.PositionOf(casesOrPairs, value, Occurrence.First, (case, theValue) => theValue = case{0})
-                   in
-                       if targetPosition = -1 then resultsOrDefault else casesOrPairs{targetPosition}{1},
-               usingCases =
-                   let
-                       cases = casesOrPairs,
-                       results = resultsOrDefault
-                   in
-                       if List.IsEmpty(cases) or List.IsEmpty(results) then default else if value = List.First(cases) then List.First(results) else @Switch(value, List.Skip(cases, 1), List.Skip(results, 1), default)
-            in
-                if hasPairs then usingPairs else usingCases
-    ),
+    "Switch",
+    "Given a value, find it's paired item <br>"&
+        "Switch(value as any, cases as list, results as list, optional default as any) <br>" &
+        "Switch(value as any, pairs as list, optional default as any)",
+    {
+        [ Description = "Using separate lists", Code = "Switch(1, {1, 2, 3}, {""A"", ""B"", ""C""})", Result = "A"],
+        [ Description = "Using one paired list", Code = "Switch(1, {{1, ""A""}, {2, ""B""}, {3, ""C""}})", Result = "A"]
+    },
+    (value as any, casesOrPairs as list, optional resultsOrDefault as any, optional default as any) =>
+        let
+            hasPairs = List.First(casesOrPairs) is list,
+            usingPairs =
+                let
+                    targetPosition = List.PositionOf(casesOrPairs, value, Occurrence.First, (case, theValue) => theValue = case{0})
+                in
+                    if targetPosition = -1 then resultsOrDefault else casesOrPairs{targetPosition}{1},
+            usingCases =
+                let
+                    cases = casesOrPairs,
+                    results = resultsOrDefault
+                in
+                    if List.IsEmpty(cases) or List.IsEmpty(results) then default else if value = List.First(cases) then List.First(results) else @Switch(value, List.Skip(cases, 1), List.Skip(results, 1), default)
+        in
+            if hasPairs then usingPairs else usingCases
+),
 
 /////////////////////////
 // Table               //
 /////////////////////////
 Table.RenameColumn = (table as table, column as text, newName as text) => Table.RenameColumns(table, {{column, newName}}),
+
+// Replaces a value if it matches a predicate
+Table.ReplaceValueIf = (table as table, replaceIf as function, after as any, columnNameOrList as any) => 
+    Table.ReplaceValue(table, null,after, (text, old, new)=>if replaceIf(text) then new else text, if columnNameOrList is list then columnNameOrList else {columnNameOrList}),
+
+// Splits camelCased and PascalCased column names. 
+Table.SplitColumnNames = (table as table) => Table.RenameColumns(table, List.Transform(Table.ColumnNames(table), each {_, Text.SplitCamelCase(_)})), 
+
+// Splits camelCased and PascalCased text in a column. 
+Table.SplitColumnText = (table as table, columns as list) => if List.Count(columns) = 0 then table else Table.TransformColumns(@Table.SplitColumnText(table, List.Skip(columns, 1)), {{List.First(columns), Text.SplitCamelCase}}),
+
+Table.TransformColumn = (table as table, column as text, transform as function) => Table.TransformColumns(table, {{column, transform}}),
+Table.RenameColumn = (table as table, column as text, newName as text) => Table.RenameColumns(table, {{column, newName}}),
+Table.RenameAndTransformColumn = (table, currentName as text, newName as text, transform as function) => Table.TransformColumn(Table.RenameColumns(table, {currentName, newName}), newName, transform),
 
 
 /////////////////////////
@@ -328,6 +347,26 @@ Table.RenameColumn = (table as table, column as text, newName as text) => Table.
 Text.Alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz" & "АБВГДЕЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯабвгдежзийклмнопрстуфхцчшщъыьэюя",
 Text.AlphaNumeric = Text.Alphabet & "0123456789",
 Text.FromList = (list as list) => List.Accumulate(list, "", (state, current) => state & Text.From(current)),
+// Is text all uppercase? returns false if any non-alpha characters are present
+Text.IsUpperCase = (text as text) => List.AllTrue(List.Transform(Text.ToList(text), (letter)=>Text.Contains(Text.Alphabet, letter) and letter = Text.Upper(letter))),
+Text.IsAlpha = (text as text) => List.MatchesAll(Text.ToList(text), each Text.Contains(Text.Alphabet, _)),
+Text.RemoveExtraWhitespace = (text as text) => Text.Combine(Splitter.SplitTextByWhitespace()(text)," "),
+// Splits camelCased and PascalCased text and separates by a space. Ex: "thisIsAColumn" -> "this Is A Column"
+Text.SplitCamelCase = (text as nullable text) => if text is null then null else List.Accumulate(Text.ToList(text),"", (state, current) =>
+   let
+      PreviousLetter = Text.End(state, 1),
+      Ignore = (text as text) => text = " " or text = "."
+   in
+      state &
+      (if
+         not Text.IsUpperCase(PreviousLetter) and
+         not Ignore(PreviousLetter) and
+         not Ignore(current) and
+         Text.IsUpperCase(current)
+       then
+         " " else "" ) &
+      current),
+
 Text.Substring = (text as text, start as number, optional count as number) =>
    let
       start = if start >= 0 then start else error "start index should be >= 0",
@@ -399,13 +438,13 @@ ImportPq.FromFile = Document(
         Code = "ImportPq.FromFile(""C:\docs\external-script.pq"")",
         Result = "code from .pq file"
     ]},
-    (Filepath as text) => 
-        try Expression.Evaluate(Text.FromBinary(File.Contents(Filepath)), #shared) 
+    (Filepath as text) =>
+        try Expression.Evaluate(Text.FromBinary(File.Contents(Filepath)), #shared)
         otherwise null
     ),
 
-ImportPq.GitHubRaw = (URL as text) => 
-        try Expression.Evaluate(Text.FromBinary(Web.Contents(URL)), #shared) 
+ImportPq.GitHubRaw = (URL as text) =>
+        try Expression.Evaluate(Text.FromBinary(Web.Contents(URL)), #shared)
         otherwise null,
 
 
