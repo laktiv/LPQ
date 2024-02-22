@@ -160,9 +160,9 @@ Document = (name as text, description as text, valueOrExample as any, optional v
 /////////////////////////
 Inno.SortTablePn = Document(
     "Inno.SortTablePn",
-    "Returns sorted table by INNO partnumbers in proper order.",
-    "Also could filter-out old models.",
-    {[  Description = "Inno.SortTablePn",
+    "Returns sorted table by INNO partnumbers in proper order. Also could filter-out old models.",
+    {[  
+        Description = "Inno.SortTablePn",
         Code = "LPQ[Inno.TableTypes](Table, ""pn"", true)",
         Result = "New sorted table by column 'pn' with old filtered." 
     ]},
