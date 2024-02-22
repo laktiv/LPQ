@@ -158,13 +158,65 @@ Document = (name as text, description as text, valueOrExample as any, optional v
 /////////////////////////
 // INNO                //
 /////////////////////////
+Inno.SortTablePn = Document(
+    "Inno.SortTablePn",
+    "Returns sorted table by INNO partnumbers in proper order.",
+    "Also could filter-out old models.",
+    {[  Description = "Inno.SortTablePn",
+        Code = "LPQ[Inno.TableTypes](Table, ""pn"", true)",
+        Result = "New sorted table by column 'pn' with old filtered." 
+    ]},
+    (Table as table, PN as text, optional FilterOld as logical) =>
+    let
+        oldList = {"C16", "C20", "207", "208", "106", "107", "108", "R"},
+        sortList = {"40", "30", "20", "16", "10", "73", "71", "21"},
+        letterList = {"C", "N", "B", "M", "R"},
+
+        fltrV = if (FilterOld ?? {FilterOld=""}{1}?) = null then false else FilterOld,
+
+        Filtered = if fltrV
+            then
+            Table.RemoveColumns(
+            Table.SelectRows(
+            Table.AddColumn(Table, "Filter",
+                (FindStrings) =>
+                List.AnyTrue(List.Transform(oldList, each Text.Contains(Record.Field(FindStrings, PN), _, Comparer.OrdinalIgnoreCase))))
+            , each ([Filter] = false))
+            , {"Filter"})
+
+            else Table,
+
+        ReplaceTable = Table.ReplaceValue(
+            Filtered,
+            each Record.Field(_,PN),
+            each if Record.Field(_,PN)="TBC" 
+                    or Record.Field(_,PN)=null 
+                    or Record.Field(_,PN)="" 
+                        then "A00003-01D5-1234552" 
+                        else Record.Field(_,PN),
+            Replacer.ReplaceValue,
+            {PN}
+        ),
+
+        Sorting = Table.Sort(ReplaceTable,
+            {
+                { each List.PositionOf(letterList, Text.Start(Record.Field(_,PN), 1)), Order.Ascending },   // by first letter of PN
+                { each List.PositionOf(sortList, Text.Range(Record.Field(_,PN), 1,2)), Order.Ascending },   // by series
+                { each Text.Range(Record.Field(_,PN), 1,4), Order.Descending },                             // by gpu
+                { each Text.Middle(Text.Split(Record.Field(_,PN),"-"){0}, 5,1), Order.Descending },         // by fans
+                { each Text.Start(Text.Split(Record.Field(_,PN),"-"){1}, 2), Order.Descending },            // by mem
+                { each Text.Select(Text.Split(Record.Field(_,PN),"-"){1}, {"X"}), Order.Descending }        // by OC
+            }
+        )
+    in  
+        Sorting
+),
 Inno.TableTypes = Document(
     "Inno.TableTypes",
     "Converts types of columns in the table",
-    {[
-        Description = "TableTypes",
+    {[  Description = "TableTypes",
         Code = "LPQ[Inno.TableTypes](Table)",
-        Result = "New table"
+        Result = "New table" 
     ]},
     (Table as table, optional ToOrder as logical) as table =>
     let
