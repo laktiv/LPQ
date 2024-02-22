@@ -156,6 +156,55 @@ Document = (name as text, description as text, valueOrExample as any, optional v
 
 
 /////////////////////////
+// INNO                //
+/////////////////////////
+Inno.TableTypes = Document(
+    "Inno.TableTypes",
+    "Converts types of columns in the table",
+    {[
+        Description = "TableTypes",
+        Code = "LPQ[Inno.TableTypes](Table)",
+        Result = "New table"
+    ]},
+    (Table as table, optional ToOrder as logical) as table =>
+    let
+        toOrder = if (ToOrder ?? {ToOrder=""}{1}?) = null then false else ToOrder,
+
+        lists = [
+            txt = {"customer", "country", "pn", "product", "gpu", "partner", "url", "name"},
+            num = {"quantity", "d_week", "d_month", "d_year", "stock", "VAT", "memory"},
+            dec = {"k"},
+            cur = {"price", "amount"},
+            dat = {"date", "Invoice Date (YYYY/MM/DD)", "short_date", "d_date"},
+            order = {"customer", "country", "pn", "product", "gpu", "quantity", "d_date", "d_week", "d_month", "d_year", "partner"}
+        ],
+        headers = Table.ColumnNames(Table),
+        c = List.Combine({
+                List.Transform(lists[txt], each {_, type text}),
+                List.Transform(lists[num], each {_, Int64.Type}),
+                List.Transform(lists[dec], each {_, type number}),
+                List.Transform(lists[cur], each {_, Currency.Type}),
+                List.Transform(lists[dat], each {_, type date})
+            }),
+        cT = List.Transform(c, each _{0}),
+
+        Type = Table.TransformColumnTypes(Table,
+            List.Select(c, each List.ContainsAny(headers, _))
+        ),
+
+        Result = if toOrder 
+            then Table.SelectColumns(Type, 
+                    List.RemoveMatchingItems(
+                        lists[order], 
+                        List.Difference(lists[order],headers)
+                    )
+                )
+            else Type
+    in  Result
+),
+
+
+/////////////////////////
 // List                //
 /////////////////////////
 List.Flatten = Document(
@@ -231,7 +280,6 @@ Number.ToLetters = Document(
             in
                 if value <= 26 then GetLetter(value) else func(value, 1) & GetLetter(value)
 ),
-
 // MY
 Number.ProperNumber = Document(
     "Number.ProperNumber",
