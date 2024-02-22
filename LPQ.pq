@@ -297,11 +297,11 @@ Splitter.SplitTextByNotIn = Document(
 Switch = Document(
     "Switch",
     "Given a value, find it's paired item <br>"&
-        "Switch(value as any, cases as list, results as list, optional default as any) <br>" &
-        "Switch(value as any, pairs as list, optional default as any)",
+    "Switch(value as any, cases as list, results as list, optional default as any) <br>" &
+    "Switch(value as any, pairs as list, optional default as any)",
     {
-        [ Description = "Using separate lists", Code = "Switch(1, {1, 2, 3}, {""A"", ""B"", ""C""})", Result = "A"],
-        [ Description = "Using one paired list", Code = "Switch(1, {{1, ""A""}, {2, ""B""}, {3, ""C""}})", Result = "A"]
+        [Description = "Using separate lists", Code = "Switch(1, {1, 2, 3}, {""A"", ""B"", ""C""})", Result = "A"],
+        [Description = "Using one paired list", Code = "Switch(1, {{1, ""A""}, {2, ""B""}, {3, ""C""}})", Result = "A"]
     },
     (value as any, casesOrPairs as list, optional resultsOrDefault as any, optional default as any) =>
         let
@@ -325,6 +325,25 @@ Switch = Document(
 // Table               //
 /////////////////////////
 Table.RenameColumn = (table as table, column as text, newName as text) => Table.RenameColumns(table, {{column, newName}}),
+Table.RenameColumns = (Table as table, OldColumns as list, NewColumns as list, optional SelectHeaders as logical) =>
+    let selectColumns = if (SelectHeaders ?? {SelectHeaders=""}{1}?) = null then false else SelectHeaders,
+        // Merge Old names and New names
+        columnsZip = List.Zip({ OldColumns, NewColumns }),
+        // Get table headers and Select list ny Old names
+        headers = List.Transform(Table.ColumnNames(Table), each _),
+        selectHeaders = List.Select(headers, (x) => List.AnyTrue(List.Transform(OldColumns, each x = _))),
+        // Get only picked columns
+        SelectTable = if selectColumns then Table.SelectColumns(Table, selectHeaders) else Table.SelectColumns(Table, headers),
+        // Rename columns
+        RenameTable = Table.RenameColumns(SelectTable, columnsZip)
+    in  try RenameTable otherwise null,
+
+Table.TrimHeader = (Table as table) =>
+    let hRaw = Table.ColumnNames(Table),
+        hTrim = List.Transform(hRaw, each Text.Trim(_))
+    in  if List.Count(List.Difference(hRaw, hTrim)) > 0 
+            then Table.RenameColumns(Table, List.Zip({hRaw, hTrim}))
+            else Table,
 
 // Replaces a value if it matches a predicate
 Table.ReplaceValueIf = (table as table, replaceIf as function, after as any, columnNameOrList as any) => 
