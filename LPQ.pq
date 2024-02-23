@@ -588,6 +588,13 @@ Table.JsonDecode = (encoded as text) =>
     in
         Decoded,
 Table.JsonEncode = (table as table) =>
+    let
+        Rows = Table.ToRows(table),
+        Json = Json.FromValue(Rows),
+        Compressed = Binary.Compress(Json, Compression.Deflate),
+        Encoded = Binary.ToText(Compressed, BinaryEncoding.Base64)
+    in
+        Encoded,
 
 /////////////////////////
 // Text                //
