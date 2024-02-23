@@ -561,10 +561,8 @@ Table.SplitColumnText = (table as table, columns as list) => if List.Count(colum
 Table.TransformColumn = (table as table, column as text, transform as function) => Table.TransformColumns(table, {{column, transform}}),
 Table.RenameAndTransformColumn = (table, currentName as text, newName as text, transform as function) => Table.TransformColumn(Table.RenameColumns(table, {currentName, newName}), newName, transform),
 
-
 Table.FromListCrossJoin = (listColumnNamePairs as any) =>
-      let 
-       remainingPairs = List.Skip(listColumnNamePairs, 1),
+   let remainingPairs = List.Skip(listColumnNamePairs, 1),
        current = List.First(listColumnNamePairs),
        theList = List.First(current),
        columnName = List.First(List.Skip(current),1),
@@ -578,23 +576,17 @@ Table.FromListCrossJoin = (listColumnNamePairs as any) =>
              nextTable = Table.ExpandListColumn(Table.AddColumn(table, columnName, each theList), columnName)
           in @doStuff(nextTable, List.Skip(remainingPairs, 1)),
        Result = doStuff(firstTable, remainingPairs)
-   in
-       Result,
-
+   in  Result,
 Table.JsonDecode = (encoded as text) =>
-    let
-        Decompressed = Binary.Decompress(Binary.FromText(encoded, BinaryEncoding.Base64), Compression.Deflate),
+    let Decompressed = Binary.Decompress(Binary.FromText(encoded, BinaryEncoding.Base64), Compression.Deflate),
         Decoded = Table.FromRows(Json.Document(Decompressed), let _t = ((type text) meta [Serialized.Text = true]) in type table [Name = _t, Number = _t])
-    in
-        Decoded,
+    in  Decoded,
 Table.JsonEncode = (table as table) =>
-    let
-        Rows = Table.ToRows(table),
+    let Rows = Table.ToRows(table),
         Json = Json.FromValue(Rows),
         Compressed = Binary.Compress(Json, Compression.Deflate),
         Encoded = Binary.ToText(Compressed, BinaryEncoding.Base64)
-    in
-        Encoded,
+    in  Encoded,
 
 /////////////////////////
 // Text                //
