@@ -255,14 +255,14 @@ Inno.TableTypes = Document(
     in  Result
 ),
 
-Inno.ONLINE = Document(
-    "Inno.ONLINE",
+Inno.Online = Document(
+    "Inno.Online",
     "Table for calculations",
     {[  Description = "Margin, VAT, Currencies",
         Code = "",
         Result = "" 
     ]},
-    [
+    ([
 	MARG = #table({"Marg","k"},{{10,0.9091},{9,0.9175},{8,0.92601},{7,0.9346},{6,0.9435},{5,0.95245},{4,0.9616},{3,0.9709},{2,0.9805}}),
 	VAT  = #table({"VAT","k"},{{12,0.928575},{18,0.847458},{19,0.84035},{20,0.83334},{21,0.826510201},{23,0.81301},{27,0.7874016}}),
 	CODE = #table({"Code","VAT"},{{"BY",20},{"GE",18},{"HK",0},{"KZ",12},{"RU",20},{"UA",20},{"UZ",12},{"BG",20},{"CY",19},{"CZ",21},{"EE",20},{"HR",27},{"LV",21},{"PL",23},{"RO",19},{"RS",20},{"SK",20},{"TR",18},{"US",0}}),
