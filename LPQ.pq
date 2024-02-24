@@ -279,7 +279,7 @@ Inno.Online = Document(
 		pln = fpln("1 USD"),
 		pln_eur = fpln("1 EUR"),
 		rec = [ czk=czk, eur=eur, ron=ron, pln=pln, pln_eur=pln_eur ]
-	in Table.RenameColumns(Table.TransformColumnTypes(Record.ToTable(rec),{{"Value", type number}}),{{"Name","Curr"},{"Value","Rate"}})]
+	in Table.RenameColumns(Table.TransformColumnTypes(Record.ToTable(rec),{{"Value", type number}}),{{"Name","Curr"},{"Value","Rate"}})])
 ),
 
 
