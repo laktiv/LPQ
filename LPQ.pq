@@ -159,12 +159,12 @@ Document = (name as text, description as text, valueOrExample as any, optional v
 // INNO                //
 /////////////////////////
 File.GetExcelDataFile = Document(
-    "File.GetExcelDataFile",
+    "LPQ[File.GetExcelDataFile]",
     "Call table from excel file in INNO folder.",
-    {[  
+    {[
         Description = "File.GetExcelDataFile",
         Code = "LPQ[File.GetExcelDataFile](""File name without extension"", ""Table name (table if null)"")",
-        Result = "Imported table with types formated." 
+        Result = "Imported table with types formated."
     ]},
     (fileName as text, optional tableName as text) as table =>
     let
@@ -203,12 +203,12 @@ File.GetExcelDataFile = Document(
         Result
 ),
 Inno.SortTablePn = Document(
-    "Inno.SortTablePn",
+    "LPQ[Inno.SortTablePn]",
     "Returns sorted table by INNO partnumbers in proper order. Also could filter-out old models.",
-    {[  
+    {[
         Description = "Inno.SortTablePn",
         Code = "LPQ[Inno.TableTypes](Table, ""pn"", true)",
-        Result = "New sorted table by column 'pn' with old filtered." 
+        Result = "New sorted table by column 'pn' with old filtered."
     ]},
     (Table as table, PN as text, optional FilterOld as logical) =>
     let
@@ -233,10 +233,10 @@ Inno.SortTablePn = Document(
         ReplaceTable = Table.ReplaceValue(
             Filtered,
             each Record.Field(_,PN),
-            each if Record.Field(_,PN)="TBC" 
-                    or Record.Field(_,PN)=null 
-                    or Record.Field(_,PN)="" 
-                        then "A00003-01D5-1234552" 
+            each if Record.Field(_,PN)="TBC"
+                    or Record.Field(_,PN)=null
+                    or Record.Field(_,PN)=""
+                        then "A00003-01D5-1234552"
                         else Record.Field(_,PN),
             Replacer.ReplaceValue,
             {PN}
@@ -252,15 +252,15 @@ Inno.SortTablePn = Document(
                 { each Text.Select(Text.Split(Record.Field(_,PN),"-"){1}, {"X"}), Order.Descending }        // by OC
             }
         )
-    in  
+    in
         Sorting
 ),
 Inno.TableTypes = Document(
-    "Inno.TableTypes",
+    "LPQ[Inno.TableTypes]",
     "Converts types of columns in the table",
     {[  Description = "TableTypes",
         Code = "LPQ[Inno.TableTypes](Table)",
-        Result = "New table" 
+        Result = "New table"
     ]},
     (Table as table, optional ToOrder as logical) as table =>
     let
@@ -288,10 +288,10 @@ Inno.TableTypes = Document(
             List.Select(c, each List.ContainsAny(headers, _))
         ),
 
-        Result = if toOrder 
-            then Table.SelectColumns(Type, 
+        Result = if toOrder
+            then Table.SelectColumns(Type,
                     List.RemoveMatchingItems(
-                        lists[order], 
+                        lists[order],
                         List.Difference(lists[order],headers)
                     )
                 )
@@ -299,26 +299,92 @@ Inno.TableTypes = Document(
     in  Result
 ),
 Inno.Online = Document(
-    "Inno.Online",
+    "LPQ[Inno.Online]",
     "Table for calculations.",
     {[  Description = "Margin, VAT, Currencies",
         Code = "Tables",
-        Result = "Table" 
+        Result = "Table"
     ]},
     ImportPq.GitHubRaw("https://raw.githubusercontent.com/laktiv/LPQ/main/Inno.TablesOnline.pq")
 ),
+Inno.GetGpuCode = Document(
+    "LPQ[Inno.GetGpuCode]",
+    "Table for calculations.",
+    {[  Description = "'3060, 3080' - add mem",
+        Code = "LPQ[Inno.GetGpuCode](PN, *MemList list, *CoolerList list)",
+        Result = "Get pn_code from PN, before first '-'"
+    ]},
+    (PN as text, optional AddMemoryList as text, optional AddCoolerList as text) =>
+    let
+        memList =
+            if AddMemoryList = null or AddMemoryList = "" then
+                false
+            else
+                List.Transform(Text.Split(AddMemoryList, ","), Text.Trim),
+        coolList =
+            if AddCoolerList = null or AddCoolerList = "" then
+                false
+            else
+                List.Transform(Text.Split(AddCoolerList, ","), Text.Trim),
+
+        goodsShort = shortCode,
+
+        func = [
+            split = Text.Split(PN, "-"),
+            pn_first = split{0},
+            pn_firstEnds =
+                if List.Contains({"T", "0", "S"}, Text.End(pn_first, 1)) then 1
+                    else if Text.Length(pn_first) > 6 and Text.End(pn_first, 1) = "K" then 3
+                else 2,
+            range = Text.Range(split{0}, 1, Text.Length(pn_first) - pn_firstEnds),
+            cooler = if Text.End(split{0}, 4) = range then "" else Text.Select(Text.End(split{0}, 2), {"1".."9", "B"}),
+            addCool = try List.Contains(coolList, range) otherwise false,
+            memory = Text.Start(split{1}, 2),
+            addMem = try List.Contains(memList, range) otherwise false,
+            code = if addCool then range & "-X" & cooler else if addMem then range & "-" & memory else range
+        ],
+
+        position = List.PositionOf(goodsShort[pn_code], func[code]),
+        pos = if position < 0
+                then List.PositionOf(goodsShort[pn_code], Text.Split(func[code],"-"){0})
+                else position,
+
+        result = if position >= 0
+                    then goodsShort{pos}[gpu_short]
+                    else if pos >= 0
+                        then goodsShort{pos}[gpu]
+                        else null
+    in
+        result
+),
 
 
-///////////////////////// 
+/////////////////////////
 // Date                //
 /////////////////////////
+// Inno
+Date.DateFromISOwn = Document(
+    "Date.DateFromISOwn",
+    "Compute date of the first day of the week given an ISO weeknumber. If the Year is not entered, it will default to 'this' year.",
+    {[  Description = "Year must be a full year: eg 2021 vs 21. The latter will not be interpreted as the year 2021.",
+        Code = "Date.DateFromISOwn(""week number"", opt. ""year"")",
+        Result = "Date on start of week #"
+    ]},
+    (wn as number, optional year as number) as date =>
+    let
+        yr = if year = null then Date.Year(DateTime.LocalNow()) else year,
+        wn1Start = Date.StartOfWeek(#date(yr,1,1), Day.Monday),
+        w1 = if Date.AddDays(wn1Start,3) < #date(yr,1,1) then Date.AddDays(wn1Start,7) else wn1Start
+    in Date.AddDays(w1, 7*(wn-1)) //-2 if not 01.01.01 start of the year(?)
+),
+
 // Basic calendar
 Date.Calendar =
    Document(
         "Date.Calendar",
         "Generate a calendar table for a given date span - can be text or proper dates. Current columns are Date, DayOfWeek, Month, MonthNum, WeekStartData, WeekStart, Year, YearMonth",
         {[ Description = "2016 calendar", Code ="PBI[Date.Calendar](""1/1/2016"", ""12/31/2016""", Result = "2016 calendar"]},
-        (start as any, end as any) => 
+        (start as any, end as any) =>
             let
                 StartDate = Date.From(start),
                 EndDate = Date.From(end),
@@ -340,9 +406,9 @@ Date.DatesBetween = Document(
     "Date.DatesBetween",
     "Returns a list of dates in a given span (inclusive). Start and end parameters can be any order",
     {[Description = "Date range", Code = "PBI[Date.DatesBetween](""1/1/2016"", ""1/3/2016"")", Result="{""1/1/2016"", ""1/2/2016"", ""1/3/2016""}" ]},
-    (start as any, end as any) => 
-      let 
-        StartDate = Date.From(start), 
+    (start as any, end as any) =>
+      let
+        StartDate = Date.From(start),
         EndDate = Date.From(end),
         adjustedStart = List.Min({StartDate, EndDate}),
         adjustedEnd = List.Max({StartDate, EndDate}),
@@ -360,13 +426,13 @@ Date.MonthName = Document(
     "Date.MonthName",
     "Returns the English month name for a date",
     {[ Description = "Get the month name", Code="PBI[Date.MonthName](""9/9/2016"")", Result = "September" ]},
-    (date as any) => 
-        let 
+    (date as any) =>
+        let
             monthNumber = if date is number then date else Date.Month(DateTime.From(date))
-        in 
+        in
             Switch(
                 monthNumber,
-                {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12}, 
+                {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12},
                 {"January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"}, null)
 ),
 
@@ -479,9 +545,9 @@ Splitter.SplitTextByNonAlpha = Document(
 Splitter.SplitTextByNotIn = Document(
     "Splitter.SplitTextByNotIn",
     "Splits text on any characters that aren't the provided 'safe' characters",
-    {[ 
-        Description = "Split on non-alphanumeric", 
-        Code = "LPQ[Splitter.SplitTextByNotIn](LPQ[Text.AlphaNumeric])(""Power BI is #1"")", 
+    {[
+        Description = "Split on non-alphanumeric",
+        Code = "LPQ[Splitter.SplitTextByNotIn](LPQ[Text.AlphaNumeric])(""Power BI is #1"")",
         Result = "{""Power BI is "", ""1""}"
     ]},
     (safeCharacters as text) => (line as nullable text) =>
@@ -555,16 +621,16 @@ Table.RenameColumns = (Table as table, OldColumns as list, NewColumns as list, o
 Table.TrimHeader = (Table as table) =>
     let hRaw = Table.ColumnNames(Table),
         hTrim = List.Transform(hRaw, each Text.Trim(_))
-    in  if List.Count(List.Difference(hRaw, hTrim)) > 0 
+    in  if List.Count(List.Difference(hRaw, hTrim)) > 0
             then Table.RenameColumns(Table, List.Zip({hRaw, hTrim}))
             else Table,
 
 // Replaces a value if it matches a predicate
-Table.ReplaceValueIf = (table as table, replaceIf as function, after as any, columnNameOrList as any) => 
+Table.ReplaceValueIf = (table as table, replaceIf as function, after as any, columnNameOrList as any) =>
     Table.ReplaceValue(table, null,after, (text, old, new)=>if replaceIf(text) then new else text, if columnNameOrList is list then columnNameOrList else {columnNameOrList}),
-// Splits camelCased and PascalCased column names. 
-Table.SplitColumnNames = (table as table) => Table.RenameColumns(table, List.Transform(Table.ColumnNames(table), each {_, Text.SplitCamelCase(_)})), 
-// Splits camelCased and PascalCased text in a column. 
+// Splits camelCased and PascalCased column names.
+Table.SplitColumnNames = (table as table) => Table.RenameColumns(table, List.Transform(Table.ColumnNames(table), each {_, Text.SplitCamelCase(_)})),
+// Splits camelCased and PascalCased text in a column.
 Table.SplitColumnText = (table as table, columns as list) => if List.Count(columns) = 0 then table else Table.TransformColumns(@Table.SplitColumnText(table, List.Skip(columns, 1)), {{List.First(columns), Text.SplitCamelCase}}),
 
 Table.TransformColumn = (table as table, column as text, transform as function) => Table.TransformColumns(table, {{column, transform}}),
@@ -578,7 +644,7 @@ Table.FromListCrossJoin = (listColumnNamePairs as any) =>
        firstTable = Table.FromList(theList, null, {columnName}),
        doStuff = (table as table, remainingPairs as list) =>
           if List.Count(remainingPairs) <= 0 then table else
-          let 
+          let
              current = List.First(remainingPairs),
              theList = List.First(current),
              columnName = List.First(List.Skip(current), 1),
@@ -596,6 +662,30 @@ Table.JsonEncode = (table as table) =>
         Compressed = Binary.Compress(Json, Compression.Deflate),
         Encoded = Binary.ToText(Compressed, BinaryEncoding.Base64)
     in  Encoded,
+
+
+
+/////////////////////////
+// ARRAYS              //
+/////////////////////////
+/* VLOOKUP in other table */
+fnVlookUp = Document(
+    "LPQ[fnVlookUp].",
+    "VLOOKUP in other table."
+    {[
+        Description = "Table,, index col name, search col name, value",
+        Code = "LPQ[fnVlookUp](lookupTable, lookupColumnName, returnColumnValue, lookupValue)",
+        Result = "9000"
+    ]},
+    (lookupValue as any, lookupTable as table, lookupColumnName as text, returnColumnValue as text) =>
+    let
+        colLookup = Table.Column(lookupTable, lookupColumnName),
+        colToReturn = Table.Column(lookupTable, returnColumnValue),
+        lookup = List.PositionOf(colLookup, lookupValue, 0),
+        Result = if lookup >=0 then colToReturn{lookup} else "Not found"
+    in
+        Result
+),
 
 
 /////////////////////////
@@ -663,13 +753,28 @@ Text.RegexMatch = (txt as text, regex as text, delim as text) => try
     Web.Page("<script>var x='"&txt&"';var delim='"&delim&"';var regex=/"&regex&"/gi;var result=x.match(regex).join(delim);document.write(result);</script>")[Data]{0}[Children]{0}[Children]{1}[Text]{0}
     otherwise null,
 
-// Code                //
-Text.RemoveHtmlTags = Document(
-    "Text.RemoveHtmlTags",
+// Code AND WEB         //
+Web.GetAllLinks = (SourceURL as text, optional AttributeDelimiter as text) =>
+    let AttributeDelimiter = if AttributeDelimiter is null then """" else AttributeDelimiter,
+        //Get HTML source
+        Source = Text.FromBinary(Web.Contents(SourceURL)),
+        //Function to find each link
+        GetLink = (Counter as number) =>
+            let CurrentLink = Text.BetweenDelimiters(Source,
+                    "href=" & AttributeDelimiter,
+                    AttributeDelimiter,
+                    Counter )
+            in  if CurrentLink = "" then {}
+                else List.Combine({{CurrentLink}, @GetLink(Counter + 1)}) //Call function
+    in Output = GetLink(0)
+,
+
+Web.RemoveHTMLTags = Document(
+    "LPQ[Web.RemoveHTMLTags]",
     "Function that enables one to pass in a column that has HTML tags.",
     {[
         Description = "Removes all Html tags from a text",
-        Code = "LPQ[Text.RemoveHtmlTags](""<div>my bit of text</div>"")",
+        Code = "LPQ[Web.RemoveHTMLTags](""<div>my bit of text</div>"")",
         Result = "my bit of text"
     ]},
     (HTML) =>
