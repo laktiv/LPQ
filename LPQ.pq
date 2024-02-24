@@ -157,51 +157,7 @@ Document = (name as text, description as text, valueOrExample as any, optional v
 
 /////////////////////////
 // INNO                //
-/////////////////////////Document(
-File.GetExcelDataFile = Document(
-    "File.GetExcelDataFile",
-    "Call table from excel file in INNO folder.",
-    {[  
-        Description = "File.GetExcelDataFile",
-        Code = "LPQ[File.GetExcelDataFile](""File name without extension"", ""Table name (table if null)"")",
-        Result = "Imported table with types formated." 
-    ]},
-    (fileName as text, optional tableName as text) as table =>
-    let
-        folder = "C:\Users\Laktionov.I\OneDrive\INNO\",
-        filepath = folder & fileName & ".xlsx",
-        tblName = tableName ?? "table",
-        data = Excel.Workbook(File.Contents(filepath), null, true),
-        dataTable = data{[Item = tblName, Kind = "Table"]}[Data],
-        fnDetectAndTransformTypes = (SourceTable as table) =>
-        let
-            moneyList = {"amount", "price", "deal", "cost", "rebate", "msrp"},
-            FnDetectType = (SourceTable, ColumnName) =>
-            let
-                ListColumn = Table.Column(SourceTable, ColumnName),
-                Money = List.Contains(moneyList, Text.Trim(ColumnName), (x, y) => Text.StartsWith(y, x, Comparer.OrdinalIgnoreCase)),
-                NumberPercentage = List.Count(List.Select(ListColumn, each _ is number)) / List.Count(ListColumn),
-                IntPercentage = List.Count(List.Select(ListColumn, each _ is number and _ = Number.Round(_, 0))) / List.Count(ListColumn),
-                DatePercentage = List.Count(List.Select(ListColumn, each _ is date)) / List.Count(ListColumn),
-                DateTimePercentage = List.Count(List.Select(ListColumn, each _ is datetime)) / List.Count(ListColumn),
-                Max = List.Max({NumberPercentage, DatePercentage, DateTimePercentage, IntPercentage}),
-                Result =
-                    if Money then {ColumnName, Currency.Type}
-                    else if Max < .95 then {ColumnName, type any}
-                    else if DateTimePercentage = Max then {ColumnName, type datetime}
-                    else if DatePercentage = Max then {ColumnName, type date}
-                    else if IntPercentage = Max then {ColumnName, Int64.Type}
-                    else {ColumnName, type number}
-            in
-                Result,
-            ConvertTypesList = List.Transform(Table.ColumnNames(SourceTable), each FnDetectType(SourceTable, _)),
-            ConvertedTable = Table.TransformColumnTypes(SourceTable, ConvertTypesList)
-        in
-            ConvertedTable,
-        Result = fnDetectAndTransformTypes(dataTable)
-    in
-        Result
-),
+/////////////////////////
 Inno.SortTablePn = Document(
     "Inno.SortTablePn",
     "Returns sorted table by INNO partnumbers in proper order. Also could filter-out old models.",
@@ -299,67 +255,33 @@ Inno.TableTypes = Document(
     in  Result
 ),
 
-///////////////////////// 
-// Date                //
-/////////////////////////
-// Basic calendar
-Date.Calendar =
-   Document(
-        "Date.Calendar",
-        "Generate a calendar table for a given date span - can be text or proper dates. Current columns are Date, DayOfWeek, Month, MonthNum, WeekStartData, WeekStart, Year, YearMonth",
-        {[ Description = "2016 calendar", Code ="PBI[Date.Calendar](""1/1/2016"", ""12/31/2016""", Result = "2016 calendar"]},
-        (start as any, end as any) => 
-            let
-                StartDate = Date.From(start),
-                EndDate = Date.From(end),
-                Source = Date.DatesBetween(StartDate, EndDate),
-                FromList = Table.FromList(Source, Splitter.SplitByNothing(), null, null, ExtraValues.Error),
-                Date = Table.RenameColumns(FromList,{{"Column1", "Date"}}),
-                DayOfWeek = Table.AddColumn(Date, "Day of Week", each Date.DayName([Date])),
-                Month = Table.AddColumn(DayOfWeek, "Month", each Date.MonthName([Date])),
-                MonthNum = Table.AddColumn(Month, "MonthNumber", each Date.Month([Date])),
-                WeekStartDate = Table.AddColumn(MonthNum, "WeekStartDate", each Date.StartOfWeek([Date])),
-                WeekStart = Table.AddColumn(WeekStartDate, "Week Start", each [Month] & " " & Text.From(Date.Day([WeekStartDate]))),
-                Year = Table.AddColumn(WeekStart, "Year", each Date.Year([Date])),
-                YearMonth = Table.AddColumn(Year, "YearMonth", each Number.From(Text.From([Year]) & (if [MonthNumber] < 10 then "0" else "") & Text.From([MonthNumber]))),
-                Result = YearMonth
-           in
-                Result
-    ),
+Inno.ONLINE = Document(
+    "Inno.ONLINE",
+    "Table for calculations",
+    {[  Description = "Margin, VAT, Currencies",
+        Code = "",
+        Result = "" 
+    ]},
+    [
+	MARG = #table({"Marg","k"},{{10,0.9091},{9,0.9175},{8,0.92601},{7,0.9346},{6,0.9435},{5,0.95245},{4,0.9616},{3,0.9709},{2,0.9805}}),
+	VAT  = #table({"VAT","k"},{{12,0.928575},{18,0.847458},{19,0.84035},{20,0.83334},{21,0.826510201},{23,0.81301},{27,0.7874016}}),
+	CODE = #table({"Code","VAT"},{{"BY",20},{"GE",18},{"HK",0},{"KZ",12},{"RU",20},{"UA",20},{"UZ",12},{"BG",20},{"CY",19},{"CZ",21},{"EE",20},{"HR",27},{"LV",21},{"PL",23},{"RO",19},{"RS",20},{"SK",20},{"TR",18},{"US",0}}),
+	CUR = let  
+		czk = let src="https://www.cnb.cz/en/financial-markets/foreign-exchange-market/central-bank-exchange-rate-fixing/central-bank-exchange-rate-fixing/daily.txt",
+			web = Table.SelectRows(Table.FromColumns({Lines.FromBinary(Web.Contents(src),null,null,65001)}), each Text.StartsWith([Column1],"USA"))
+		    in  Number.FromText(List.Last(Text.Split(web[Column1]{0},"|")), "en-us"),
+		eur = let src=Xml.Tables(Web.Contents("https://www.ecb.europa.eu/rss/fxref-usd.html")){0}[Table]{1}[Table]{0}[title]
+		    in  Number.FromText(Text.Split(src{0}[#"Element:Text"]," "){0}, "en-us"),
+		ron = let src=Xml.Tables(Web.Contents("https://www.bnr.ro/nbrfxrates.xml")){1}[Table]{0}[Cube]{0}[Rate]
+		    in  Number.FromText(src[#"Element:Text"]{List.PositionOf(src[#"Attribute:currency"],"USD")},"en-us"),
+		fpln = (t) => let src=Web.Page(Web.Contents("https://nbp.pl/statystyka-i-sprawozdawczosc/kursy/tabela-a/")){0}[Data]
+			in Table.Column(src,List.Last(Table.ColumnNames(src))){List.PositionOf(src[Kod waluty],t)},
+		pln = fpln("1 USD"),
+		pln_eur = fpln("1 EUR"),
+		rec = [ czk=czk, eur=eur, ron=ron, pln=pln, pln_eur=pln_eur ]
+	in Table.RenameColumns(Table.TransformColumnTypes(Record.ToTable(rec),{{"Value", type number}}),{{"Name","Curr"},{"Value","Rate"}})]
+),
 
-Date.DatesBetween = Document(
-    "Date.DatesBetween",
-    "Returns a list of dates in a given span (inclusive). Start and end parameters can be any order",
-    {[Description = "Date range", Code = "PBI[Date.DatesBetween](""1/1/2016"", ""1/3/2016"")", Result="{""1/1/2016"", ""1/2/2016"", ""1/3/2016""}" ]},
-    (start as any, end as any) => 
-      let 
-        StartDate = Date.From(start), 
-        EndDate = Date.From(end),
-        adjustedStart = List.Min({StartDate, EndDate}),
-        adjustedEnd = List.Max({StartDate, EndDate}),
-        GetDates = (start as date, end as date, dates as list)=> if start > end then dates else @GetDates(Date.AddDays(start, 1), end, List.Combine({dates, {start}})),
-        Dates = GetDates(adjustedStart, adjustedEnd, {})
-      in Dates
-),
-Date.DayName = Document(
-    "Date.DayName",
-    "Returns the English day of the week name for a date",
-    {[ Description = "Get the day name", Code="Date.DayName(""9/9/2016"")", Result="Friday"]},
-    (date as any) => Switch(Date.DayOfWeek(DateTime.From(date)), {0, 1, 2, 3, 4, 5, 6}, {"Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"}, null)
-),
-Date.MonthName = Document(
-    "Date.MonthName",
-    "Returns the English month name for a date",
-    {[ Description = "Get the month name", Code="PBI[Date.MonthName](""9/9/2016"")", Result = "September" ]},
-    (date as any) => 
-        let 
-            monthNumber = if date is number then date else Date.Month(DateTime.From(date))
-        in 
-            Switch(
-                monthNumber,
-                {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12}, 
-                {"January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"}, null)
-),
 
 /////////////////////////
 // List                //
@@ -561,32 +483,6 @@ Table.SplitColumnText = (table as table, columns as list) => if List.Count(colum
 Table.TransformColumn = (table as table, column as text, transform as function) => Table.TransformColumns(table, {{column, transform}}),
 Table.RenameAndTransformColumn = (table, currentName as text, newName as text, transform as function) => Table.TransformColumn(Table.RenameColumns(table, {currentName, newName}), newName, transform),
 
-Table.FromListCrossJoin = (listColumnNamePairs as any) =>
-   let remainingPairs = List.Skip(listColumnNamePairs, 1),
-       current = List.First(listColumnNamePairs),
-       theList = List.First(current),
-       columnName = List.First(List.Skip(current),1),
-       firstTable = Table.FromList(theList, null, {columnName}),
-       doStuff = (table as table, remainingPairs as list) =>
-          if List.Count(remainingPairs) <= 0 then table else
-          let 
-             current = List.First(remainingPairs),
-             theList = List.First(current),
-             columnName = List.First(List.Skip(current), 1),
-             nextTable = Table.ExpandListColumn(Table.AddColumn(table, columnName, each theList), columnName)
-          in @doStuff(nextTable, List.Skip(remainingPairs, 1)),
-       Result = doStuff(firstTable, remainingPairs)
-   in  Result,
-Table.JsonDecode = (encoded as text) =>
-    let Decompressed = Binary.Decompress(Binary.FromText(encoded, BinaryEncoding.Base64), Compression.Deflate),
-        Decoded = Table.FromRows(Json.Document(Decompressed), let _t = ((type text) meta [Serialized.Text = true]) in type table [Name = _t, Number = _t])
-    in  Decoded,
-Table.JsonEncode = (table as table) =>
-    let Rows = Table.ToRows(table),
-        Json = Json.FromValue(Rows),
-        Compressed = Binary.Compress(Json, Compression.Deflate),
-        Encoded = Binary.ToText(Compressed, BinaryEncoding.Base64)
-    in  Encoded,
 
 /////////////////////////
 // Text                //
