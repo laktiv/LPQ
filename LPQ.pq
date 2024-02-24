@@ -400,7 +400,13 @@ Inno.ParseInnoComSpecs = (url as text) =>
     in
         Replace
 ,
-
+Inno.CleanTable = (Table as table) =>
+    let
+        order = {"Name","customer","country","pn","product","gpu","quantity","d_date","d_week","d_month","d_year","partner"},
+        headers = Table.ColumnNames(Table),
+        Quantity = Table.SelectRows(Table, each [quantity]<>0 and [quantity]<>null and [quantity]<>"" )
+    in  Table.SelectColumns(Quantity, List.RemoveMatchingItems(order, List.Difference(order,headers)) )
+,
 
 // TABLES
 MyFindReplace_Sample =
@@ -766,16 +772,15 @@ Table.JsonEncode = (table as table) =>
     in  Encoded
 ,
 
-Inno.CleanTable = (Table as table) =>
-    let 
-        order = { "Name", "customer", "country", "pn", "product", "gpu", "quantity", "d_date", "d_week", "d_month", "d_year", "partner" },
-        headers = Table.ColumnNames(Table),
-        Quantity = Table.SelectRows(Table, each [quantity]<>0 and [quantity]<>null and [quantity]<>"" ),
-        Order = Table.SelectColumns(Quantity, List.RemoveMatchingItems(order, List.Difference(order,headers)) )
-    in  
-        Quantity
-,
 
+Table.NumberColumns = (table as table, columns as list) as table =>
+    let
+        NumberTypes = List.Repeat({type number}, List.Count(columns)),
+        DataWithTypes = Table.TransformColumnTypes( table, List.Zip({columns, NumberTypes}) ),
+        NumberNotNull = (number) => if number is null then 0 else number,
+        DataNoNulls = Table.TransformColumns( DataWithTypes, List.Zip({ columns, List.Repeat({NumberNotNull}, List.Count(columns)), NumberTypes }) )
+    in  Table.ReplaceErrorValues(DataNoNulls, List.Transform(columns, each {_,0}))
+,
 Table.RenameColumnsByIndices = (Source as table, Indices as list, ColumnNamesNew as list) =>
     let
         ColumnNames = Table.ColumnNames(Source),
@@ -797,17 +802,10 @@ Table.RenameColumnsByOrderFiltered = (InputTable as table, ColumnNumbers as list
         RenamedColumns
 ,
 
-
-
-Table.NumberColumns = (table as table, columns as list) as table =>
-    let
-        NumberTypes = List.Repeat({type number}, List.Count(columns)),
-        DataWithTypes = Table.TransformColumnTypes( table, List.Zip({columns, NumberTypes}) ),
-        NumberNotNull = (number) => if number is null then 0 else number,
-        DataNoNulls = Table.TransformColumns( DataWithTypes, List.Zip({ columns, List.Repeat({NumberNotNull}, List.Count(columns)), NumberTypes }) ),
-        Return = Table.ReplaceErrorValues(DataNoNulls, List.Transform(columns, each {_,0}))
-    in
-        Return
+Table.TrimHeaders = (Table as table) =>
+    let hRaw = Table.ColumnNames(Table),
+        hTrim = List.Transform(hRaw, each Text.Trim(_))
+    in  if List.Count(List.Difference(hRaw, hTrim)) > 0 then Table.RenameColumns(Table, List.Zip({hRaw, hTrim})) else Table
 ,
 Table.PromoteHeadersNonEmpty = (table as table) as table =>
     /**
@@ -831,6 +829,32 @@ Table.PromoteHeadersNonEmpty = (table as table) as table =>
         Return = RenamedColumns
     in
         Return
+,
+Table.SelectHeaders = (List as list, ColumnStart as text, ColumnEnd as text, optional Index as text) =>
+    let pos1 = List.PositionOf(List, ColumnStart),
+        pos2 = List.PositionOf(List, ColumnEnd),
+        range = List.Range(List, pos1 + 1, pos2 - pos1 - 1)
+    in  if Index=null then range else List.Union({{Index}, range})
+,
+
+Table.RemoveEmptyRows = (tbl as table) =>
+    // return a table with empty rows removed
+    let
+        empties_list = {null, ""}, //null = original null value, "" = after applying text.trim transformation
+        col_names = Table.ColumnNames(tbl),
+        tbl_no_erors =  Table.ReplaceErrorValues(tbl, List.Transform(col_names, each {_, null})),
+        //Add helper column
+        AddedCustom = Table.AddColumn(tbl_no_erors, "Custom",
+            each
+                let
+                    //convert each record to list and remove empty spaces in each list
+                    record_values = List.Transform(Record.ToList(_), each try Text.Trim(_) otherwise _) //handles numbers
+                in List.MatchesAll(record_values, each List.ContainsAny(empties_list, {_}) ) //evaluate empties in each record and return a boolean
+            ),
+        // filter out empty or null record
+        Filter_out_empty_rows = Table.SelectRows(AddedCustom, each [Custom] = false)
+    in
+        Table.RemoveColumns(Filter_out_empty_rows, {"Custom"}) //Remove helper column added
 ,
 Table.RemoveEmptyColumns = (tbl as table) =>
     // return table with blank columns removed
@@ -858,39 +882,11 @@ Table.RemoveEmptyColumns = (tbl as table) =>
     in
     Table.SelectColumns(tbl, non_empty_columns(tbl_no_erors))
 ,
-Table.RemoveEmptyRows = (tbl as table) =>
-    // return a table with empty rows removed
-    let
-        empties_list = {null, ""}, //null = original null value, "" = after applying text.trim transformation
-        col_names = Table.ColumnNames(tbl),
-        tbl_no_erors =  Table.ReplaceErrorValues(tbl, List.Transform(col_names, each {_, null})),
-        //Add helper column
-        AddedCustom = Table.AddColumn(tbl_no_erors, "Custom",
-            each
-                let
-                    //convert each record to list and remove empty spaces in each list
-                    record_values = List.Transform(Record.ToList(_), each try Text.Trim(_) otherwise _) //handles numbers
-                in List.MatchesAll(record_values, each List.ContainsAny(empties_list, {_}) ) //evaluate empties in each record and return a boolean
-            ),
-        // filter out empty or null record
-        Filter_out_empty_rows = Table.SelectRows(AddedCustom, each [Custom] = false)
-    in
-        Table.RemoveColumns(Filter_out_empty_rows, {"Custom"}) //Remove helper column added
-,
 Table.ReplaceAllErrorsInTable = (tbl as table, optional replacer_value) => Table.ReplaceErrorValues(tbl, List.Transform(Table.ColumnNames(tbl), each {_, replacer_value}))
     // return a table with all errors replaced with specified value or null
 ,
-Table.SelectHeaders = (List as list, ColumnStart as text, ColumnEnd as text, optional Index as text) =>
-    let pos1 = List.PositionOf(List, ColumnStart),
-        pos2 = List.PositionOf(List, ColumnEnd),
-        range = List.Range(List, pos1 + 1, pos2 - pos1 - 1)
-    in  if Index=null then range else List.Union({{Index}, range})
-,
-Table.TrimHeaders = (Table as table) =>
-    let hRaw = Table.ColumnNames(Table),
-        hTrim = List.Transform(hRaw, each Text.Trim(_))
-    in  if List.Count(List.Difference(hRaw, hTrim)) > 0 then Table.RenameColumns(Table, List.Zip({hRaw, hTrim})) else Table
-,
+
+
 
 
 Table.RunningTotalfunction = (TabName as table, RT_Amt_ColumnName as text, Added_Col_RT_Name as text)=>
@@ -938,6 +934,7 @@ Table.GroupedRunningTotal = (values as list, grouping as list) as list =>
     in
         GRTList
 ,
+
 
 Table.GetParameter = (ParameterName as text) =>
     // Query written by Ken Puls, FCPA, FCMA, MS MVP (Excel) (www.excelguru.ca)
@@ -1087,7 +1084,7 @@ Text.PowerTrim = (text as text, optional char_to_trim as text) =>
 	in
         Text.Combine(removeblanks, char)
 ,
-Text.ReplaceByList = try (txt as text, replacementLists as list) as text => 
+Text.ReplaceByList = try (txt as text, replacementLists as list) as text =>
     List.Accumulate(replacementLists, txt, (s,x) => Text.Replace(s,x{0},x{1})) otherwise null
 ,
 Text.RegexMatch = (txt as text, regex as text, delim as text) => try
