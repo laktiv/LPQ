@@ -825,10 +825,8 @@ Table.PromoteHeadersNonEmpty = (table as table) as table =>
                 then Text.From(Candidate)
                 else Current
         ),
-        RenamedColumns = Table.RenameColumns( Table.Skip(table, 1), List.Zip({OldHeaders, NewHeaders}) ),
-        Return = RenamedColumns
-    in
-        Return
+        RenamedColumns = Table.RenameColumns( Table.Skip(table, 1), List.Zip({OldHeaders, NewHeaders}) )
+    in  RenamedColumns
 ,
 Table.SelectHeaders = (List as list, ColumnStart as text, ColumnEnd as text, optional Index as text) =>
     let pos1 = List.PositionOf(List, ColumnStart),
@@ -846,8 +844,7 @@ Table.RemoveEmptyRows = (tbl as table) =>
         //Add helper column
         AddedCustom = Table.AddColumn(tbl_no_erors, "Custom",
             each
-                let
-                    //convert each record to list and remove empty spaces in each list
+                let //convert each record to list and remove empty spaces in each list
                     record_values = List.Transform(Record.ToList(_), each try Text.Trim(_) otherwise _) //handles numbers
                 in List.MatchesAll(record_values, each List.ContainsAny(empties_list, {_}) ) //evaluate empties in each record and return a boolean
             ),
@@ -882,8 +879,8 @@ Table.RemoveEmptyColumns = (tbl as table) =>
     in
     Table.SelectColumns(tbl, non_empty_columns(tbl_no_erors))
 ,
+// return a table with all errors replaced with specified value or null
 Table.ReplaceAllErrorsInTable = (tbl as table, optional replacer_value) => Table.ReplaceErrorValues(tbl, List.Transform(Table.ColumnNames(tbl), each {_, replacer_value}))
-    // return a table with all errors replaced with specified value or null
 ,
 
 
@@ -914,8 +911,7 @@ Table.RunningTotalfunction = (TabName as table, RT_Amt_ColumnName as text, Added
         Consolidate
 ,
 Table.GroupedRunningTotal = (values as list, grouping as list) as list =>
-    /*
-        Written by Philip Treacy
+    /* Written by Philip Treacy
         https://www.myonlinetraininghub.com/grouped-running-totals-in-power-query
     */
     let
@@ -1103,27 +1099,16 @@ Web.GetAllLinks = (SourceURL as text, optional AttributeDelimiter as text) =>
         Source = Text.FromBinary(Web.Contents(SourceURL)),
         //Function to find each link
         GetLink = (Counter as number) =>
-            let
-                CurrentLink = Text.BetweenDelimiters(
-                    Source,
-                    "href=" & AttributeDelimiter,
-                    AttributeDelimiter,
-                    Counter
-                )
-            in
-                if CurrentLink = "" then
-                    {}
-                else
-                    List.Combine({{CurrentLink}, @GetLink(Counter + 1)})
+            let CurrentLink = Text.BetweenDelimiters( Source, "href=" & AttributeDelimiter, AttributeDelimiter, Counter )
+            in  if CurrentLink = "" then {}
+                else List.Combine({{CurrentLink}, @GetLink(Counter + 1)})
     in  GetLink(0)
 ,
 Web.StripHtmlList = (tbl as table) =>
 	let
 		t1 = Table.Column(tbl, "Column1"),
 		l1 = List.Select(List.Transform(t1, each Text.Clean(Text.PowerTrim(_))), each _ <> ""),
-		lBodyStart = List.PositionOf(
-			l1,
-			List.Select(l1, each Text.Contains(_, "<body", Comparer.OrdinalIgnoreCase)){0}
+		lBodyStart = List.PositionOf( l1, List.Select(l1, each Text.Contains(_, "<body", Comparer.OrdinalIgnoreCase)){0}
 		),
 		lBodyEnd = List.PositionOf(l1, List.Select(l1, each Text.Contains(_, "</body", Comparer.OrdinalIgnoreCase)){0} ),
 		L = List.Range(l1, lBodyStart, lBodyEnd - lBodyStart - 1)
