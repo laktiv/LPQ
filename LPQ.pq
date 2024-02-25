@@ -1010,12 +1010,16 @@ fnVlookUp = Document(
     "fnVlookUp",
     "LookUp in other table."
     {[
-        Description = "Table,, index col name, search col name, value",
+        Description = "(Value, Table, Search at Column name, Return Column name)",
         Code = "LPQ[fnVlookUp](lookupTable, lookupColumnName, returnColumnValue, lookupValue)",
         Result = "9000"
     ]},
     (lookupValue as any, lookupTable as table, lookupColumnName as text, returnColumnValue as text) =>
     let
+        // lookupTable= Products,
+        // lookupColumnName = "ProductKey",
+        // returnColumnValue = "Price",
+        // lookupValue = 1,
         colLookup = Table.Column(lookupTable, lookupColumnName),
         colToReturn = Table.Column(lookupTable, returnColumnValue),
         lookup = List.PositionOf(colLookup, lookupValue, 0),
