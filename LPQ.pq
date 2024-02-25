@@ -336,7 +336,7 @@ Inno.GetCooler = (Product as text) =>
 ,
 Inno.ParseInnoCom = (url as text) =>
     let
-        src = Table.FromColumns({Lines.FromBinary(Web.Contents(url))}),
+        src = Table.FromColumns({Lines.FromBinary( Binary.Buffer( Web.Contents(url ) ))}),
         filtrTags = Table.SelectRows(src, each Text.Contains([Column1],"productBox") or Text.Contains([Column1],"<p class=""h4"">") or Text.Contains([Column1],"Part No.")),
         addCol = Table.AddColumn(filtrTags,"src", each if Text.Contains([Column1],"href") then Text.BetweenDelimiters([Column1],"href=""",""">") else Text.BetweenDelimiters([Column1], ">","</")),
         splitCols = Table.FromRows(List.Split(addCol[src], 3)),
@@ -349,7 +349,7 @@ Inno.ParseInnoCom = (url as text) =>
 Inno.ParseInnoComSpecs = (url as text) =>
     let
         //url = "https://inno3d.com/en/PRODUCT_INNO3D_GEFORCE_RTX_3060_8GB_TWIN_X2_2",
-        src = Web.Page(Web.Contents(url)){0}[Data],
+        src = Web.Page( Binary.Buffer( Web.Contents(url) ) ){0}[Data],
         Rename = Table.RenameColumnsAdv(src,{"GPU Engine Specs:",""}, {"spec","value"}),
         Replace = Text.BulkTableReplace(Rename, MyFindReplace_InnoSpecs, {"spec","value"})
     in
