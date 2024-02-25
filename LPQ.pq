@@ -1217,7 +1217,8 @@ ImportPq = Document(
     ]},
     (FilePath as text, optional Encoding as nullable number) as any =>
         try Expression.Evaluate(Text.FromBinary(File.Contents(FilePath),(Encoding ?? TextEncoding.Utf8)),#shared)
-        otherwise null ),
+        otherwise null )
+,
 ImportPq.GitHubRaw = (URL as text) => try Expression.Evaluate(Text.FromBinary(Web.Contents(URL)),#shared) otherwise null
 ,
 // Extended script loader with auto data types
