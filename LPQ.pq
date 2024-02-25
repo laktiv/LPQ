@@ -408,7 +408,7 @@ Inno.CleanTable = (Table as table) =>
     in  Table.SelectColumns(Quantity, List.RemoveMatchingItems(order, List.Difference(order,headers)) )
 ,
 
-// TABLES
+// BULK REPLACE & TABLES
 MyFindReplace_Sample =
     let table = Table.FromRows(Json.Document(Binary.Decompress(Binary.FromText("TY7LDoIwFAV/hXQrxijInrY8GnkFKi4ICyQsGhUIYvh925JCdzOTe5NTVQCXBJgA1GYFQhxvXAauQpwpMg7GFnFuaWxrfNXYUezYkM1KMkSOnpLldA7gLhddLF3sXSjjRInkoPOHqe14CDw/zZEnK+n7wcI8kiRJOcivhfXi70GS9QaFJIp4YSuIVvzGbuKpuGdeLgsaPmPTiu0ojTMXUVnhu2lfvMHIRTdZ/Gn4zk82iyV+nhYUEsq31H8=", BinaryEncoding.Base64), Compression.Deflate)), let _t = ((type nullable text) meta [Serialized.Text = true]) in type table [Find = _t, Replace = _t])
     in  Table.ReplaceValue(table,"",null,Replacer.ReplaceValue,{"Replace"})
@@ -459,6 +459,91 @@ Text.BulkTableReplace = let BulkReplace = (DataTable as table, FindReplaceTable 
             Output
     in
         BulkReplace
+,
+
+
+/////////////////////////
+// GPU & NV SERIES     //   Checks GPU
+/////////////////////////
+
+fxGpuSeries = (Product as text) =>
+    let p = Text.Lower(Product), //Text.Remove(, {" "})
+        posG = if Text.Contains(p, "RTX") then Text.PositionOf(p, "RTX")
+                else if Text.Contains(p, "GTX") then Text.PositionOf(p, "GTX")
+                else if Text.Contains(p, "GT") then Text.PositionOf(p, "GT")
+                else 0,
+        posE = if Text.Contains(p, "ti super", Comparer.OrdinalIgnoreCase) then 9
+                else if Text.Contains(p, "ti", Comparer.OrdinalIgnoreCase) then 3
+                else if Text.Contains(p, "super", Comparer.OrdinalIgnoreCase) then 6
+                else 0,
+        gpu = Text.Middle(Product, posG, 4 + 4 + posE)
+    in  Text.Trim(Text.Replace(p,"SUPER","Super"))
+,
+
+
+/////////////////////////
+// FANS & TABLES       //   SEARCH # OF FANS BY FILLED BRAND/SERIES TABLES
+/////////////////////////
+// Search full product name at Geizhals.eu, scrape result from specs table by coolers
+fsGeizFans = (Product as text) =>
+    let
+        searchstring = "https://geizhals.eu/?fs=" & Uri.EscapeDataString(Product) & "&hloc=pl",
+        Source = Web.BrowserContents(searchstring),
+        Table = Html.Table(Source, {{"Column1","DT"}, {"Column2","DD"}, {"Column3", ".listview__toggle-details-button .visually-hidden"}, {"Column4",".listview__name-link"}, {"Column5",".listview__offercount-link"}}, [RowSelector="DT"]),
+        Cooler = Table.SelectRows(Table, each ([Column1] = "Kühlung"))[Column2]{0},
+        txt = Text.Split(Cooler," "){0},
+        Split = if Text.EndsWith(txt,"x") 
+                    then "X" & Text.Select(Text.Split(Cooler," "){0},{"0".."9"})
+                    else txt
+    in
+        try Split otherwise null
+,
+// Search by Matching Series/Brand in the Table 'tblBrandsFans'
+fsGetFansAdv = (Product as text) =>
+    let srcTable = Table.Buffer( tblBrandsFans ),
+        // small replace
+        listReplace = 
+        {   { "Storm X", "StormX" },
+            { "GAMING BLOCK", "GAMING_BLOCK" },
+            { "STRIX LC", "STRIX_LC" },
+            { "GAMING OC", "GAMING_OC" },
+            { "GAMING SLIM", "GAMING_SLIM" },
+            { "GAMING X", "GAMING_X" } },
+        mReplace = List.Accumulate(listReplace, Product, (s,x) => Text.Replace(s, x{0}, x{1})),
+        mList = List.Transform(Text.Split(mReplace, " "), each Text.Upper(Text.Trim(_))),
+        brand = mList{0},   // Get Brand
+        fMatchFib = (ml, b, optional i) =>  //Main function
+            let        i = i ?? 0,
+                tbl      = Table.SelectRows(srcTable, each [brand]=b),
+                listLook = List.Transform(Text.Split(tbl[name]{i}, ","), each Text.Upper(Text.Trim(_))),
+                Matching = if List.ContainsAny(ml, listLook, (x,y) => x=y) then tbl[fans]{i} else null,
+                Checking = Matching ?? {i<Table.RowCount(tbl)}{1}? ?? @fMatchFib(ml, b, i+1) //Recurse
+            in  try Checking otherwise null
+    in  fMatchFib(mList,"") ?? fMatchFib(mList,brand)
+,
+// Simplier search
+fsGetFans = (Brand as text, Fans as text, Product as text) =>
+	let srcTable = Table.Buffer( tblBrandsFans ),
+        Table = Table.SelectRows(srcTable,
+			each [brand] = Text.Lower(Brand) and Text.Lower([fans]) = Text.Lower(Fans) )
+	in	Result = List.AnyTrue(
+			List.Transform(Table[series], each Text.Contains(Product,_,Comparer.OrdinalIgnoreCase)) )
+,
+// Flat table # Fans by brands
+tblBrandsFans = 
+    let Table = Table.FromRows(Json.Document(Binary.Decompress(Binary.FromText("fZbRcuIgFEB/JeNzZ3aq+wMYMbImIRtIzW6nD9GyNVMNOxhn698vEE2TeuEFkzmHcLnAxefnCWIFmzxM8EcrVFMd9GNUHevmLdge5O59SF4eensz1w1rVf0RxKF5r7QTzG2PgVbOdJNUxtMPSCh5RzMlkWpdlPGclBCc6mZRoNjF1hQij2bAvRQNHI/BvMjnYN/pNxsRL5ZDGiGSblC+6KdTNe1eKK+y1448+pW7GIeKmWC0l6fWJdh5irfqdD6NFBKh+S+ObwtoV+2PVDsBLOFAtjEhnFPHxzpOc5sop4BjYl+cQoQSkkYBDX1SghjHuc94IozQ1GeUPMeJM5RpH4rLMOnVnPg4P6utdA7R7SWMotgdRudsSLpY0jwceSRN6WxxW8b5obIHtVvB1WWr6ldAW4mqPdXN+/Dx3loqva+2dQttid4sv9+a+5C6DM9gZnLL/9WNm9oGYCanoTz+rXatW/ghPNA2PVsv0bTPzOVVSSiBQylDjJEn/DV7V8VOeFYCI3QrXQa6qo7rwphHLrSiSxdizk6MQ8Q0UzBGW07PtvqDDI96JYzcsqV/Y/KzIAtgu4w1hlGwQpu1UxzWABaT5H7EbmpFljuhvi6oA12/DEzEceIHkOtTCKBHoCzeenWn9wmnfFwVM6TLYJ/yLzdYD82XWSvVsfTjAObX0c2Wy7tL3Ofoyz5T0ifpc6Uve1GNLq3flKOwP+tknIYR1P8glDgKJ+eqbur2AnJbDpLMx4JQKvjjduuGcGBQKeqhTTCNP3u+/Ac=", BinaryEncoding.Base64), Compression.Deflate)), let _t = ((type nullable text) meta [Serialized.Text = true]) in type table [brand = _t, fans = _t, series = _t, #"type" = _t]),
+        Lower = Table.TransformColumns(Table, {
+            {"brand", Text.Lower, type text},
+            {"series", Text.Lower, type text} })
+    in  Lower
+,
+//Grouped table by Brand/Series and # Fans
+tblBrandsFansGrouped = 
+    let Table = Table.FromRows(Json.Document(Binary.Decompress(Binary.FromText("fZbRcuIgFEB/JeNzZ3aq+wMYMbImIRtIzW6nD9GyNVMNOxhn698vEE2TeuEFkzmHcLnAxefnCWIFmzxM8EcrVFMd9GNUHevmLdge5O59SF4eensz1w1rVf0RxKF5r7QTzG2PgVbOdJNUxtMPSCh5RzMlkWpdlPGclBCc6mZRoNjF1hQij2bAvRQNHI/BvMjnYN/pNxsRL5ZDGiGSblC+6KdTNe1eKK+y1448+pW7GIeKmWC0l6fWJdh5irfqdD6NFBKh+S+ObwtoV+2PVDsBLOFAtjEhnFPHxzpOc5sop4BjYl+cQoQSkkYBDX1SghjHuc94IozQ1GeUPMeJM5RpH4rLMOnVnPg4P6utdA7R7SWMotgdRudsSLpY0jwceSRN6WxxW8b5obIHtVvB1WWr6ldAW4mqPdXN+/Dx3loqva+2dQttid4sv9+a+5C6DM9gZnLL/9WNm9oGYCanoTz+rXatW/ghPNA2PVsv0bTPzOVVSSiBQylDjJEn/DV7V8VOeFYCI3QrXQa6qo7rwphHLrSiSxdizk6MQ8Q0UzBGW07PtvqDDI96JYzcsqV/Y/KzIAtgu4w1hlGwQpu1UxzWABaT5H7EbmpFljuhvi6oA12/DEzEceIHkOtTCKBHoCzeenWn9wmnfFwVM6TLYJ/yLzdYD82XWSvVsfTjAObX0c2Wy7tL3Ofoyz5T0ifpc6Uve1GNLq3flKOwP+tknIYR1P8glDgKJ+eqbur2AnJbDpLMx4JQKvjjduuGcGBQKeqhTTCNP3u+/Ac=", BinaryEncoding.Base64), Compression.Deflate)), let _t = ((type nullable text) meta [Serialized.Text = true]) in type table [brand = _t, fans = _t, series = _t, #"type" = _t]),
+        Lower = Table.TransformColumns(Table, {
+            {"brand", Text.Lower, type text},
+            {"series", Text.Lower, type text} })
+    in  Lower
 ,
 
 
@@ -885,7 +970,6 @@ Table.ReplaceAllErrorsInTable = (tbl as table, optional replacer_value) => Table
 
 
 
-
 Table.RunningTotalfunction = (TabName as table, RT_Amt_ColumnName as text, Added_Col_RT_Name as text)=>
     /**
     *   TabName = Name of the Table to implement running total on
@@ -968,11 +1052,11 @@ Table.GetParameter = (ParameterName as text) =>
 /////////////////////////
 /* VLOOKUP in other table */
 fnVlookUp = Document(
-    "LPQ[fnVlookUp].",
-    "VLOOKUP in other table."
+    "fnVlookUp",
+    "fnVlookUp in other table."
     {[
         Description = "Table,, index col name, search col name, value",
-        Code = "LPQ[fnVlookUp](lookupTable, lookupColumnName, returnColumnValue, lookupValue)",
+        Code = "fnVlookUp(lookupTable, lookupColumnName, returnColumnValue, lookupValue)",
         Result = "9000"
     ]},
     (lookupValue as any, lookupTable as table, lookupColumnName as text, returnColumnValue as text) =>
@@ -991,6 +1075,27 @@ fnCheckUp = (lookupValue as any, lookupTable as table, lookupColumnName as text)
         lookup = List.PositionOf(colLookup, lookupValue, 0)
     in  if lookup >=0 then 1 else null
 ,
+// Search Name in List
+fnCheckInList = Document(
+    "fnCheckInList.",
+    "Search word in the list. True - case not sesetive, False - case sensetive.",
+    {[
+        Description = "Using separate lists. Params: Word, List, Case sensetive.", 
+        Code = "fnCheckInList(""Word"", {""Text"", ""Word"", ""Letter""}, true)", 
+        Result = "TRUE."
+    ]},
+    (Name as text, List as list, optional Match as logical) => 
+    let 
+        match = if (Match ?? {Match=""}{1}?) = null then true else Match,
+        p = try Text.Trim(Text.BeforeDelimiter(Name,"(")) otherwise Name,
+        pList = Text.Split(p, " "),
+        result = if match 
+            then List.ContainsAny(pList, List, (x,y) => Text.Contains(x,y,Comparer.OrdinalIgnoreCase))
+            else List.ContainsAny(pList, List, (x,y) => x=y)
+    in  
+        try result otherwise null)
+,
+
 Text.RegExp = (txt as text, regex as text, delim as text) =>
     let
     RegExp =
