@@ -151,58 +151,13 @@ Document = (name as text, description as text, valueOrExample as any, optional v
             Documentation.Name = name,
             Documentation.Description = description,
             // [Description = "", Code="", Result =""]
-            Documentation.Examples = examples
-        ])
+            Documentation.Examples = examples])
 ,
 
 
 /////////////////////////
 // INNO                //
 /////////////////////////
-File.GetExcelDataFile = Document(
-    "LPQ[File.GetExcelDataFile]",
-    "Call table from excel file in INNO folder.",
-    {[
-        Description = "File.GetExcelDataFile",
-        Code = "LPQ[File.GetExcelDataFile](""File name without extension"", ""Table name (table if null)"")",
-        Result = "Imported table with types formated."
-    ]},
-    (fileName as text, optional tableName as text) as table =>
-    let
-        folder = "C:\Users\Laktionov.I\OneDrive\INNO\",
-        filepath = folder & fileName & ".xlsx",
-        tblName = tableName ?? "table",
-        data = Excel.Workbook(File.Contents(filepath), null, true),
-        dataTable = data{[Item = tblName, Kind = "Table"]}[Data],
-        fnDetectAndTransformTypes = (SourceTable as table) =>
-        let
-            moneyList = {"amount", "price", "deal", "cost", "rebate", "msrp"},
-            FnDetectType = (SourceTable, ColumnName) =>
-            let
-                ListColumn = Table.Column(SourceTable, ColumnName),
-                Money = List.Contains(moneyList, Text.Trim(ColumnName), (x, y) => Text.StartsWith(y, x, Comparer.OrdinalIgnoreCase)),
-                NumberPercentage = List.Count(List.Select(ListColumn, each _ is number)) / List.Count(ListColumn),
-                IntPercentage = List.Count(List.Select(ListColumn, each _ is number and _ = Number.Round(_, 0))) / List.Count(ListColumn),
-                DatePercentage = List.Count(List.Select(ListColumn, each _ is date)) / List.Count(ListColumn),
-                DateTimePercentage = List.Count(List.Select(ListColumn, each _ is datetime)) / List.Count(ListColumn),
-                Max = List.Max({NumberPercentage, DatePercentage, DateTimePercentage, IntPercentage}),
-                Result =
-                    if Money then {ColumnName, Currency.Type}
-                    else if Max < .95 then {ColumnName, type any}
-                    else if DateTimePercentage = Max then {ColumnName, type datetime}
-                    else if DatePercentage = Max then {ColumnName, type date}
-                    else if IntPercentage = Max then {ColumnName, Int64.Type}
-                    else {ColumnName, type number}
-            in
-                Result,
-            ConvertTypesList = List.Transform(Table.ColumnNames(SourceTable), each FnDetectType(SourceTable, _)),
-            ConvertedTable = Table.TransformColumnTypes(SourceTable, ConvertTypesList)
-        in
-            ConvertedTable,
-        Result = fnDetectAndTransformTypes(dataTable)
-    in
-        Result)
-,
 Inno.SortTablePn = Document(
     "LPQ[Inno.SortTablePn]",
     "Returns sorted table by INNO partnumbers in proper order. Also could filter-out old models.",
@@ -492,7 +447,7 @@ fsGeizFans = (Product as text) =>
         Table = Html.Table(Source, {{"Column1","DT"}, {"Column2","DD"}, {"Column3", ".listview__toggle-details-button .visually-hidden"}, {"Column4",".listview__name-link"}, {"Column5",".listview__offercount-link"}}, [RowSelector="DT"]),
         Cooler = Table.SelectRows(Table, each ([Column1] = "Kühlung"))[Column2]{0},
         txt = Text.Split(Cooler," "){0},
-        Split = if Text.EndsWith(txt,"x") 
+        Split = if Text.EndsWith(txt,"x")
                     then "X" & Text.Select(Text.Split(Cooler," "){0},{"0".."9"})
                     else txt
     in
@@ -502,7 +457,7 @@ fsGeizFans = (Product as text) =>
 fsGetFansAdv = (Product as text) =>
     let srcTable = Table.Buffer( tblBrandsFans ),
         // small replace
-        listReplace = 
+        listReplace =
         {   { "Storm X", "StormX" },
             { "GAMING BLOCK", "GAMING_BLOCK" },
             { "STRIX LC", "STRIX_LC" },
@@ -530,7 +485,7 @@ fsGetFans = (Brand as text, Fans as text, Product as text) =>
 			List.Transform(Table[series], each Text.Contains(Product,_,Comparer.OrdinalIgnoreCase)) )
 ,
 // Flat table # Fans by brands
-tblBrandsFans = 
+tblBrandsFans =
     let Table = Table.FromRows(Json.Document(Binary.Decompress(Binary.FromText("fZbRcuIgFEB/JeNzZ3aq+wMYMbImIRtIzW6nD9GyNVMNOxhn698vEE2TeuEFkzmHcLnAxefnCWIFmzxM8EcrVFMd9GNUHevmLdge5O59SF4eensz1w1rVf0RxKF5r7QTzG2PgVbOdJNUxtMPSCh5RzMlkWpdlPGclBCc6mZRoNjF1hQij2bAvRQNHI/BvMjnYN/pNxsRL5ZDGiGSblC+6KdTNe1eKK+y1448+pW7GIeKmWC0l6fWJdh5irfqdD6NFBKh+S+ObwtoV+2PVDsBLOFAtjEhnFPHxzpOc5sop4BjYl+cQoQSkkYBDX1SghjHuc94IozQ1GeUPMeJM5RpH4rLMOnVnPg4P6utdA7R7SWMotgdRudsSLpY0jwceSRN6WxxW8b5obIHtVvB1WWr6ldAW4mqPdXN+/Dx3loqva+2dQttid4sv9+a+5C6DM9gZnLL/9WNm9oGYCanoTz+rXatW/ghPNA2PVsv0bTPzOVVSSiBQylDjJEn/DV7V8VOeFYCI3QrXQa6qo7rwphHLrSiSxdizk6MQ8Q0UzBGW07PtvqDDI96JYzcsqV/Y/KzIAtgu4w1hlGwQpu1UxzWABaT5H7EbmpFljuhvi6oA12/DEzEceIHkOtTCKBHoCzeenWn9wmnfFwVM6TLYJ/yLzdYD82XWSvVsfTjAObX0c2Wy7tL3Ofoyz5T0ifpc6Uve1GNLq3flKOwP+tknIYR1P8glDgKJ+eqbur2AnJbDpLMx4JQKvjjduuGcGBQKeqhTTCNP3u+/Ac=", BinaryEncoding.Base64), Compression.Deflate)), let _t = ((type nullable text) meta [Serialized.Text = true]) in type table [brand = _t, fans = _t, series = _t, #"type" = _t]),
         Lower = Table.TransformColumns(Table, {
             {"brand", Text.Lower, type text},
@@ -538,7 +493,7 @@ tblBrandsFans =
     in  Lower
 ,
 //Grouped table by Brand/Series and # Fans
-tblBrandsFansGrouped = 
+tblBrandsFansGrouped =
     let Table = Table.FromRows(Json.Document(Binary.Decompress(Binary.FromText("fZbRcuIgFEB/JeNzZ3aq+wMYMbImIRtIzW6nD9GyNVMNOxhn698vEE2TeuEFkzmHcLnAxefnCWIFmzxM8EcrVFMd9GNUHevmLdge5O59SF4eensz1w1rVf0RxKF5r7QTzG2PgVbOdJNUxtMPSCh5RzMlkWpdlPGclBCc6mZRoNjF1hQij2bAvRQNHI/BvMjnYN/pNxsRL5ZDGiGSblC+6KdTNe1eKK+y1448+pW7GIeKmWC0l6fWJdh5irfqdD6NFBKh+S+ObwtoV+2PVDsBLOFAtjEhnFPHxzpOc5sop4BjYl+cQoQSkkYBDX1SghjHuc94IozQ1GeUPMeJM5RpH4rLMOnVnPg4P6utdA7R7SWMotgdRudsSLpY0jwceSRN6WxxW8b5obIHtVvB1WWr6ldAW4mqPdXN+/Dx3loqva+2dQttid4sv9+a+5C6DM9gZnLL/9WNm9oGYCanoTz+rXatW/ghPNA2PVsv0bTPzOVVSSiBQylDjJEn/DV7V8VOeFYCI3QrXQa6qo7rwphHLrSiSxdizk6MQ8Q0UzBGW07PtvqDDI96JYzcsqV/Y/KzIAtgu4w1hlGwQpu1UxzWABaT5H7EbmpFljuhvi6oA12/DEzEceIHkOtTCKBHoCzeenWn9wmnfFwVM6TLYJ/yLzdYD82XWSvVsfTjAObX0c2Wy7tL3Ofoyz5T0ifpc6Uve1GNLq3flKOwP+tknIYR1P8glDgKJ+eqbur2AnJbDpLMx4JQKvjjduuGcGBQKeqhTTCNP3u+/Ac=", BinaryEncoding.Base64), Compression.Deflate)), let _t = ((type nullable text) meta [Serialized.Text = true]) in type table [brand = _t, fans = _t, series = _t, #"type" = _t]),
         Lower = Table.TransformColumns(Table, {
             {"brand", Text.Lower, type text},
@@ -1080,19 +1035,19 @@ fnCheckInList = Document(
     "fnCheckInList.",
     "Search word in the list. True - case not sesetive, False - case sensetive.",
     {[
-        Description = "Using separate lists. Params: Word, List, Case sensetive.", 
-        Code = "fnCheckInList(""Word"", {""Text"", ""Word"", ""Letter""}, true)", 
+        Description = "Using separate lists. Params: Word, List, Case sensetive.",
+        Code = "fnCheckInList(""Word"", {""Text"", ""Word"", ""Letter""}, true)",
         Result = "TRUE."
     ]},
-    (Name as text, List as list, optional Match as logical) => 
-    let 
+    (Name as text, List as list, optional Match as logical) =>
+    let
         match = if (Match ?? {Match=""}{1}?) = null then true else Match,
         p = try Text.Trim(Text.BeforeDelimiter(Name,"(")) otherwise Name,
         pList = Text.Split(p, " "),
-        result = if match 
+        result = if match
             then List.ContainsAny(pList, List, (x,y) => Text.Contains(x,y,Comparer.OrdinalIgnoreCase))
             else List.ContainsAny(pList, List, (x,y) => x=y)
-    in  
+    in
         try result otherwise null)
 ,
 
@@ -1249,26 +1204,67 @@ Web.RemoveHtmlTags = let func = (HTML) =>
 // Web.RemoveShortCode??
 
 /////////////////////////
-// Import              //
+// Import PQ           //
 /////////////////////////
-ImportPq.FromFile = Document(
-    "ImportPq.FromFile",
-	"Text.",
-    {[
-        Description = "Function to import an external .pq script",
-        Code = "ImportPq.FromFile(""C:\docs\external-script.pq"")",
-        Result = "code from .pq file"
-    ]},
-    (Filepath as text) =>
-        try Expression.Evaluate(Text.FromBinary(File.Contents(Filepath)), #shared)
-        otherwise null
-    )
-,
-ImportPq.GitHubRaw = (URL as text) =>
-    try Expression.Evaluate(Text.FromBinary(Web.Contents(URL)), #shared)
-    otherwise null
-,
 
+// Minimal script loader
+ImportPq = Document(
+    "ImportPq", "Most minimal external PQ script file loader.",
+    {[ 
+        Description="Load PQ file to Excel", 
+        Code="LPQ[ImportPq](""C:\File.pq"")", 
+        Result = "code from .pq file" 
+    ]},
+    (FilePath as text, optional Encoding as nullable number) as any =>
+        try Expression.Evaluate(Text.FromBinary(File.Contents(FilePath),(Encoding ?? TextEncoding.Utf8)),#shared)
+        otherwise null ),
+ImportPq.GitHubRaw = (URL as text) => try Expression.Evaluate(Text.FromBinary(Web.Contents(URL)),#shared) otherwise null
+,
+// Extended script loader with auto data types
+File.GetExcelDataFile = Document(
+    "LPQ[File.GetExcelDataFile]",
+    "Call table from excel file in INNO folder.",
+    {[
+        Description = "File.GetExcelDataFile",
+        Code = "LPQ[File.GetExcelDataFile](""File name without extension"", ""Table name (table if null)"")",
+        Result = "Imported table with types formated."
+    ]},
+    (fileName as text, optional tableName as text) as table =>
+    let
+        folder = "C:\Users\Laktionov.I\OneDrive\INNO\",
+        filepath = folder & fileName & ".xlsx",
+        tblName = tableName ?? "table",
+        data = Excel.Workbook(File.Contents(filepath), null, true),
+        dataTable = data{[Item = tblName, Kind = "Table"]}[Data],
+        fnDetectAndTransformTypes = (SourceTable as table) =>
+        let
+            moneyList = {"amount", "price", "deal", "cost", "rebate", "msrp"},
+            FnDetectType = (SourceTable, ColumnName) =>
+            let
+                ListColumn = Table.Column(SourceTable, ColumnName),
+                Money = List.Contains(moneyList, Text.Trim(ColumnName), (x, y) => Text.StartsWith(y, x, Comparer.OrdinalIgnoreCase)),
+                NumberPercentage = List.Count(List.Select(ListColumn, each _ is number)) / List.Count(ListColumn),
+                IntPercentage = List.Count(List.Select(ListColumn, each _ is number and _ = Number.Round(_, 0))) / List.Count(ListColumn),
+                DatePercentage = List.Count(List.Select(ListColumn, each _ is date)) / List.Count(ListColumn),
+                DateTimePercentage = List.Count(List.Select(ListColumn, each _ is datetime)) / List.Count(ListColumn),
+                Max = List.Max({NumberPercentage, DatePercentage, DateTimePercentage, IntPercentage}),
+                Result =
+                    if Money then {ColumnName, Currency.Type}
+                    else if Max < .95 then {ColumnName, type any}
+                    else if DateTimePercentage = Max then {ColumnName, type datetime}
+                    else if DatePercentage = Max then {ColumnName, type date}
+                    else if IntPercentage = Max then {ColumnName, Int64.Type}
+                    else {ColumnName, type number}
+            in
+                Result,
+            ConvertTypesList = List.Transform(Table.ColumnNames(SourceTable), each FnDetectType(SourceTable, _)),
+            ConvertedTable = Table.TransformColumnTypes(SourceTable, ConvertTypesList)
+        in
+            ConvertedTable,
+        Result = fnDetectAndTransformTypes(dataTable)
+    in
+        Result)
+,
 
 /////////////////////////
 // Value               //
