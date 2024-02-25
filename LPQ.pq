@@ -1008,31 +1008,19 @@ Table.GetParameter = (ParameterName as text) =>
 /* VLOOKUP in other table */
 fnVlookUp = Document(
     "fnVlookUp",
-    "LookUp in other table."
+    "LookUp or CheckUp value in other table (return value from other column or just search)."
     {[
         Description = "(Value, Table, Search at Column name, Return Column name)",
-        Code = "LPQ[fnVlookUp](lookupTable, lookupColumnName, returnColumnValue, lookupValue)",
-        Result = "9000"
+        Code = "LPQ[fnVlookUp](1, Products, ""ProductKey"", ""Price"")",
+        Result = "9000  OR   1"
     ]},
-    (lookupValue as any, lookupTable as table, lookupColumnName as text, returnColumnValue as text) =>
-    let
-        // lookupTable= Products,
-        // lookupColumnName = "ProductKey",
-        // returnColumnValue = "Price",
-        // lookupValue = 1,
-        colLookup = Table.Column(lookupTable, lookupColumnName),
-        colToReturn = Table.Column(lookupTable, returnColumnValue),
-        lookup = List.PositionOf(colLookup, lookupValue, 0),
-        Result = if lookup >=0 then colToReturn{lookup} else "Not found"
-    in
-        Result)
-,
-/* SEARCH value in other table and returns "1" if record found */
-fnCheckUp = (lookupValue as any, lookupTable as table, lookupColumnName as text) =>
-    let colLookup = Table.Column(lookupTable, lookupColumnName),
-        // colToReturn = Table.Column(lookupTable, returnColumnValue),
-        lookup = List.PositionOf(colLookup, lookupValue, 0)
-    in  if lookup >=0 then 1 else null
+    (lookupValue as any, lookupTable as table, lookupColumnName as text, optional returnColumnValue as text) =>
+        let colLookup = Table.Column(lookupTable, lookupColumnName),
+            colToReturn =
+                if (returnColumnValue ?? {returnColumnValue = ""}{1}?) = null then false
+                    else Table.Column(lookupTable, returnColumnValue),
+            lookup = List.PositionOf(colLookup, lookupValue, 0)
+        in  if lookup >= 0 then if colToReturn = false then 1 else colToReturn{lookup} else "Not found")
 ,
 // Search Name in List
 fnCheckInList = Document(
