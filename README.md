@@ -2,8 +2,11 @@
 Extensions and Functions for Power Query
 
 ## Лист переіменувань
- - fxCheck -> fnCheckInList
-- [fans] -> tblBrandFans
-- [tblFans] -> tblBrandsFansGrouped
-- fUriGeiz -> fsGeizFans
-- fxGPU -> fxGpuSeries
+
+ | Категорія       | Стара назва | Нова назва           | Опис та коментарь                | TODO |
+| --------------- | ----------- | -------------------- | -------------------------------- | ---- |
+| Функція,Пошук   | fUriGeiz    | fsGeizFans           | Пошук кулерів через скраббінг    | [ ]  |
+| Функція,Пошук   | fxGPU       | fxGpuSeries          | Подстановка серії GPU по назві   | [x]  |
+| Функція,Матчінг | fxCheck     | fnCheckInList        | Пошук слова у ячейці (лист)      | [ ]  |
+| Таблиця         | [fans]      | tblBrandFans         | Повна Бренд/Серія/Кулерів        | [ ]  |
+| Таблиця         | [tblFans]   | tblBrandsFansGrouped | Группірована Бренд/Серія/Кулерів | [ ]  |
