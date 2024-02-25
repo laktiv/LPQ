@@ -1008,10 +1008,10 @@ Table.GetParameter = (ParameterName as text) =>
 /* VLOOKUP in other table */
 fnVlookUp = Document(
     "fnVlookUp",
-    "fnVlookUp in other table."
+    "LookUp in other table."
     {[
         Description = "Table,, index col name, search col name, value",
-        Code = "fnVlookUp(lookupTable, lookupColumnName, returnColumnValue, lookupValue)",
+        Code = "LPQ[fnVlookUp](lookupTable, lookupColumnName, returnColumnValue, lookupValue)",
         Result = "9000"
     ]},
     (lookupValue as any, lookupTable as table, lookupColumnName as text, returnColumnValue as text) =>
