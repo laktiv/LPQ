@@ -1,7 +1,7 @@
 /**
 *  Inspired by Power-BI-Desktop-Query-Extensions - https://github.com/tnclark8012/Power-BI-Desktop-Query-Extensions
 *  Expression.Evaluate(Text.FromBinary(Web.Contents("https://gist.github.com/laktiv/700a6d65e098189881ecd77e585b233a")),#shared)
-*
+*  ASCII - https://patorjk.com/software/taag/#p=display&c=c%2B%2B&f=Small&t=INNO
 **/
 
 let
@@ -148,25 +148,29 @@ Document = (name as text, description as text, valueOrExample as any, optional v
         examples = if valueIfExample is null then {} else valueOrExample
     in
         Value.ReplaceType(value, Value.Type(value) meta [
+            // [Description="", Code="", Result="", Category=""]
             Documentation.Name = name,
-            Documentation.Description = description,
-            // [Description = "", Code="", Result =""]
-            Documentation.Examples = examples])
+            Documentation.Description= description,
+            Documentation.Examples = examples,
+            Documentation.Category = category,
+            ])
 ,
 
 
-/////////////////////////
-// INNO                //
-/////////////////////////
+
+//    ___ _  _ _  _  ___
+//   |_ _| \| | \| |/ _ \
+//    | || .` | .` | (_) |
+//   |___|_|\_|_|\_|\___/
+//
 // Extended script loader with auto data types
 File.GetExcelDataFile = Document(
-    "LPQ[File.GetExcelDataFile]",
+    "File.GetExcelDataFile",
     "Call table from excel file in INNO folder.",
-    {[
-        Description = "File.GetExcelDataFile",
-        Code = "LPQ[File.GetExcelDataFile](""File name without extension"", ""Table name (table if null)"")",
-        Result = "Imported table with types formated."
-    ]},
+    {[  Description="File.GetExcelDataFile",
+        Code =	    "LPQ[File.GetExcelDataFile](""File name without extension"", ""Table name (table if null)"")",
+        Result =	"Imported table with types formated.",
+        Category =	"Files import, INNO3D"	]},
     (fileName as text, optional tableName as text) as table =>
     let
         folder = "C:\Users\Laktionov.I\OneDrive\INNO\",
@@ -204,13 +208,12 @@ File.GetExcelDataFile = Document(
         Result)
 ,
 File.GetFilesFolder = Document(
-    "LPQ[File.GetFilesFolder]",
+    "File.GetFilesFolder",
     "Gets files from folder with parameters.",
-    {[
-        Description = "Inno.SortTablePn",
-        Code = "LPQ[File.GetFilesFolder](""C:\Users\Laktionov.I\OneDrive\INNO\"", ""price"", ""xlsx"", ""INNO3D"", true, true, false)",
-        Result = "Table with price lists, only from RootFOlder and latest"
-    ]},
+    {[  Description="Inno.SortTablePn",
+        Code =	    "LPQ[File.GetFilesFolder](""C:\Users\Laktionov.I\OneDrive\INNO\"", ""price"", ""xlsx"", ""INNO3D"", true, true, false)",
+        Result =	"Table with price lists, only from RootFOlder and latest",
+        Category =	"Files import, INNO3D"	]},
     (RootFolder as text, FolderName as text, ExtensionsList as any, FilterNames as any, rootOnly as logical, latestOnly as logical, optional sortNames as logical) =>
     let
         Name = Text.Lower(FolderName),
@@ -284,13 +287,12 @@ File.GetFilesFolder = Document(
         Result)
 ,
 Inno.SortTablePn = Document(
-    "LPQ[Inno.SortTablePn]",
+    "Inno.SortTablePn",
     "Returns sorted table by INNO partnumbers in proper order. Also could filter-out old models.",
-    {[
-        Description = "Inno.SortTablePn",
-        Code = "LPQ[Inno.TableTypes](Table, ""pn"", true)",
-        Result = "New sorted table by column 'pn' with old filtered."
-    ]},
+    {[  Description="Inno.SortTablePn",
+        Code =		"LPQ[Inno.TableTypes](Table, ""pn"", true)",
+        Result =	"New sorted table by column 'pn' with old filtered.",
+        Category =	"Prodycts, INNO3D"	]},
     (Table as table, PN as text, optional FilterOld as logical) =>
     let
         oldList = {"C16", "C20", "207", "208", "106", "107", "108", "R"},
@@ -337,12 +339,12 @@ Inno.SortTablePn = Document(
         Sorting)
 ,
 Inno.TableTypes = Document(
-    "LPQ[Inno.TableTypes]",
+    "Inno.TableTypes",
     "Converts types of columns in the table",
-    {[  Description = "TableTypes",
-        Code = "LPQ[Inno.TableTypes](Table)",
-        Result = "New table"
-    ]},
+    {[  Description="TableTypes",
+        Code =		"LPQ[Inno.TableTypes](Table)",
+        Result =	"New table",
+        Category =	"Tables, INNO3D"	]},
     (Table as table, optional ToOrder as logical) as table =>
     let
         toOrder = if (ToOrder ?? {ToOrder=""}{1}?) = null then false else ToOrder,
@@ -380,21 +382,21 @@ Inno.TableTypes = Document(
     in  Result)
 ,
 Inno.Online = Document(
-    "LPQ[Inno.Online]",
+    "Inno.Online",
     "Table for calculations.",
-    {[  Description = "Margin, VAT, Currencies",
-        Code = "Tables",
-        Result = "Table"
-    ]},
+    {[  Description="Margin, VAT, Currencies",
+        Code =		"Tables",
+        Result =	"Table",
+        Category =	"Reference, INNO3D"	]},
     ImportPq.GitHubRaw("https://raw.githubusercontent.com/laktiv/LPQ/main/Inno.TablesOnline.pq"))
 ,
 Inno.GetGpuCode = Document(
-    "LPQ[Inno.GetGpuCode]",
+    "Inno.GetGpuCode",
     "Table for calculations.",
-    {[  Description = "'3060, 3080' - add mem",
-        Code = "LPQ[Inno.GetGpuCode](PN, *MemList list, *CoolerList list)",
-        Result = "Get pn_code from PN, before first '-'"
-    ]},
+    {[  Description="'3060, 3080' - add mem",
+        Code =		"LPQ[Inno.GetGpuCode](PN, *MemList list, *CoolerList list)",
+        Result =	"Get pn_code from PN, before first '-'",
+        Category =	"Products, INNO3D"	]},
     (PN as text, optional AddMemoryList as text, optional AddCoolerList as text) =>
     let
         memList =
@@ -542,9 +544,13 @@ Text.BulkTableReplace = let BulkReplace = (DataTable as table, FindReplaceTable 
 ,
 
 
-/////////////////////////
-// GPU & NV SERIES     //   Checks GPU
-/////////////////////////
+
+//     ___ ___ _   _   __       _  ___   __  ___ ___ ___ ___ ___ ___
+//    / __| _ \ | | | / _|___  | \| \ \ / / / __| __| _ \_ _| __/ __|
+//   | (_ |  _/ |_| | > _|_ _| | .` |\ V /  \__ \ _||   /| || _|\__ \
+//    \___|_|  \___/  \_____|  |_|\_| \_/   |___/___|_|_\___|___|___/
+//
+//   Checks GPU
 fxGpuSeries = (Product as text) =>
     let p = Text.Lower(Product), //Text.Remove(, {" "})
         posG = if Text.Contains(p, "RTX") then Text.PositionOf(p, "RTX")
@@ -560,10 +566,12 @@ fxGpuSeries = (Product as text) =>
 ,
 
 
-/////////////////////////
-// FANS & TABLES       //   SEARCH # OF FANS BY FILLED BRAND/SERIES TABLES
-/////////////////////////
-
+//    ___ _   _  _       __       _____     _    _
+//   | __/_\ | \| |___  / _|___  |_   _|_ _| |__| |___ ___
+//   | _/ _ \| .` (_-<  > _|_ _|   | |/ _` | '_ \ / -_|_-<
+//   |_/_/ \_\_|\_/__/  \_____|    |_|\__,_|_.__/_\___/__/
+//
+//   SEARCH # OF FANS BY FILLED BRAND/SERIES TABLES
 // Search full product name at Geizhals.eu, scrape result from specs table by coolers
 fsGeizFans = (Product as text) =>
     let
@@ -575,8 +583,7 @@ fsGeizFans = (Product as text) =>
         Split = if Text.EndsWith(txt,"x")
                     then "X" & Text.Select(Text.Split(Cooler," "){0},{"0".."9"})
                     else txt
-    in
-        try Split otherwise null
+    in  try Split otherwise null
 ,
 // Search by Matching Series/Brand in the Table 'tblBrandsFans'
 fsGetFansAdv = (Product as text) =>
@@ -633,30 +640,35 @@ tblInnoFans =
 ,
 
 
-/////////////////////////
-// Date                //
-/////////////////////////
+
+//    ___   _ _____ ___
+//   |   \ /_\_   _| __|
+//   | |) / _ \| | | _|
+//   |___/_/ \_\_| |___|
+//
 // Inno
 Date.DateFromISOwn = Document(
     "Date.DateFromISOwn",
     "Compute date of the first day of the week given an ISO weeknumber. If the Year is not entered, it will default to 'this' year.",
-    {[  Description = "Year must be a full year: eg 2021 vs 21. The latter will not be interpreted as the year 2021.",
-        Code = "Date.DateFromISOwn(""week number"", opt. ""year"")",
-        Result = "Date on start of week #"
-    ]},
+    {[  Description="Year must be a full year: eg 2021 vs 21. The latter will not be interpreted as the year 2021.",
+        Code =		"LPQ[Date.DateFromISOwn](""week number"", opt. ""year"")",
+        Result =	"Date on start of week #",
+        Category =	"Dates"	]},
     (wn as number, optional year as number) as date =>
     let
         yr = if year = null then Date.Year(DateTime.LocalNow()) else year,
         wn1Start = Date.StartOfWeek(#date(yr,1,1), Day.Monday),
         w1 = if Date.AddDays(wn1Start,3) < #date(yr,1,1) then Date.AddDays(wn1Start,7) else wn1Start
         //-2 if not 01.01.01 start of the year(?)
-    in Date.AddDays(w1, 7*(wn-1)) )
-,
+    in Date.AddDays(w1, 7*(wn-1)) ),
 // Basic calendar
 Date.Calendar = Document(
         "Date.Calendar",
         "Generate a calendar table for a given date span - can be text or proper dates. Current columns are Date, DayOfWeek, Month, MonthNum, WeekStartData, WeekStart, Year, YearMonth",
-        {[ Description = "2016 calendar", Code ="PBI[Date.Calendar](""1/1/2016"", ""12/31/2016""", Result = "2016 calendar"]},
+        {[  Description="2024 calendar",
+            Code =		"LPQ[Date.Calendar](""1/1/2024"", ""12/31/2024""",
+            Result =	"2024 calendar",
+            Category =	"Dates" ]},
         (start as any, end as any) =>
             let
                 StartDate = Date.From(start),
@@ -673,12 +685,14 @@ Date.Calendar = Document(
                 YearMonth = Table.AddColumn(Year, "YearMonth", each Number.From(Text.From([Year]) & (if [MonthNumber] < 10 then "0" else "") & Text.From([MonthNumber]))),
                 Result = YearMonth
            in
-                Result)
-,
+                Result),
 Date.DatesBetween = Document(
     "Date.DatesBetween",
     "Returns a list of dates in a given span (inclusive). Start and end parameters can be any order",
-    {[Description = "Date range", Code = "PBI[Date.DatesBetween](""1/1/2016"", ""1/3/2016"")", Result="{""1/1/2016"", ""1/2/2016"", ""1/3/2016""}" ]},
+    {[  Description="Date range",
+        Code =		"LPQ[Date.DatesBetween](""1/1/2016"", ""1/3/2016"")",
+        Result =	"{""1/1/2016"", ""1/2/2016"", ""1/3/2016""}",
+        Category =	"Dates"	]},
     (start as any, end as any) =>
       let
         StartDate = Date.From(start),
@@ -687,18 +701,22 @@ Date.DatesBetween = Document(
         adjustedEnd = List.Max({StartDate, EndDate}),
         GetDates = (start as date, end as date, dates as list)=> if start > end then dates else @GetDates(Date.AddDays(start, 1), end, List.Combine({dates, {start}})),
         Dates = GetDates(adjustedStart, adjustedEnd, {})
-      in Dates)
-,
+      in Dates),
 Date.DayName = Document(
     "Date.DayName",
     "Returns the English day of the week name for a date",
-    {[ Description = "Get the day name", Code="Date.DayName(""9/9/2016"")", Result="Friday"]},
-    (date as any) => Switch(Date.DayOfWeek(DateTime.From(date)), {0, 1, 2, 3, 4, 5, 6}, {"Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"}, null))
-,
+    {[  Description="Get the day name", 
+        Code =		"LPQ[Date.DayName](""9/9/2016"")", 
+        Result =	"Friday",
+        Category =	"Dates"	]},
+    (date as any) => Switch(Date.DayOfWeek(DateTime.From(date)), {0, 1, 2, 3, 4, 5, 6}, {"Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"}, null)),
 Date.MonthName = Document(
     "Date.MonthName",
     "Returns the English month name for a date",
-    {[ Description = "Get the month name", Code="PBI[Date.MonthName](""9/9/2016"")", Result = "September" ]},
+    {[  Description="Get the month name", 
+        Code =		"LPQ[Date.MonthName](""9/9/2016"")", 
+        Result =	"September",
+        Category =  "Dates" ]},
     (date as any) =>
         let
             monthNumber = if date is number then date else Date.Month(DateTime.From(date))
@@ -709,39 +727,48 @@ Date.MonthName = Document(
                 {"January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"}, null))
 ,
 
-/////////////////////////
-// List                //
-/////////////////////////
+
+//    _    ___ ___ _____
+//   | |  |_ _/ __|_   _|
+//   | |__ | |\__ \ | |
+//   |____|___|___/ |_|
+//
 List.Flatten = Document(
     "List.Flatten",
     "Recursively flattens list elements. The end result is a single list",
-    { [ Description = "Flattening nested lists into one", Code = "List.Flatten({ 1, 2, Table.FromRecords({[x=1]}), {3, 4, 5} })", Result = "{ 1, 2, Table.FromRecords({[x=1]}), 3, 4, 5}"] },
+    {[  Description="Flattening nested lists into one",
+        Code =		"LPQ[List.Flatten]({ 1, 2, Table.FromRecords({[x=1]}), {3, 4, 5} })",
+        Result =	"{ 1, 2, Table.FromRecords({[x=1]}), 3, 4, 5}",
+        Category =	"Lists"	]},
     (list as list) => List.Accumulate(list, {}, (state, current) =>
         let
             currentListContent = if current is list then @List.Flatten(current) else {current}
         in
             List.Combine({state, currentListContent})
-    ))
-,
+    )),
 List.From = Document(
     "List.From",
     "Converts a text representation of a list into a list of the elements. Items are considered to be split by ,",
-    { [ Description = "Convert a text list", Code = "List.From(""{A, B, C}"")", Result = "{ ""A"", ""B"", ""C"" }"] },
+    {[  Description="Convert a text list",
+        Code =		"LPQ[List.From](""{A, B, C}"")",
+        Result =	"{ ""A"", ""B"", ""C"" }",
+        Category =	"Lists"	]},
     (simpleTextList as text) =>
         let
             trimWhitespace = Text.Trim(simpleTextList),
             listToSplit = Text.TrimEnd(Text.TrimStart(trimWhitespace, "{"), "}"),
             Result = List.Transform(Text.Split(listToSplit, ","), each Text.Trim(_))
         in
-            Result)
-,
+            Result),
 List.ToText = Document(
     "List.ToText",
     "Converts a list to a textual representation. Inverse of List.From",
-    { [ Description = "Conver to text", Code = "List.ToText({ 1, 2, 3})", Result = """{1, 2, 3}"""] },
+    {[  Description="Conver to text",
+        Code =		"LPQ[List.ToText]({ 1, 2, 3})",
+        Result =	"""{1, 2, 3}""",
+        Category =	"Lists"	]},
     (list as list) =>
-            List.Accumulate(list, "{", (state, current) => current & Text.From(current)) & "}")
-,
+            List.Accumulate(list, "{", (state, current) => current & Text.From(current)) & "}"),
 // INNO
 List.CompareListsCheck = (ListSource as list, ListCompare as list, optional CaseIgnore as logical) =>
     //fxList = (l) => try Text.Combine( List.Transform(List.Distinct(List.Transform(l, each Text.Split(_, " "){1})), each Text.From(_)), "," ) otherwise "",
@@ -757,14 +784,20 @@ List.CompareListsMatches = (ListSource as list, ListCompare as list, optional Ca
 ,
 
 
-/////////////////////////
-// Number              //
-/////////////////////////
+
+//    _  _ _   _ __  __ ___ ___ ___  ___
+//   | \| | | | |  \/  | _ ) __| _ \/ __|
+//   | .` | |_| | |\/| | _ \ _||   /\__ \
+//   |_|\_|\___/|_|  |_|___/___|_|_\|___/
+//
 Number.Digits = {0,1,2,3,4,5,6,7,8,9},
 Number.ParseText = Document(
     "Number.ParseText",
     "Returns the first number (1+ consecutive digits) in the given text. Optionally, provide allowed characters to ignore them",
-    {[ Description = "Allow commas", Code="PBI[Number.ParseText](""It's over 9,000!"", 0, {"",""})", Result = "9000" ]},
+    {[  Description="Allow commas",
+        Code =		"LPQ[Number.ParseText](""It's over 9,000!"", 0, {"",""})",
+        Result =	"9000",
+        Category =	"Numbers"	]},
     (text as text, optional startIndex as number, optional allowCharacters as list) =>
         let
             consider = if startIndex is null then text else Text.Range(text,startIndex),
@@ -773,40 +806,38 @@ Number.ParseText = Document(
         in
             if text is null then null else Text.FromList(numberSeries)),
 Number.ToLetters = Document(
-        "Number.ToLetters",
-        "Converts a number  (starting at 1) to an alphabet representation. Works like column headers in Excel.",
-        {[
-            Description = "Column 27",
-            Code = "PBI[Number.ToLetters](27)",
-            Result = "AB"
-        ]},
-        (value as number) =>
-            let
-                GetLetter = (num as number) =>
-                    let
-                        number = Number.Mod(num, 26),
-                        val = if number = 0 then 26 else number,
-                        valid = number < 26 and number > 0
-                    in
-                        if valid then Text.At(Text.Alphabet, val - 1) else error "Can't get letter for " & Text.From(num),
-                func = (value as number, factor as number) =>
-                    let
-                        ThisLetter = GetLetter(Number.RoundDown(value/Number.Power(26, factor))),
-                        Result = if value <= Number.Power(26, factor) then "" else @func(value, factor+1) & ThisLetter
-                    in
-                        Result
-            in
-                if value <= 26 then GetLetter(value) else func(value, 1) & GetLetter(value)),
-// MY
+    "Number.ToLetters",
+    "Converts a number  (starting at 1) to an alphabet representation. Works like column headers in Excel.",
+    {[  Description="Column 27",
+        Code =		"LPQ[Number.ToLetters](27)",
+        Result =	"AB",
+        Category =	"Numbers"	]},
+    (value as number) =>
+        let
+            GetLetter = (num as number) =>
+                let
+                    number = Number.Mod(num, 26),
+                    val = if number = 0 then 26 else number,
+                    valid = number < 26 and number > 0
+                in
+                    if valid then Text.At(Text.Alphabet, val - 1) else error "Can't get letter for " & Text.From(num),
+            func = (value as number, factor as number) =>
+                let
+                    ThisLetter = GetLetter(Number.RoundDown(value/Number.Power(26, factor))),
+                    Result = if value <= Number.Power(26, factor) then "" else @func(value, factor+1) & ThisLetter
+                in
+                    Result
+        in
+            if value <= 26 then GetLetter(value) else func(value, 1) & GetLetter(value))
+,
 Number.ProperNumber = Document(
     "Number.ProperNumber",
     "Concerts text as number to proper number type. Also will erase inconvinient thouthands and decimal symbols to regular format. <br>" &
     "In case of error will return input text",
-    {[
-        Description = "Allow commas",
-        Code = "LPQ[Number.ProperNumber](""It's over 9,000!"", null, {"",""}, 0)",
-        Result = "9000"
-    ]},
+    {[  Description="Allow commas",
+        Code =		"LPQ[Number.ProperNumber](""It's over 9,000!"", null, {"",""}, 0)",
+        Result =	"9000",
+        Category =	"Numbers"	]},
     (text as text, optional digitsAfter as number, optional allowCharacters as list, optional startIndex as number) =>
     let
         after = if digitsAfter is null then 0 else digitsAfter,
@@ -817,22 +848,27 @@ Number.ProperNumber = Document(
         if text is null then null else Number.Round(Text.FromList(numberSeries), after))
 ,
 
-/////////////////////////
-// Splitters           //
-/////////////////////////
+
+//    ___ ___ _    ___ _____ _____ ___ ___  ___
+//   / __| _ \ |  |_ _|_   _|_   _| __| _ \/ __|
+//   \__ \  _/ |__ | |  | |   | | | _||   /\__ \
+//   |___/_| |____|___| |_|   |_| |___|_|_\|___/
+//
 Splitter.SplitTextByNonAlpha = Document(
     "Splitter.SplitTextByNonAlpha",
     "Splits text by characters that aren't [A-Za-z]",
-    {[ Description = "Split text", Code="LPQ[Splitter.SplitTextByNonAlpha](""A1B,C"")", Result = "{ ""A"", ""B"", ""C"" }"]},
+    {[  Description="Split text",
+        Code =		"LPQ[Splitter.SplitTextByNonAlpha](""A1B,C"")",
+        Result =	"{ ""A"", ""B"", ""C"" }",
+        Category =	"Numbers"	]},
     (line as text) => Splitter.SplitTextByNotIn(Text.Alphabet)),
 Splitter.SplitTextByNotIn = Document(
     "Splitter.SplitTextByNotIn",
     "Splits text on any characters that aren't the provided 'safe' characters",
-    {[
-        Description = "Split on non-alphanumeric",
-        Code = "LPQ[Splitter.SplitTextByNotIn](LPQ[Text.AlphaNumeric])(""Power BI is #1"")",
-        Result = "{""Power BI is "", ""1""}"
-    ]},
+    {[  Description="Split on non-alphanumeric",
+        Code =		"LPQ[Splitter.SplitTextByNotIn](LPQ[Text.AlphaNumeric])(""Power BI is #1"")",
+        Result =	"{""Power BI is "", ""1""}",
+        Category =	"Numbers"	]},
     (safeCharacters as text) => (line as nullable text) =>
         if line is null then
             {}
@@ -853,18 +889,25 @@ Splitter.SplitTextByNotIn = Document(
                 else
                     List.Combine({List.RemoveLastN(state, 1), {current}}))),
 
-/////////////////////////
-// Switch             //
-////////////////////////
+
+//    _____      _____ _____ ___ _  _
+//   / __\ \    / /_ _|_   _/ __| || |
+//   \__ \\ \/\/ / | |  | || (__| __ |
+//   |___/ \_/\_/ |___| |_| \___|_||_|
+//
 Switch = Document(
     "Switch",
     "Given a value, find it's paired item <br>"&
     "Switch(value as any, cases as list, results as list, optional default as any) <br>" &
     "Switch(value as any, pairs as list, optional default as any)",
-    {
-        [Description = "Using separate lists", Code = "Switch(1, {1, 2, 3}, {""A"", ""B"", ""C""})", Result = "A"],
-        [Description = "Using one paired list", Code = "Switch(1, {{1, ""A""}, {2, ""B""}, {3, ""C""}})", Result = "A"]
-    },
+    { [ Description="Using separate lists", 
+        Code =		"LPQ[Switch](1, {1, 2, 3}, {""A"", ""B"", ""C""})", 
+        Result =	"A", 
+        Category =	"Dev" ],
+      [ Description="Using one paired list", 
+        Code =		"LPQ[Switch](1, {{1, ""A""}, {2, ""B""}, {3, ""C""}})", 
+        Result =	"A", 
+        Category =	"Dev" ]},
     (value as any, casesOrPairs as list, optional resultsOrDefault as any, optional default as any) =>
         let
             hasPairs = List.First(casesOrPairs) is list,
@@ -882,9 +925,12 @@ Switch = Document(
         in
             if hasPairs then usingPairs else usingCases),
 
-/////////////////////////
-// Table               //
-/////////////////////////
+
+//    _____ _   ___ _    ___
+//   |_   _/_\ | _ ) |  | __|
+//     | |/ _ \| _ \ |__| _|
+//     |_/_/ \_\___/____|___|
+//
 Table.TrimHeader = (Table as table) =>
     let hRaw = Table.ColumnNames(Table),
         hTrim = List.Transform(hRaw, each Text.Trim(_))
@@ -1138,33 +1184,33 @@ Table.GetParameter = (ParameterName as text) =>
 
 
 
-/////////////////////////
-// ARRAYS              //
-/////////////////////////
+//      _   ___ ___    ___   _____
+//     /_\ | _ \ _ \  /_\ \ / / __|
+//    / _ \|   /   / / _ \ V /\__ \
+//   /_/ \_\_|_\_|_\/_/ \_\_| |___/
+//
 // VLOOKUP in other table
 fnVlookUp = Document(
-    "fnVlookUp.",
+    "fnVlookUp",
     "LookUp or CheckUp value in other table (return value from other column or just search)."
-    {[
-        Description = "Value, Table, Search at Column name, Return Column name.",
-        Code = "LPQ[fnVlookUp](1, Products, ""ProductKey"", ""Price"")",
-        Result = "9000 OR 1."
-    ]},
+    {[  Description="Value, Table, Search at Column name, Return Column name.",
+        Code =		"LPQ[fnVlookUp]([1], Products, ""ProductKey"", ""Price"")",
+        Result =	"9000 OR 1.",
+        Category =	"Tables"	]},
     (lookupValue, lookupTable as table, lookupColumnName as text, optional returnColumnValue as text) =>
 	    let colLookup = Table.Column(lookupTable, lookupColumnName),
 	        lookup = List.PositionOf(colLookup, lookupValue, 0)
-	    in  if lookup >= 0 
+	    in  if lookup >= 0
 	            then if returnColumnValue=null then 1 else Table.Column(lookupTable, returnColumnValue){lookup}
 	            else null),
 // Search Name in List
 fnCheckInList = Document(
-    "fnCheckInList.",
+    "fnCheckInList",
     "Search word in the list. True - case not sesetive, False - case sensetive.",
-    {[
-        Description = "Using separate lists. Params: Word, List, Case sensetive.",
-        Code = "LPQ[fnCheckInList](""Word"", {""Text"", ""Word"", ""Letter""}, true)",
-        Result = "TRUE."
-    ]},
+    {[  Description="Using separate lists. Params: Word, List, Case sensetive.",
+        Code =		"LPQ[fnCheckInList](""Word"", {""Text"", ""Word"", ""Letter""}, true)",
+        Result =	"TRUE.",
+        Category =	"Lists"	]},
     (Name as text, List as list, optional Match as logical) =>
     let
         match = if (Match ?? {Match=""}{1}?) = null then true else Match,
@@ -1205,9 +1251,13 @@ Text.GetMatch = (Text as text, List as list) =>
     otherwise null
 ,
 
-/////////////////////////
-// Text                //
-/////////////////////////
+
+
+//    _____ _____  _______
+//   |_   _| __\ \/ /_   _|
+//     | | | _| >  <  | |
+//     |_| |___/_/\_\ |_|
+//
 Text.Alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz" & "АБВГДЕЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯабвгдежзийклмнопрстуфхцчшщъыьэюя",
 Text.AlphaNumeric = Text.Alphabet & "0123456789",
 Text.FromList = (list as list) => List.Accumulate(list, "", (state, current) => state & Text.From(current)),
@@ -1263,9 +1313,12 @@ Text.ReplaceByList = try (txt as text, replacementLists as list) as text =>
 
 
 
-/////////////////////////
-// Code AND WEB        //
-/////////////////////////
+
+//     ___ ___  ___  ___     _   _  _ ___   __      _____ ___
+//    / __/ _ \|   \| __|   /_\ | \| |   \  \ \    / / __| _ )
+//   | (_| (_) | |) | _|   / _ \| .` | |) |  \ \/\/ /| _|| _ \
+//    \___\___/|___/|___| /_/ \_\_|\_|___/    \_/\_/ |___|___/
+//
 Web.GetAllLinks = (SourceURL as text, optional AttributeDelimiter as text) =>
     let
         AttributeDelimiter = if AttributeDelimiter is null then """" else AttributeDelimiter,
@@ -1289,56 +1342,65 @@ Web.StripHtmlList = (tbl as table) =>
 	in Table.FromList(L, Splitter.SplitByNothing(), null, null, ExtraValues.Error)
 ,
 Web.RemoveHtmlTags = let func = (HTML) =>
-        let
-            Check = if Value.Is(Value.FromText(HTML), type text) then HTML else "",
-            Source = Text.From(Check),
-            //TextRemove = Text.Replace(Text.Replace(Source, "!--",""), "--",""),
-            SplitAny = Text.SplitAny(Source,"<>"),
-            ListAlternate = List.Alternate(SplitAny,1,1,1),
-            ListSelect = List.Select(ListAlternate, each _<>"")
-        in
-            Text.Combine(ListSelect, ""),
-            documentation = [
-                Documentation.Name =  " Web.RemoveHtmlTags"
-                , Documentation.Description = "Remove Html Tags"
-                , Documentation.LongDescription = " Removes all Html tags from a text"
-                , Documentation.Category = " Web.Modification"
-                , Documentation.Source = " Inspired by a solution from Bill Szysz"
-                , Documentation.Author = " Imke Feldmann: www.TheBIccountant.com & Mike Carlo: PowerBI.Tips"
-                , Documentation.Examples = {[
-                    Description = "Function that enables one to pass in a column that has HTML tags."
-                    , Code = "<div>my bit of text</div>"
-                    , Result = "my bit of text "
-                    ]}]
+    let
+        Check = if Value.Is(Value.FromText(HTML), type text) then HTML else "",
+        Source = Text.From(Check),
+        //TextRemove = Text.Replace(Text.Replace(Source, "!--",""), "--",""),
+        SplitAny = Text.SplitAny(Source,"<>"),
+        ListAlternate = List.Alternate(SplitAny,1,1,1),
+        ListSelect = List.Select(ListAlternate, each _<>"")
+    in
+        Text.Combine(ListSelect, ""),
+        documentation = [
+            Documentation.Name= "Web.RemoveHtmlTags",
+            Documentation.Description= "Remove Html Tags",
+            Documentation.LongDescription= "Removes all Html tags from a text",
+            Documentation.Category= "Web.Modification",
+            Documentation.Source= "Inspired by a solution from Bill Szysz",
+            Documentation.Author= "Imke Feldmann: www.TheBIccountant.com & Mike Carlo: PowerBI.Tips",
+            Documentation.Examples= {[  Description="Function that enables one to pass in a column that has HTML tags.", 
+                                            Code =	     "<div>my bit of text</div>", 
+                                            Result =	"my bit of text"    ]}]
     in
         Value.ReplaceType(func, Value.ReplaceMetadata(Value.Type(func), documentation))
 ,
-
+Web.TableToMarkdown = (Table as table) =>
+    let
+        TableValues = Table.AddColumn(Table, "Custom", each Text.Combine(Record.FieldValues(_), " | ")),
+        HyphenLine = Text.Combine(List.Transform(Table.ColumnNames(Table), each Text.Repeat("-",Text.Length(_))), " | "),
+        CombineList = List.Combine({{Text.Combine(Table.ColumnNames(Table), " | ")}, {HyphenLine}, TableValues[Custom]}),
+        TransferToMarkdown = Text.Combine(CombineList, "#(lf)")
+    in
+        TransferToMarkdown
+,
 
 // Web.RemoveShortCode??
 
-/////////////////////////
-// Import PQ           //
-/////////////////////////
 
+//    ___                     _     ___  ___
+//   |_ _|_ __  _ __  ___ _ _| |_  | _ \/ _ \
+//    | || '  \| '_ \/ _ \ '_|  _| |  _/ (_) |
+//   |___|_|_|_| .__/\___/_|  \__| |_|  \__\_\
+//             |_|
 // Minimal script loader
 ImportPq = Document(
-    "ImportPq", "Most minimal external PQ script file loader.",
-    {[
-        Description="Load PQ file to Excel",
-        Code="LPQ[ImportPq](""C:\File.pq"")",
-        Result = "code from .pq file"
-    ]},
+    "ImportPq", 
+    "Most minimal external PQ script file loader.",
+    {[  Description="Load PQ file to Excel",
+        Code =		"LPQ[ImportPq](""C:\File.pq"")",
+        Result =	"code from .pq file",
+        Category =	"Import files"	]},
     (FilePath as text, optional Encoding as nullable number) as any =>
         try Expression.Evaluate(Text.FromBinary(File.Contents(FilePath),(Encoding ?? TextEncoding.Utf8)),#shared)
-        otherwise null)
-,
-ImportPq.GitHubRaw = (URL as text) => try Expression.Evaluate(Text.FromBinary(Web.Contents(URL)),#shared) otherwise null
-,
+        otherwise null),
+ImportPq.GitHubRaw = (URL as text) => try Expression.Evaluate(Text.FromBinary(Web.Contents(URL)),#shared) otherwise null,
 
-/////////////////////////
-// Value               //
-/////////////////////////
+
+//   __   ___   _   _   _ ___
+//   \ \ / /_\ | | | | | | __|
+//    \ V / _ \| |_| |_| | _|
+//     \_/_/ \_\____\___/|___|
+//
 Value.TypeText = (value as any) =>
     if value is binary then "binary" else
     if value is date then "date" else
