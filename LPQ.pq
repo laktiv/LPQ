@@ -212,55 +212,49 @@ File.GetFilesFolder = Document(
         Result = "Table with price lists, only from RootFOlder and latest"
     ]},
     (RootFolder as text, FolderName as text, ExtensionsList as any, FilterNames as any, rootOnly as logical, latestOnly as logical, optional sortNames as logical) =>
-    let    
+    let
         Name = Text.Lower(FolderName),
-        Extensions = 
+        Extensions =
             if Value.Type(ExtensionsList) = "list"
                 then List.Transform(ExtensionsList, each Text.Trim(Text.Lower(_)))
-                else 
+                else
                     try List.Transform(Text.Split(ExtensionsList, ","), each Text.Trim(Text.Lower(_)))
                     otherwise {""},
-        Filter = 
+        Filter =
             if Value.Type(FilterNames) = "list"
                 then List.Transform(FilterNames, each Text.Trim(Text.Lower(_)))
-                else 
+                else
                     try List.Transform(Text.Split(FilterNames, ","), each Text.Trim(_))
                     otherwise {""},
         Folder = Folder.Files(if Text.EndsWith(RootFolder,"\") then RootFolder&"\" else RootFolder & Name),
 
         fnTable = (Table as table) as table =>
-            let ListComb = Table.AddColumn(Table, "my", each 
+            let ListComb = Table.AddColumn(Table, "my", each
                     Text.Combine(
-                        List.Transform( 
-                            List.Select(Splitter.SplitTextByNotIn(Text.AlphaNumeric)(Text.Remove([Name],{"W","w","k"})), 
+                        List.Transform(
+                            List.Select(Splitter.SplitTextByNotIn(Text.AlphaNumeric)(Text.Remove([Name],{"W","w","k"})),
                             each Text.IsNumber(_)), Text.From
-                        ), 
-                        ","
-                    )
+                        ), ",")
                 ),
                 SplitCol = Table.TransformColumnTypes(
-                    Table.SplitColumn(
-                        ListComb, 
-                        "my", 
-                        Splitter.SplitTextByEachDelimiter({","},QuoteStyle.Csv,false), {"m","y"}
-                    ),
+                    Table.SplitColumn(ListComb, "my", Splitter.SplitTextByEachDelimiter({","},QuoteStyle.Csv,false), {"m","y"}),
                     {{"y",Int64.Type}, {"m",Int64.Type}}
                 )
             in SplitCol,
 
-        Sorted = 
+        Sorted =
             if sortNames ?? false
                 then Table.Sort(fnTable(Folder), {
-                        {each Date.From(Record.Field(_,"y")), Order.Ascending}, 
+                        {each Date.From(Record.Field(_,"y")), Order.Ascending},
                         {each Date.From(Record.Field(_,"m")), Order.Ascending}
                     })
                 else Table.Sort(Folder, {
-                        {each Date.From(Record.Field(_,"Date modified")), Order.Descending}, 
-                        {each Date.From(Record.Field(_,"Date created")), Order.Descending}, 
+                        {each Date.From(Record.Field(_,"Date modified")), Order.Descending},
+                        {each Date.From(Record.Field(_,"Date created")), Order.Descending},
                         {"Name", Order.Descending}
                     }),
-                    
-        selectExt = 
+
+        selectExt =
             Table.SelectRows(Sorted, each
                 List.ContainsAny(
                     List.Transform(Text.Split([Extension], "."), each Text.Trim(Text.Lower(_))),
@@ -268,7 +262,7 @@ File.GetFilesFolder = Document(
                     (x,y) => x=y
                 )
             ),
-        selectName = 
+        selectName =
             Table.SelectRows(selectExt, each
                 List.ContainsAny(
                     List.Transform(Text.Split([Name],"."), each Text.Trim(_)),
@@ -276,11 +270,11 @@ File.GetFilesFolder = Document(
                     (x,y) => Text.Contains(x, y, Comparer.OrdinalIgnoreCase)
                 )
             ),
-        selectRoot = 
+        selectRoot =
             if rootOnly
                 then Table.SelectRows(selectName, each Text.EndsWith([Folder Path], Name &"\"))
                 else selectName,
-        selectLast = 
+        selectLast =
             if latestOnly
                 then Table.FirstN(selectRoot, 1)
                 else selectRoot,
@@ -357,7 +351,7 @@ Inno.TableTypes = Document(
             txt = {"customer", "country", "pn", "product", "gpu", "partner", "url", "name"},
             num = {"quantity", "d_week", "d_month", "d_year", "stock", "VAT", "memory"},
             dec = {"k"},
-            cur = {"price", "amount"},
+            cur = {"price", "amount", "rebate", "price_ddp", "price_deal", "deal_fob", "deal_ddp"},
             dat = {"date", "Invoice Date (YYYY/MM/DD)", "short_date", "d_date"},
             order = {"customer", "country", "pn", "product", "gpu", "quantity", "d_date", "d_week", "d_month", "d_year", "partner"}
         ],
@@ -631,6 +625,12 @@ tblBrandsFansGrouped =
             {"series", Text.Lower, type text} })
     in  Lower
 ,
+// INNO FANS
+tblInnoFans =
+    let Tbl = Table.FromRows(Json.Document(Binary.Decompress(Binary.FromText("i45WSspJTM5W0lEKd1KK1YlWSivKLy5JyixJRQgl5+cWJCaXAAUiDMECEUYgthGEbQxiG0PYJiC2iVJsLAA=", BinaryEncoding.Base64), Compression.Deflate)), let _t = ((type nullable text) meta [Serialized.Text = true]) in type table [series = _t, fans = _t]),
+        Type = Table.TransformColumnTypes(Tbl,{{"series", type text}, {"fans", type text}})
+    in  Table.Buffer( Type )
+,
 
 
 /////////////////////////
@@ -742,12 +742,25 @@ List.ToText = Document(
     (list as list) =>
             List.Accumulate(list, "{", (state, current) => current & Text.From(current)) & "}")
 ,
+// INNO
+List.CompareListsCheck = (ListSource as list, ListCompare as list, optional CaseIgnore as logical) =>
+    //fxList = (l) => try Text.Combine( List.Transform(List.Distinct(List.Transform(l, each Text.Split(_, " "){1})), each Text.From(_)), "," ) otherwise "",
+    if (CaseIgnore ?? {CaseIgnore=""}{1}?) <> null
+        then List.ContainsAny(ListSource, ListCompare, (x, y) => Text.Contains(x, y, Comparer.OrdinalIgnoreCase))
+        else List.ContainsAny(ListSource, ListCompare, (x, y) => x = y)
+,
+List.CompareListsMatches = (ListSource as list, ListCompare as list, optional CaseIgnore as logical) =>
+    //fxList = (l) => try Text.Combine( List.Transform(List.Distinct(List.Transform(l, each Text.Split(_, " "){1})), each Text.From(_)), "," ) otherwise "",
+    if (CaseIgnore ?? {CaseIgnore=""}{1}?) <> null
+        then List.Select(ListSource, each List.Contains(ListCompare, _, (x,y) => Text.Contains(x, y, Comparer.OrdinalIgnoreCase)))
+        else List.Select(ListSource, each List.Contains(ListCompare, _, (x,y) => Text.Contains(x, y, Comparer.Equals)))
+,
+
 
 /////////////////////////
 // Number              //
 /////////////////////////
-Number.Digits = {0,1,2,3,4,5,6,7,8,9}
-,
+Number.Digits = {0,1,2,3,4,5,6,7,8,9},
 Number.ParseText = Document(
     "Number.ParseText",
     "Returns the first number (1+ consecutive digits) in the given text. Optionally, provide allowed characters to ignore them",
@@ -758,8 +771,7 @@ Number.ParseText = Document(
             _allowCharacters = if allowCharacters is null then {} else allowCharacters,
             numberSeries = List.FirstN(List.Skip(Text.ToList(consider), each not Text.IsNumber(_)), each Text.IsNumber(_) or List.Contains(_allowCharacters, _))
         in
-            if text is null then null else Text.FromList(numberSeries))
-,
+            if text is null then null else Text.FromList(numberSeries)),
 Number.ToLetters = Document(
         "Number.ToLetters",
         "Converts a number  (starting at 1) to an alphabet representation. Works like column headers in Excel.",
@@ -784,8 +796,7 @@ Number.ToLetters = Document(
                     in
                         Result
             in
-                if value <= 26 then GetLetter(value) else func(value, 1) & GetLetter(value))
-,
+                if value <= 26 then GetLetter(value) else func(value, 1) & GetLetter(value)),
 // MY
 Number.ProperNumber = Document(
     "Number.ProperNumber",
@@ -813,8 +824,7 @@ Splitter.SplitTextByNonAlpha = Document(
     "Splitter.SplitTextByNonAlpha",
     "Splits text by characters that aren't [A-Za-z]",
     {[ Description = "Split text", Code="LPQ[Splitter.SplitTextByNonAlpha](""A1B,C"")", Result = "{ ""A"", ""B"", ""C"" }"]},
-    (line as text) => Splitter.SplitTextByNotIn(Text.Alphabet))
-,
+    (line as text) => Splitter.SplitTextByNotIn(Text.Alphabet)),
 Splitter.SplitTextByNotIn = Document(
     "Splitter.SplitTextByNotIn",
     "Splits text on any characters that aren't the provided 'safe' characters",
@@ -841,8 +851,7 @@ Splitter.SplitTextByNotIn = Document(
                 else if appendLast then
                     List.Combine({List.RemoveLastN(state, 1), {lastItem & current}})
                 else
-                    List.Combine({List.RemoveLastN(state, 1), {current}})))
-,
+                    List.Combine({List.RemoveLastN(state, 1), {current}}))),
 
 /////////////////////////
 // Switch             //
@@ -871,8 +880,7 @@ Switch = Document(
                 in
                     if List.IsEmpty(cases) or List.IsEmpty(results) then default else if value = List.First(cases) then List.First(results) else @Switch(value, List.Skip(cases, 1), List.Skip(results, 1), default)
         in
-            if hasPairs then usingPairs else usingCases)
-,
+            if hasPairs then usingPairs else usingCases),
 
 /////////////////////////
 // Table               //
@@ -913,20 +921,17 @@ Table.FromListCrossJoin = (listColumnNamePairs as any) =>
              nextTable = Table.ExpandListColumn(Table.AddColumn(table, columnName, each theList), columnName)
           in @doStuff(nextTable, List.Skip(remainingPairs, 1)),
        Result = doStuff(firstTable, remainingPairs)
-   in  Result
-,
+   in  Result,
 Table.JsonDecode = (encoded as text) =>
     let Decompressed = Binary.Decompress(Binary.FromText(encoded, BinaryEncoding.Base64), Compression.Deflate),
         Decoded = Table.FromRows(Json.Document(Decompressed), let _t = ((type text) meta [Serialized.Text = true]) in type table [Name = _t, Number = _t])
-    in  Decoded
-,
+    in  Decoded,
 Table.JsonEncode = (table as table) =>
     let Rows = Table.ToRows(table),
         Json = Json.FromValue(Rows),
         Compressed = Binary.Compress(Json, Compression.Deflate),
         Encoded = Binary.ToText(Compressed, BinaryEncoding.Base64)
-    in  Encoded
-,
+    in  Encoded,
 
 
 Table.NumberColumns = (table as table, columns as list) as table =>
@@ -937,6 +942,7 @@ Table.NumberColumns = (table as table, columns as list) as table =>
         DataNoNulls = Table.TransformColumns( DataWithTypes, List.Zip({ columns, List.Repeat({NumberNotNull}, List.Count(columns)), NumberTypes }) )
     in  Table.ReplaceErrorValues(DataNoNulls, List.Transform(columns, each {_,0}))
 ,
+//
 Table.RenameColumn = (Table as table, column as text, newName as text) => Table.RenameColumns(Table, {{column, newName}})
 ,
 Table.RenameColumnsAdv = (Table as table, OldColumns as list, NewColumns as list, optional SelectHeaders as logical) =>
@@ -1048,8 +1054,7 @@ Table.RemoveEmptyColumns = (tbl as table) =>
                     )
             in  List.Select(col_states, each _ <> null )
     in
-    Table.SelectColumns(tbl, non_empty_columns(tbl_no_erors))
-,
+    Table.SelectColumns(tbl, non_empty_columns(tbl_no_erors)),
 // return a table with all errors replaced with specified value or null
 Table.ReplaceAllErrorsInTable = (tbl as table, optional replacer_value) => Table.ReplaceErrorValues(tbl, List.Transform(Table.ColumnNames(tbl), each {_, replacer_value}))
 ,
@@ -1136,7 +1141,7 @@ Table.GetParameter = (ParameterName as text) =>
 /////////////////////////
 // ARRAYS              //
 /////////////////////////
-/* VLOOKUP in other table */
+// VLOOKUP in other table
 fnVlookUp = Document(
     "fnVlookUp.",
     "LookUp or CheckUp value in other table (return value from other column or just search)."
@@ -1146,13 +1151,13 @@ fnVlookUp = Document(
         Result = "9000 OR 1."
     ]},
     (lookupValue as any, lookupTable as table, lookupColumnName as text, optional returnColumnValue as text) =>
-        let colLookup = Table.Column(lookupTable, lookupColumnName),
-            colToReturn =
-                if (returnColumnValue ?? {returnColumnValue = ""}{1}?) = null then false
-                    else Table.Column(lookupTable, returnColumnValue),
+        let retColVal = if (returnColumnValue ?? {returnColumnValue = ""}{1}?)=null then false else true,
+            colLookup = Table.Column(lookupTable, lookupColumnName),
+            colToReturn =  if retColVal then Table.Column(lookupTable, returnColumnValue) else null,
             lookup = List.PositionOf(colLookup, lookupValue, 0)
-        in  if lookup >= 0 then if colToReturn = false then 1 else colToReturn{lookup} else "Not found")
-,
+        in  if lookup >= 0
+                then if retColVal then colToReturn{lookup} else 1
+                else null),
 // Search Name in List
 fnCheckInList = Document(
     "fnCheckInList.",
@@ -1191,6 +1196,10 @@ Text.RegExp = (txt as text, regex as text, delim as text) =>
     in
         return
 ,
+Text.RegexMatch = (txt as text, regex as text, delim as text) => try
+    Web.Page("<script>var x='"&txt&"';var delim='"&delim&"';var regex=/"&regex&"/gi;var result=x.match(regex).join(delim);document.write(result);</script>")[Data]{0}[Children]{0}[Children]{1}[Text]{0}
+    otherwise null
+,
 Text.GetMatch = (Text as text, List as list) =>
     try List.Select(Text.Split(Text," "),
             each List.ContainsAny(List.LastN(Text.Split(_," "),1), List, (x,y) => Text.Contains(x,y,Comparer.OrdinalIgnoreCase))
@@ -1201,34 +1210,25 @@ Text.GetMatch = (Text as text, List as list) =>
 /////////////////////////
 // Text                //
 /////////////////////////
-Text.Alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz" & "АБВГДЕЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯабвгдежзийклмнопрстуфхцчшщъыьэюя"
-,
-Text.AlphaNumeric = Text.Alphabet & "0123456789"
-,
-Text.FromList = (list as list) => List.Accumulate(list, "", (state, current) => state & Text.From(current))
-,
+Text.Alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz" & "АБВГДЕЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯабвгдежзийклмнопрстуфхцчшщъыьэюя",
+Text.AlphaNumeric = Text.Alphabet & "0123456789",
+Text.FromList = (list as list) => List.Accumulate(list, "", (state, current) => state & Text.From(current)),
 // Is text all uppercase? returns false if any non-alpha characters are present
-Text.IsUpperCase = (text as text) => List.AllTrue(List.Transform(Text.ToList(text), (letter)=>Text.Contains(Text.Alphabet, letter) and letter = Text.Upper(letter)))
-,
-Text.IsAlpha = (text as text) => List.MatchesAll(Text.ToList(text), each Text.Contains(Text.Alphabet, _))
-,
-Text.RemoveExtraWhitespace = (text as text) => Text.Combine(Splitter.SplitTextByWhitespace()(text)," ")
-,
+Text.IsUpperCase = (text as text) => List.AllTrue(List.Transform(Text.ToList(text), (letter)=>Text.Contains(Text.Alphabet, letter) and letter = Text.Upper(letter))),
+Text.IsAlpha = (text as text) => List.MatchesAll(Text.ToList(text), each Text.Contains(Text.Alphabet, _)),
+Text.RemoveExtraWhitespace = (text as text) => Text.Combine(Splitter.SplitTextByWhitespace()(text)," "),
 // Splits camelCased and PascalCased text and separates by a space. Ex: "thisIsAColumn" -> "this Is A Column"
 Text.SplitCamelCase = (text as nullable text) => if text is null then null else List.Accumulate(Text.ToList(text),"", (state, current) =>
-   let
-      PreviousLetter = Text.End(state, 1),
-      Ignore = (text as text) => text = " " or text = "."
-   in
-      state &
-      (if
-         not Text.IsUpperCase(PreviousLetter) and
-         not Ignore(PreviousLetter) and
-         not Ignore(current) and
-         Text.IsUpperCase(current)
-       then
-         " " else "" ) &
-      current )
+        let
+            PreviousLetter = Text.End(state, 1),
+            Ignore = (text as text) => text = " " or text = "."
+        in state &
+            (if not Text.IsUpperCase(PreviousLetter) and
+                not Ignore(PreviousLetter) and
+                not Ignore(current) and
+                Text.IsUpperCase(current)
+            then " " else "" ) &
+            current)
 ,
 Text.Substring = (text as text, start as number, optional count as number) =>
    let
@@ -1236,40 +1236,33 @@ Text.Substring = (text as text, start as number, optional count as number) =>
       end = if count = null then Text.Length(text) else if count <= Text.Length(text) then count else error "count should be <= text length",
       textList = Text.ToList(text),
       substr = Text.FromList(List.FirstN(List.Skip(textList, start), end - start))
-   in substr
-,
-Text.IsNumber = (text as text) => try Number.FromText(text) is number otherwise false
-,
+   in substr,
+Text.IsNumber = (text as text) => try Number.FromText(text) is number otherwise false,
 Text.PositionAfter = (text as nullable text, substring as text) =>
     let
         firstIndex = Text.PositionOf(text, substring),
         indexAfter = if firstIndex >=0 then firstIndex + Text.Length(substring) else -1
     in
-        if text is null then -1 else if indexAfter >= 0 and indexAfter < Text.Length(text) then indexAfter else -1
-,
+        if text is null then -1 else if indexAfter >= 0 and indexAfter < Text.Length(text) then indexAfter else -1,
 Text.Until = (text as text, endDelimiter as text, optional startIndex as number) =>
     let
         start = if startIndex = null then 0 else startIndex,
         textFromStart = Text.Substring(text, start),
         delimPosition = if Text.PositionOf(textFromStart, endDelimiter) >= 0 then Text.PositionOf(textFromStart, endDelimiter) else Text.Length(textFromStart)
     in
-        if text is null then null else Text.Range(textFromStart, 0, delimPosition)
-,
+        if text is null then null else Text.Range(textFromStart, 0, delimPosition),
+//
 Text.PowerTrim = (text as text, optional char_to_trim as text) =>
     let
         char = if char_to_trim = null then " " else char_to_trim,
 		split = Text.Split(text, char),
 		removeblanks = List.Select(split, each _ <> "")
 	in
-        Text.Combine(removeblanks, char)
-,
+        Text.Combine(removeblanks, char),
 Text.ReplaceByList = try (txt as text, replacementLists as list) as text =>
     List.Accumulate(replacementLists, txt, (s,x) => Text.Replace(s,x{0},x{1})) otherwise null
 ,
-Text.RegexMatch = (txt as text, regex as text, delim as text) => try
-    Web.Page("<script>var x='"&txt&"';var delim='"&delim&"';var regex=/"&regex&"/gi;var result=x.match(regex).join(delim);document.write(result);</script>")[Data]{0}[Children]{0}[Children]{1}[Text]{0}
-    otherwise null
-,
+
 
 
 /////////////////////////
@@ -1333,10 +1326,10 @@ Web.RemoveHtmlTags = let func = (HTML) =>
 // Minimal script loader
 ImportPq = Document(
     "ImportPq", "Most minimal external PQ script file loader.",
-    {[ 
-        Description="Load PQ file to Excel", 
-        Code="LPQ[ImportPq](""C:\File.pq"")", 
-        Result = "code from .pq file" 
+    {[
+        Description="Load PQ file to Excel",
+        Code="LPQ[ImportPq](""C:\File.pq"")",
+        Result = "code from .pq file"
     ]},
     (FilePath as text, optional Encoding as nullable number) as any =>
         try Expression.Evaluate(Text.FromBinary(File.Contents(FilePath),(Encoding ?? TextEncoding.Utf8)),#shared)
