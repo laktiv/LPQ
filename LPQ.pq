@@ -1007,12 +1007,12 @@ Table.GetParameter = (ParameterName as text) =>
 /////////////////////////
 /* VLOOKUP in other table */
 fnVlookUp = Document(
-    "fnVlookUp",
+    "fnVlookUp.",
     "LookUp or CheckUp value in other table (return value from other column or just search)."
     {[
-        Description = "(Value, Table, Search at Column name, Return Column name)",
+        Description = "Value, Table, Search at Column name, Return Column name.",
         Code = "LPQ[fnVlookUp](1, Products, ""ProductKey"", ""Price"")",
-        Result = "9000  OR   1"
+        Result = "9000 OR 1."
     ]},
     (lookupValue as any, lookupTable as table, lookupColumnName as text, optional returnColumnValue as text) =>
         let colLookup = Table.Column(lookupTable, lookupColumnName),
@@ -1028,7 +1028,7 @@ fnCheckInList = Document(
     "Search word in the list. True - case not sesetive, False - case sensetive.",
     {[
         Description = "Using separate lists. Params: Word, List, Case sensetive.",
-        Code = "fnCheckInList(""Word"", {""Text"", ""Word"", ""Letter""}, true)",
+        Code = "LPQ[fnCheckInList](""Word"", {""Text"", ""Word"", ""Letter""}, true)",
         Result = "TRUE."
     ]},
     (Name as text, List as list, optional Match as logical) =>
@@ -1209,7 +1209,7 @@ ImportPq = Document(
     ]},
     (FilePath as text, optional Encoding as nullable number) as any =>
         try Expression.Evaluate(Text.FromBinary(File.Contents(FilePath),(Encoding ?? TextEncoding.Utf8)),#shared)
-        otherwise null )
+        otherwise null)
 ,
 ImportPq.GitHubRaw = (URL as text) => try Expression.Evaluate(Text.FromBinary(Web.Contents(URL)),#shared) otherwise null
 ,
