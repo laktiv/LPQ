@@ -147,13 +147,14 @@ Document = (name as text, description as text, valueOrExample as any, optional v
         value = if valueIfExample is null then valueOrExample else valueIfExample,
         examples = if valueIfExample is null then {} else valueOrExample
     in
-        Value.ReplaceType(value, Value.Type(value) meta [
+        Value.ReplaceType(value, Value.Type(value) meta 
+        [
             // [Description="", Code="", Result="", Category=""]
             Documentation.Name = name,
             Documentation.Description= description,
             Documentation.Examples = examples,
-            Documentation.Category = category,
-            ])
+            Documentation.Category = category
+        ])
 ,
 
 
