@@ -589,7 +589,7 @@ fsGetFansAdv = (Product as text) =>
             { "GAMING OC", "GAMING_OC" },
             { "GAMING SLIM", "GAMING_SLIM" },
             { "GAMING X", "GAMING_X" } },
-        mReplace = List.Accumulate(listReplace, Product, (s,x) => Text.Replace(s, x{0}, x{1})),
+        mReplace = List.Accumulate(listReplace, Product, (s,x) => Text.Replace(s, x{0}, x{1})),
         mList = List.Transform(Text.Split(mReplace, " "), each Text.Upper(Text.Trim(_))),
         brand = mList{0},   // Get Brand
         fMatchFib = (ml, b, optional i) =>  //Main function
