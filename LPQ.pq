@@ -1150,14 +1150,12 @@ fnVlookUp = Document(
         Code = "LPQ[fnVlookUp](1, Products, ""ProductKey"", ""Price"")",
         Result = "9000 OR 1."
     ]},
-    (lookupValue as any, lookupTable as table, lookupColumnName as text, optional returnColumnValue as text) =>
-        let retColVal = if (returnColumnValue ?? {returnColumnValue = ""}{1}?)=null then false else true,
-            colLookup = Table.Column(lookupTable, lookupColumnName),
-            colToReturn =  if retColVal then Table.Column(lookupTable, returnColumnValue) else null,
-            lookup = List.PositionOf(colLookup, lookupValue, 0)
-        in  if lookup >= 0
-                then if retColVal then colToReturn{lookup} else 1
-                else null),
+    (lookupValue, lookupTable as table, lookupColumnName as text, optional returnColumnValue as text) =>
+	    let colLookup = Table.Column(lookupTable, lookupColumnName),
+	        lookup = List.PositionOf(colLookup, lookupValue, 0)
+	    in  if lookup >= 0 
+	            then if returnColumnValue=null then 1 else Table.Column(lookupTable, returnColumnValue){lookup}
+	            else null),
 // Search Name in List
 fnCheckInList = Document(
     "fnCheckInList.",
