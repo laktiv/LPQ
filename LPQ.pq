@@ -892,6 +892,15 @@ Table.RenameColumnsAdv = (Table as table, OldColumns as list, NewColumns as list
         RenameTable = Table.RenameColumns(SelectTable, columnsZip)
     in  try RenameTable otherwise null
 ,
+Table.RenameColumnsByOrder = (InputTable as table, ColumnNumbers as list, NewColumnNames as list) =>
+    let
+        OldColumnNames = Table.ColumnNames(InputTable),
+        Indexed = List.Zip({OldColumnNames, {0..-1+List.Count(OldColumnNames)}}),
+        Filtered = List.Select(Indexed, each List.Contains(ColumnNumbers,_{1})),
+        IndexRemoved = List.Transform(Filtered, each _{0}),
+        RenameList = List.Zip({IndexRemoved,NewColumnNames}),
+    in  Table.RenameColumns(InputTable, RenameList)
+,
 Table.TrimHeader = (Table as table) =>
     let hRaw = Table.ColumnNames(Table),
         hTrim = List.Transform(hRaw, each Text.Trim(_))
