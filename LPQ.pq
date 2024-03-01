@@ -740,7 +740,7 @@ List.CompareListsCheck = (ListSource as list, ListCompare as list, optional Case
     //fxList = (l) => try Text.Combine( List.Transform(List.Distinct(List.Transform(l, each Text.Split(_, " "){1})), each Text.From(_)), "," ) otherwise "",
     if (CaseIgnore ?? {CaseIgnore=""}{1}?) <> null
         then List.ContainsAny(ListSource, ListCompare, (x, y) => Text.Contains(x, y, Comparer.OrdinalIgnoreCase))
-        else List.ContainsAny(ListSource, ListCompare, (x, y) => x = y)
+        else List.ContainsAny(ListSource, ListCompare, (x, y) => x=y)
 ,
 List.CompareListsMatches = (ListSource as list, ListCompare as list, optional CaseIgnore as logical) =>
     //fxList = (l) => try Text.Combine( List.Transform(List.Distinct(List.Transform(l, each Text.Split(_, " "){1})), each Text.From(_)), "," ) otherwise "",
