@@ -142,10 +142,11 @@ TestResults =
 
 _extensionLibrary = [
 
-Document = (name as text, description as text, valueOrExample as any, optional valueIfExample as any) =>
+Document = (name as text, description as text, valueOrExample as any, optional valueIfExample as any, optional category as any) =>
     let
         value = if valueIfExample is null then valueOrExample else valueIfExample,
-        examples = if valueIfExample is null then {} else valueOrExample
+        examples = if valueIfExample is null then {} else valueOrExample,
+        category = if valueIfCategory is null then valueOrCategory else valueIfCategory
     in
         Value.ReplaceType(value, Value.Type(value) meta 
         [
