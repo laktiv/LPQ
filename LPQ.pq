@@ -877,30 +877,6 @@ Switch = Document(
 /////////////////////////
 // Table               //
 /////////////////////////
-Table.RenameColumn = (Table as table, column as text, newName as text) => Table.RenameColumns(Table, {{column, newName}})
-,
-Table.RenameColumnsAdv = (Table as table, OldColumns as list, NewColumns as list, optional SelectHeaders as logical) =>
-    let selectColumns = if (SelectHeaders ?? {SelectHeaders=""}{1}?) = null then false else SelectHeaders,
-        // Merge Old names and New names
-        columnsZip = List.Zip({ OldColumns, NewColumns }),
-        // Get table headers and Select list ny Old names
-        headers = List.Transform(Table.ColumnNames(Table), each _),
-        selectHeaders = List.Select(headers, (x) => List.AnyTrue(List.Transform(OldColumns, each x = _))),
-        // Get only picked columns
-        SelectTable = if selectColumns then Table.SelectColumns(Table, selectHeaders) else Table.SelectColumns(Table, headers),
-        // Rename columns
-        RenameTable = Table.RenameColumns(SelectTable, columnsZip)
-    in  try RenameTable otherwise null
-,
-Table.RenameColumnsByOrder = (InputTable as table, ColumnNumbers as list, NewColumnNames as list) =>
-    let
-        OldColumnNames = Table.ColumnNames(InputTable),
-        Indexed = List.Zip({OldColumnNames, {0..-1+List.Count(OldColumnNames)}}),
-        Filtered = List.Select(Indexed, each List.Contains(ColumnNumbers,_{1})),
-        IndexRemoved = List.Transform(Filtered, each _{0}),
-        RenameList = List.Zip({IndexRemoved,NewColumnNames}),
-    in  Table.RenameColumns(InputTable, RenameList)
-,
 Table.TrimHeader = (Table as table) =>
     let hRaw = Table.ColumnNames(Table),
         hTrim = List.Transform(hRaw, each Text.Trim(_))
@@ -961,6 +937,21 @@ Table.NumberColumns = (table as table, columns as list) as table =>
         DataNoNulls = Table.TransformColumns( DataWithTypes, List.Zip({ columns, List.Repeat({NumberNotNull}, List.Count(columns)), NumberTypes }) )
     in  Table.ReplaceErrorValues(DataNoNulls, List.Transform(columns, each {_,0}))
 ,
+Table.RenameColumn = (Table as table, column as text, newName as text) => Table.RenameColumns(Table, {{column, newName}})
+,
+Table.RenameColumnsAdv = (Table as table, OldColumns as list, NewColumns as list, optional SelectHeaders as logical) =>
+    let selectColumns = if (SelectHeaders ?? {SelectHeaders=""}{1}?) = null then false else SelectHeaders,
+        // Merge Old names and New names
+        columnsZip = List.Zip({ OldColumns, NewColumns }),
+        // Get table headers and Select list ny Old names
+        headers = List.Transform(Table.ColumnNames(Table), each _),
+        selectHeaders = List.Select(headers, (x) => List.AnyTrue(List.Transform(OldColumns, each x = _))),
+        // Get only picked columns
+        SelectTable = if selectColumns then Table.SelectColumns(Table, selectHeaders) else Table.SelectColumns(Table, headers),
+        // Rename columns
+        RenameTable = Table.RenameColumns(SelectTable, columnsZip)
+    in  try RenameTable otherwise null
+,
 Table.RenameColumnsByIndices = (Source as table, Indices as list, ColumnNamesNew as list) =>
     let
         ColumnNames = Table.ColumnNames(Source),
@@ -970,7 +961,7 @@ Table.RenameColumnsByIndices = (Source as table, Indices as list, ColumnNamesNew
     in
         #"Renamed Columns"
 ,
-Table.RenameColumnsByOrderFiltered = (InputTable as table, ColumnNumbers as list, NewColumnNames as list) =>
+Table.RenameColumnsByOrder = (InputTable as table, ColumnNumbers as list, NewColumnNames as list) =>
     let
         OldColumnNames = Table.ColumnNames(InputTable),
         Indexed = List.Zip({OldColumnNames, {0..-1+List.Count(OldColumnNames)}}),
