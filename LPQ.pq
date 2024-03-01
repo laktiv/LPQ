@@ -961,7 +961,7 @@ Table.RenameColumn = Document(
     "Table.Transformation",
     {[  Description="Rename a column in table.",
         Code =		"LPQ[Table.RenameColumn](table, ""old column name"", ""new column name"")",
-        Result =	"| new column |  column   |#(lf)| ----------- | ----------- |"     ]},
+        Result =	"| new column |  column   |#(lf)| ---------- | ---------- |"     ]},
     (Table as table, column as text, newName as text) => Table.RenameColumns(Table, {{column, newName}})
     ),
 Table.RenameColumnsAdv = Document(
@@ -992,8 +992,7 @@ Table.RenameColumnsByIndices = (Source as table, Indices as list, ColumnNamesNew
         ZippedList = List.Zip({ ColumnNamesList, ColumnNamesNew } ),
         #"Renamed Columns" = Table.RenameColumns(Source, ZippedList )
     in
-        #"Renamed Columns"
-,
+        #"Renamed Columns",
 Table.RenameColumnsByOrder = (InputTable as table, ColumnNumbers as list, NewColumnNames as list) =>
     let
         OldColumnNames = Table.ColumnNames(InputTable),
