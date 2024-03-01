@@ -158,6 +158,137 @@ Document = (name as text, description as text, valueOrExample as any, optional v
 /////////////////////////
 // INNO                //
 /////////////////////////
+// Extended script loader with auto data types
+File.GetExcelDataFile = Document(
+    "LPQ[File.GetExcelDataFile]",
+    "Call table from excel file in INNO folder.",
+    {[
+        Description = "File.GetExcelDataFile",
+        Code = "LPQ[File.GetExcelDataFile](""File name without extension"", ""Table name (table if null)"")",
+        Result = "Imported table with types formated."
+    ]},
+    (fileName as text, optional tableName as text) as table =>
+    let
+        folder = "C:\Users\Laktionov.I\OneDrive\INNO\",
+        filepath = folder & fileName & ".xlsx",
+        tblName = tableName ?? "table",
+        data = Excel.Workbook(File.Contents(filepath), null, true),
+        dataTable = data{[Item = tblName, Kind = "Table"]}[Data],
+        fnDetectAndTransformTypes = (SourceTable as table) =>
+        let
+            moneyList = {"amount", "price", "deal", "cost", "rebate", "msrp"},
+            FnDetectType = (SourceTable, ColumnName) =>
+            let
+                ListColumn = Table.Column(SourceTable, ColumnName),
+                Money = List.Contains(moneyList, Text.Trim(ColumnName), (x, y) => Text.StartsWith(y, x, Comparer.OrdinalIgnoreCase)),
+                NumberPercentage = List.Count(List.Select(ListColumn, each _ is number)) / List.Count(ListColumn),
+                IntPercentage = List.Count(List.Select(ListColumn, each _ is number and _ = Number.Round(_, 0))) / List.Count(ListColumn),
+                DatePercentage = List.Count(List.Select(ListColumn, each _ is date)) / List.Count(ListColumn),
+                DateTimePercentage = List.Count(List.Select(ListColumn, each _ is datetime)) / List.Count(ListColumn),
+                Max = List.Max({NumberPercentage, DatePercentage, DateTimePercentage, IntPercentage}),
+                Result =
+                    if Money then {ColumnName, Currency.Type}
+                    else if Max < .95 then {ColumnName, type any}
+                    else if DateTimePercentage = Max then {ColumnName, type datetime}
+                    else if DatePercentage = Max then {ColumnName, type date}
+                    else if IntPercentage = Max then {ColumnName, Int64.Type}
+                    else {ColumnName, type number}
+            in
+                Result,
+            ConvertTypesList = List.Transform(Table.ColumnNames(SourceTable), each FnDetectType(SourceTable, _)),
+            ConvertedTable = Table.TransformColumnTypes(SourceTable, ConvertTypesList)
+        in
+            ConvertedTable,
+        Result = fnDetectAndTransformTypes(dataTable)
+    in
+        Result)
+,
+File.GetFilesFolder = Document(
+    "LPQ[File.GetFilesFolder]",
+    "Gets files from folder with parameters.",
+    {[
+        Description = "Inno.SortTablePn",
+        Code = "LPQ[File.GetFilesFolder](""C:\Users\Laktionov.I\OneDrive\INNO\"", ""price"", ""xlsx"", ""INNO3D"", true, true, false)",
+        Result = "Table with price lists, only from RootFOlder and latest"
+    ]},
+    (RootFolder as text, FolderName as text, ExtensionsList as any, FilterNames as any, rootOnly as logical, latestOnly as logical, optional sortNames as logical) =>
+    let    
+        Name = Text.Lower(FolderName),
+        Extensions = 
+            if Value.Type(ExtensionsList) = "list"
+                then List.Transform(ExtensionsList, each Text.Trim(Text.Lower(_)))
+                else 
+                    try List.Transform(Text.Split(ExtensionsList, ","), each Text.Trim(Text.Lower(_)))
+                    otherwise {""},
+        Filter = 
+            if Value.Type(FilterNames) = "list"
+                then List.Transform(FilterNames, each Text.Trim(Text.Lower(_)))
+                else 
+                    try List.Transform(Text.Split(FilterNames, ","), each Text.Trim(_))
+                    otherwise {""},
+        Folder = Folder.Files(if Text.EndsWith(RootFolder,"\") then RootFolder&"\" else RootFolder & Name),
+
+        fnTable = (Table as table) as table =>
+            let ListComb = Table.AddColumn(Table, "my", each 
+                    Text.Combine(
+                        List.Transform( 
+                            List.Select(Splitter.SplitTextByNotIn(Text.AlphaNumeric)(Text.Remove([Name],{"W","w","k"})), 
+                            each Text.IsNumber(_)), Text.From
+                        ), 
+                        ","
+                    )
+                ),
+                SplitCol = Table.TransformColumnTypes(
+                    Table.SplitColumn(
+                        ListComb, 
+                        "my", 
+                        Splitter.SplitTextByEachDelimiter({","},QuoteStyle.Csv,false), {"m","y"}
+                    ),
+                    {{"y",Int64.Type}, {"m",Int64.Type}}
+                )
+            in SplitCol,
+
+        Sorted = 
+            if sortNames ?? false
+                then Table.Sort(fnTable(Folder), {
+                        {each Date.From(Record.Field(_,"y")), Order.Ascending}, 
+                        {each Date.From(Record.Field(_,"m")), Order.Ascending}
+                    })
+                else Table.Sort(Folder, {
+                        {each Date.From(Record.Field(_,"Date modified")), Order.Descending}, 
+                        {each Date.From(Record.Field(_,"Date created")), Order.Descending}, 
+                        {"Name", Order.Descending}
+                    }),
+                    
+        selectExt = 
+            Table.SelectRows(Sorted, each
+                List.ContainsAny(
+                    List.Transform(Text.Split([Extension], "."), each Text.Trim(Text.Lower(_))),
+                    Extensions,
+                    (x,y) => x=y
+                )
+            ),
+        selectName = 
+            Table.SelectRows(selectExt, each
+                List.ContainsAny(
+                    List.Transform(Text.Split([Name],"."), each Text.Trim(_)),
+                    Filter,
+                    (x,y) => Text.Contains(x, y, Comparer.OrdinalIgnoreCase)
+                )
+            ),
+        selectRoot = 
+            if rootOnly
+                then Table.SelectRows(selectName, each Text.EndsWith([Folder Path], Name &"\"))
+                else selectName,
+        selectLast = 
+            if latestOnly
+                then Table.FirstN(selectRoot, 1)
+                else selectRoot,
+
+        Result = Table.SelectColumns(selectLast, {"Folder Path","Name"})
+    in
+        Result)
+,
 Inno.SortTablePn = Document(
     "LPQ[Inno.SortTablePn]",
     "Returns sorted table by INNO partnumbers in proper order. Also could filter-out old models.",
@@ -420,7 +551,6 @@ Text.BulkTableReplace = let BulkReplace = (DataTable as table, FindReplaceTable 
 /////////////////////////
 // GPU & NV SERIES     //   Checks GPU
 /////////////////////////
-
 fxGpuSeries = (Product as text) =>
     let p = Text.Lower(Product), //Text.Remove(, {" "})
         posG = if Text.Contains(p, "RTX") then Text.PositionOf(p, "RTX")
@@ -439,6 +569,7 @@ fxGpuSeries = (Product as text) =>
 /////////////////////////
 // FANS & TABLES       //   SEARCH # OF FANS BY FILLED BRAND/SERIES TABLES
 /////////////////////////
+
 // Search full product name at Geizhals.eu, scrape result from specs table by coolers
 fsGeizFans = (Product as text) =>
     let
@@ -1212,51 +1343,6 @@ ImportPq = Document(
         otherwise null)
 ,
 ImportPq.GitHubRaw = (URL as text) => try Expression.Evaluate(Text.FromBinary(Web.Contents(URL)),#shared) otherwise null
-,
-// Extended script loader with auto data types
-File.GetExcelDataFile = Document(
-    "LPQ[File.GetExcelDataFile]",
-    "Call table from excel file in INNO folder.",
-    {[
-        Description = "File.GetExcelDataFile",
-        Code = "LPQ[File.GetExcelDataFile](""File name without extension"", ""Table name (table if null)"")",
-        Result = "Imported table with types formated."
-    ]},
-    (fileName as text, optional tableName as text) as table =>
-    let
-        folder = "C:\Users\Laktionov.I\OneDrive\INNO\",
-        filepath = folder & fileName & ".xlsx",
-        tblName = tableName ?? "table",
-        data = Excel.Workbook(File.Contents(filepath), null, true),
-        dataTable = data{[Item = tblName, Kind = "Table"]}[Data],
-        fnDetectAndTransformTypes = (SourceTable as table) =>
-        let
-            moneyList = {"amount", "price", "deal", "cost", "rebate", "msrp"},
-            FnDetectType = (SourceTable, ColumnName) =>
-            let
-                ListColumn = Table.Column(SourceTable, ColumnName),
-                Money = List.Contains(moneyList, Text.Trim(ColumnName), (x, y) => Text.StartsWith(y, x, Comparer.OrdinalIgnoreCase)),
-                NumberPercentage = List.Count(List.Select(ListColumn, each _ is number)) / List.Count(ListColumn),
-                IntPercentage = List.Count(List.Select(ListColumn, each _ is number and _ = Number.Round(_, 0))) / List.Count(ListColumn),
-                DatePercentage = List.Count(List.Select(ListColumn, each _ is date)) / List.Count(ListColumn),
-                DateTimePercentage = List.Count(List.Select(ListColumn, each _ is datetime)) / List.Count(ListColumn),
-                Max = List.Max({NumberPercentage, DatePercentage, DateTimePercentage, IntPercentage}),
-                Result =
-                    if Money then {ColumnName, Currency.Type}
-                    else if Max < .95 then {ColumnName, type any}
-                    else if DateTimePercentage = Max then {ColumnName, type datetime}
-                    else if DatePercentage = Max then {ColumnName, type date}
-                    else if IntPercentage = Max then {ColumnName, Int64.Type}
-                    else {ColumnName, type number}
-            in
-                Result,
-            ConvertTypesList = List.Transform(Table.ColumnNames(SourceTable), each FnDetectType(SourceTable, _)),
-            ConvertedTable = Table.TransformColumnTypes(SourceTable, ConvertTypesList)
-        in
-            ConvertedTable,
-        Result = fnDetectAndTransformTypes(dataTable)
-    in
-        Result)
 ,
 
 /////////////////////////
