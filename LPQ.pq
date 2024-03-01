@@ -954,21 +954,36 @@ Table.NumberColumns = (table as table, columns as list) as table =>
         DataNoNulls = Table.TransformColumns( DataWithTypes, List.Zip({ columns, List.Repeat({NumberNotNull}, List.Count(columns)), NumberTypes }) )
     in  Table.ReplaceErrorValues(DataNoNulls, List.Transform(columns, each {_,0}))
 ,
-//
-Table.RenameColumn = (Table as table, column as text, newName as text) => Table.RenameColumns(Table, {{column, newName}})
-,
-Table.RenameColumnsAdv = (Table as table, OldColumns as list, NewColumns as list, optional SelectHeaders as logical) =>
-    let selectColumns = if (SelectHeaders ?? {SelectHeaders=""}{1}?) = null then false else SelectHeaders,
-        // Merge Old names and New names
-        columnsZip = List.Zip({ OldColumns, NewColumns }),
-        // Get table headers and Select list ny Old names
-        headers = List.Transform(Table.ColumnNames(Table), each _),
-        selectHeaders = List.Select(headers, (x) => List.AnyTrue(List.Transform(OldColumns, each x = _))),
-        // Get only picked columns
-        SelectTable = if selectColumns then Table.SelectColumns(Table, selectHeaders) else Table.SelectColumns(Table, headers),
-        // Rename columns
-        RenameTable = Table.RenameColumns(SelectTable, columnsZip)
-    in  try RenameTable otherwise null
+// Renaming columns
+Table.RenameColumn = Document(
+    "Table.RenameColumn",
+    "Simple rename 1 column in the table.",
+    "Table.Transformation",
+    {[  Description="Rename a column in table.",
+        Code =		"LPQ[Table.RenameColumn](table, ""old column name"", ""new column name"")",
+        Result =	"<table><thead><tr><th>new column name</th></tr></thead><tbody><tr><td>Text</td></tr></tbody></table>"     ]},
+    (Table as table, column as text, newName as text) => Table.RenameColumns(Table, {{column, newName}})
+    ),
+Table.RenameColumnsAdv = Document(
+    "Table.RenameColumnsAdv",
+    "Advanced rename columns in table by Lists and with optional Filter.",
+    "Table.Transformation",
+    {[  Description="Rename mane columns in table with possible selection.",
+        Code =		"LPQ[Table.RenameColumnsAdv](table, ""{""col1"",""col2""}"", ""{""new1"",""new2""}"", True)",
+        Result =	"Table with new column's names and Selected with only renamed columns.<br/>" &
+                    "<table><thead><tr><th>new1</th><th>new2</th></tr></thead><tbody><tr><td>Text</td><td>Text</td></tr></tbody></table>"     ]},
+    (Table as table, OldColumns as list, NewColumns as list, optional SelectHeaders as logical) =>
+        let selectColumns = if (SelectHeaders ?? {SelectHeaders=""}{1}?) = null then false else SelectHeaders,
+            // Merge Old names and New names
+            columnsZip = List.Zip({ OldColumns, NewColumns }),
+            // Get table headers and Select list ny Old names
+            headers = List.Transform(Table.ColumnNames(Table), each _),
+            selectHeaders = List.Select(headers, (x) => List.AnyTrue(List.Transform(OldColumns, each x = _))),
+            // Get only picked columns
+            SelectTable = if selectColumns then Table.SelectColumns(Table, selectHeaders) else Table.SelectColumns(Table, headers),
+            // Rename columns
+            RenameTable = Table.RenameColumns(SelectTable, columnsZip)
+        in  try RenameTable otherwise null)
 ,
 Table.RenameColumnsByIndices = (Source as table, Indices as list, ColumnNamesNew as list) =>
     let
@@ -1040,8 +1055,7 @@ Table.RemoveEmptyRows = (tbl as table) =>
         // filter out empty or null record
         Filter_out_empty_rows = Table.SelectRows(AddedCustom, each [Custom] = false)
     in
-        Table.RemoveColumns(Filter_out_empty_rows, {"Custom"}) //Remove helper column added
-,
+        Table.RemoveColumns(Filter_out_empty_rows, {"Custom"}),
 Table.RemoveEmptyColumns = (tbl as table) =>
     // return table with blank columns removed
     let
@@ -1066,7 +1080,7 @@ Table.RemoveEmptyColumns = (tbl as table) =>
                     )
             in  List.Select(col_states, each _ <> null )
     in
-    Table.SelectColumns(tbl, non_empty_columns(tbl_no_erors)),
+        Table.SelectColumns(tbl, non_empty_columns(tbl_no_erors)),
 // return a table with all errors replaced with specified value or null
 Table.ReplaceAllErrorsInTable = (tbl as table, optional replacer_value) => Table.ReplaceErrorValues(tbl, List.Transform(Table.ColumnNames(tbl), each {_, replacer_value}))
 ,
