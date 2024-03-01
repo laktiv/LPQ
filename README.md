@@ -25,3 +25,11 @@ Extensions and Functions for Power Query
 
 - %OneDrive%\Apps\Excel
 - %OneDrive%\Apps\Excel\!PQ (! Addin)
+
+### PowerQueryNet
+
+- `#credetials.xml` лежить тут %AppData%\Local\Microsoft\Excel
+
+## Readme
+
+[Web API PQ - ninMonkQuery](https://github.com/ninmonkey/ninMonkQuery-examples/tree/main/WebRequests)
