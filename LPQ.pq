@@ -961,7 +961,7 @@ Table.RenameColumn = Document(
     "Table.Transformation",
     {[  Description="Rename a column in table.",
         Code =		"LPQ[Table.RenameColumn](table, ""old column name"", ""new column name"")",
-        Result =	"<table><thead><tr><th>new column name</th></tr></thead><tbody><tr><td>Text</td></tr></tbody></table>"     ]},
+        Result =	"| new column |  column   |#(lf)| ----------- | ----------- |"     ]},
     (Table as table, column as text, newName as text) => Table.RenameColumns(Table, {{column, newName}})
     ),
 Table.RenameColumnsAdv = Document(
@@ -970,8 +970,8 @@ Table.RenameColumnsAdv = Document(
     "Table.Transformation",
     {[  Description="Rename mane columns in table with possible selection.",
         Code =		"LPQ[Table.RenameColumnsAdv](table, ""{""col1"",""col2""}"", ""{""new1"",""new2""}"", True)",
-        Result =	"Table with new column's names and Selected with only renamed columns.<br/>" &
-                    "<table><thead><tr><th>new1</th><th>new2</th></tr></thead><tbody><tr><td>Text</td><td>Text</td></tr></tbody></table>"     ]},
+        Result =	"Table with new column's names and Selected with only renamed columns.#(lf)" &
+                    "|    new1   |    new2    |"     ]},
     (Table as table, OldColumns as list, NewColumns as list, optional SelectHeaders as logical) =>
         let selectColumns = if (SelectHeaders ?? {SelectHeaders=""}{1}?) = null then false else SelectHeaders,
             // Merge Old names and New names
