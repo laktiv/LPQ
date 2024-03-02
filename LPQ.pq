@@ -141,11 +141,11 @@ TestResults =
 _extensionLibrary = [
 
 
-//    ___  ___ ___ ___ _  _ ___  ___ _  _  ___ ___ ___ ___ 
+//    ___  ___ ___ ___ _  _ ___  ___ _  _  ___ ___ ___ ___
 //   |   \| __| _ \ __| \| |   \| __| \| |/ __|_ _| __/ __|
 //   | |) | _||  _/ _|| .` | |) | _|| .` | (__ | || _|\__ \
 //   |___/|___|_| |___|_|\_|___/|___|_|\_|\___|___|___|___/
-//                                                         
+//
 Document = (name as text, description as text, category as text, valueOrExample as any, optional valueIfExample as any) =>
     let
         value = if valueIfExample is null then valueOrExample else valueIfExample,
@@ -166,11 +166,11 @@ Switch = Document(
     "Switch(value as any, cases as list, results as list, optional default as any) <br>" &
     "Switch(value as any, pairs as list, optional default as any)",
     "Development",
-    { [ Description="Using separate lists", 
-        Code =		"LPQ[Switch](1, {1, 2, 3}, {""A"", ""B"", ""C""})", 
+    { [ Description="Using separate lists",
+        Code =		"LPQ[Switch](1, {1, 2, 3}, {""A"", ""B"", ""C""})",
         Result =	"A"     ],
-      [ Description="Using one paired list", 
-        Code =		"LPQ[Switch](1, {{1, ""A""}, {2, ""B""}, {3, ""C""}})", 
+      [ Description="Using one paired list",
+        Code =		"LPQ[Switch](1, {{1, ""A""}, {2, ""B""}, {3, ""C""}})",
         Result =	"A"     ]},
     (value as any, casesOrPairs as list, optional resultsOrDefault as any, optional default as any) =>
         let
@@ -358,7 +358,7 @@ Inno.SortTablePn = Document(
                 { each Text.Range(Record.Field(_,PN), 1,4), Order.Descending },                             // by gpu
                 { each Number.From(Text.Select(Text.Start(Text.Split(Record.Field(_,PN),"-"){1},2),{"0".."9"})), Order.Descending },            // by mem
                 { each Text.Middle(Text.Split(Record.Field(_,PN),"-"){0}, 5,1), Order.Descending },         // by fans
-                { each Text.Select(Text.Split(Record.Field(_,PN),"-"){1}, {"X"}), Order.Descending } })     // by OC 
+                { each Text.Select(Text.Split(Record.Field(_,PN),"-"){1}, {"X"}), Order.Descending } })     // by OC
         in
             Sorting)
 ,
@@ -503,7 +503,7 @@ MyFindReplace_Sample =
 MyFindReplace_InnoSpecs =
     let table = Table.FromRows(Json.Document(Binary.Decompress(Binary.FromText("bY/PboJAEIdfZcKpjcQo9gVaOOiBlMSaHoiHLYxKxJ3NsqTi03f/AAumt5nv983Mbp4H8SF5h5gkNkFom+AY5sEHUaMgrqm4wku6fbzqcGBXZ7AGnTDmjrh43wpR4w25YrKDjH5R6iucY6FImlNPyA6leCNt261aGdt+pWK8ZLKEgRM/VWfv7asHTtfsuEJ5YgV65asTM8X08F2V6uIdPzY7mlSNqFk3/8Rnq0SrrLhN0h1Ey7Wmppyy1c8zZFPQb85IKlgv30yWZP8lPtjcQVemhfvGkmhCovFOCM7oTVjA7BkujoaxMT7+AQ==", BinaryEncoding.Base64), Compression.Deflate)), let _t = ((type nullable text) meta [Serialized.Text = true]) in type table [Find = _t, Replace = _t])
     in  Table.ReplaceValue(table,"",null,Replacer.ReplaceValue,{"Replace"}),
-Text.BulkTableReplace = 
+Text.BulkTableReplace =
     let BulkReplace = (DataTable as table, FindReplaceTable as table, DataTableColumn as list, optional ReplaceFullCell as logical) =>
         /*
         *   Replace values in column by table list of replaces
@@ -698,26 +698,26 @@ Date.DatesBetween = Document(
             adjustedEnd = List.Max({StartDate, EndDate}),
             GetDates = (start as date, end as date, dates as list)=> if start > end then dates else @GetDates(Date.AddDays(start, 1), end, List.Combine({dates, {start}})),
             Dates = GetDates(adjustedStart, adjustedEnd, {})
-        in 
+        in
             Dates),
 Date.DayName = Document(
     "Date.DayName",
     "Returns the English day of the week name for a date",
     "Dates.Date",
-    {[  Description="Get the day name", 
-        Code =		"LPQ[Date.DayName](""9/9/2016"")", 
+    {[  Description="Get the day name",
+        Code =		"LPQ[Date.DayName](""9/9/2016"")",
         Result =	"Friday"    ]},
-    (date as any) => 
+    (date as any) =>
         let Eng = {"Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"},
             Ukr = {"Неділя","Понеділок","Вівторок","Середа","Четвер","Пятниця","Субота"},
-            Lang = Eng,
+            Lang = Eng
         in  Switch(Date.DayOfWeek(DateTime.From(date)), {0,1,2,3,4,5,6}, Lang, null)),
 Date.MonthName = Document(
     "Date.MonthName",
     "Returns the English month name for a date",
     "Dates.Date",
-    {[  Description="Get the month name", 
-        Code =		"LPQ[Date.MonthName](""9/9/2016"")", 
+    {[  Description="Get the month name",
+        Code =		"LPQ[Date.MonthName](""9/9/2016"")",
         Result =	"September"     ]},
     (date as any, optional lang as text) =>
         let eng = {"January","February","March","April","May","June","July","August","September","October","November","December"},
@@ -767,17 +767,17 @@ List.ToText = Document(
         Code =		"LPQ[List.ToText]({ 1, 2, 3})",
         Result =	"""{1, 2, 3}"""     ]},
     (list as list) => List.Accumulate(list, "{", (state, current) => current & Text.From(current)) & "}"),
-List.Swap = (_,_from as number ,_to as number) => 
+List.Swap = (_,_from as number ,_to as number) =>
     let
         from = List.Min({_from,_to}),
-        to = List.Max({_from,_to})                        
+        to = List.Max({_from,_to})
     in if from=to then _ else
         List.Range(_,0,from)
         &{_{to}}
         &List.Range(_,from+1,to-from-1)
         &{_{from}}
         &List.Range(_,to+1),
-List.Shuffle = (n) => List.Accumulate({0..(n-2)},{0..n},(_,iterator)=> 
+List.Shuffle = (n) => List.Accumulate({0..(n-2)},{0..n},(_,iterator)=>
                         List.Swap(List.Buffer(_),
                             Number.Round(Number.RandomBetween(iterator,n)),
                             iterator
@@ -908,32 +908,32 @@ Splitter.SplitTextByNotIn = Document(
 //
 shared Table.AddBlankRow = (table as table) => Table.Combine({table, Table.FromRecords({[]})}),
 shared Table.DrillIntoColumn = (table as table, columnName as text) =>
-    let FindValue = (value as any) => 
+    let FindValue = (value as any) =>
         if value is list then
-            if List.Count(value) = 1 then @FindValue(List.First(value)) 
+            if List.Count(value) = 1 then @FindValue(List.First(value))
             else if List.Count(value) = 0 then null
             else error "Couldn't find single value"
         else if value is table then
             if Table.RowCount(value) = 1 then @FindValue(List.First(Table.ToColumns(value)))
-                                    else if Table.RowCount(value) = 0 then null 
+                                    else if Table.RowCount(value) = 0 then null
             else error "Couldn't find single value"
         else  value,
         Result = Table.TransformColumns(table, {{columnName, FindValue}})
     in  Result,
-    
+
 shared Table.EnterDataFormula = Document(
     "Table.EnterDataFormula",
     "Convert a table into a formula that's compatible with the Enter Data UI. This function returns an expression you can copy and paste to editthe " &
     " table using Enter Data. Paste the formula, then click the gear icon next to the step name. This is an easy way to allow people to customize a table you've queried",
-    {[ Description= "Simple table", 
-        Code=        "Web.Page(Web.Contents(""https://en.wikipedia.org/wiki/List_of_Super_Bowl_champions"")){3}[Data]", 
+    {[ Description= "Simple table",
+        Code=        "Web.Page(Web.Contents(""https://en.wikipedia.org/wiki/List_of_Super_Bowl_champions"")){3}[Data]",
         Result=      "Table.FromRows(Json.Document(Binary.Decompress(Binary.FromText(""jVVtb9s2EP4rRD4aRqI3S9TH2Gm7ZWkb1MGGom6Aq83IhBkyoOik2a8fT6Ski6Fu+yDdWea9Pffc8du3M342P7uVzrU/jrbZs7UTQgnb+q+lfzL/nFeLxIu0ror55pglWcK8viA6J3o96vVwJksSqvNRT5Ognn2fh1yuQClo2cq8/DCvmMbCPzmmUWaLkEYyn2GkNIhFEFUQvBN1FkQexGI2uP8kXtg73SjQO3YLzkrjMEgRn/NFEmrlpL66JLmnRM+JXhC9IvWR82lxWqvQz8KypTV6a9pYJxZ5nlex1mpMg5dEp98p5OR7TWEmqaYLkgY2eQ2avbegt7LdGlbUof1dApgLz/MASQCcF0EEpH3wDuJiNkfXWUAabT9YITRbwqvHeXsIPovBZ4S5jDWl3kdZjbqHfBbKmXUkGd1iA78ae2AfJGg36ZRH46QzTqKIrtLR1Wc4IA82FzemZZe68cRv2ReQu5Bs3vO/7JOt5kixEt886d45Vp1kg8u/oN1L3Tij2Rexaw9ST3qqAj95FIGmPFC4Jhl+lPAo2ZVRT/vgKeuHoeg9pWT2MqLnhCDkO6ccROSWoJx8NFZsLn7XO48pPBklcQCV6yNmdDJKPrbJj+LIejol9UmUj1Jr0RoH7E/pQWnQc9LPXNJ7ronngEkVyFaVszHh48MDKMOWUqlJN3VCZoDAUxMY6pwkiIASCmwu1u6c3ZijRDY8tpFeHQh5nIUq0r4O3Iotw//WApxTgnm5h5fDhHW3DGdhKDtRBOuMdsNHfhZDy7vCYoEdo8dhzkghePQP0C3uT+le2WovxUOfQfqmieX8Hkeuvh8M/eEtNB5XAXbShoesk3JM93YvFewE0hPYO2g8ejHbjHaExxEkha6kXzdag5M+oG5ATRuS9nF+UukKrGeqBr9ftNuHmT3xgDs6LKZ4BaR0g1wL1xdKAUaK3w+n7+DxCbo1tjxut6CFsFNGuAXehvhslfC9YGuQejIOjslogkv4SgrfgNUebDOWk77hNh1f/OfS+RXmx+o9qK3R0zZ8jHIncA5bIdiddPCL8/VpDCv/Nh5nD/jO460mrPBSD1Hw10qJZ9Fdsf5qexmi4IOuUxzXT5uLy8HgSjhrpGM30vyP09f+PmmNfvYLQLBraI5g/9voN3NscS3fiZ/wbzG+/wM="", BinaryEncoding.Base64), Compression.Deflate)), let _t = ((type text) meta [Serialized.Text = true]) in type table [Appearances = _t, Team = _t, Wins = _t, Losses = _t, Winning percentage = _t, Season(s) = _t])"    ]},
     (table as table) =>
         let
             Encoded = Table.JsonEncode(table),
             ColumnMeta= "[" & Text.Range(List.Accumulate(Table.ColumnNames(table), "", (state, current) => state & ", " & current & " = _t"), 2) & "]",
-            Text = 
-                "Table.FromRows(Json.Document(Binary.Decompress(Binary.FromText(""" & Encoded & """, BinaryEncoding.Base64), Compression.Deflate))," & 
+            Text =
+                "Table.FromRows(Json.Document(Binary.Decompress(Binary.FromText(""" & Encoded & """, BinaryEncoding.Base64), Compression.Deflate))," &
                 " let _t = ((type text) meta [Serialized.Text = true]) in type table " & ColumnMeta & ")"
         in
             Text),
@@ -942,7 +942,7 @@ shared Table.EnterDataFormula = Document(
 // Table.FromListCrossJoin({ {ColorsTable[ColorName], "Color"}, {NumbersTable[Number], "Number"}})
 // Will give me a new table with two columns, "Color" and "Number" which contains one row for each possible
 // combination of colors and numbers
-// Table.FromListCrossJoin({{"Red", "Blue"}, "Color"}, {{1,2,3}, "Number"}}) = 
+// Table.FromListCrossJoin({{"Red", "Blue"}, "Color"}, {{1,2,3}, "Number"}}) =
 //    Table.FromRecords({[Color="Red", Number=1],[Color="Red", Number = 2],[Color="Red", Number = 3],[Color="Blue", Number=1],[Color="Blue", Number=2],[Color="Blue", Number=3]})
 Table.FromListCrossJoin = (listColumnNamePairs as any) =>
    let remainingPairs = List.Skip(listColumnNamePairs, 1),
@@ -1209,7 +1209,7 @@ Table.GetParameter = (ParameterName as text) =>
     let
         ParamSource = Excel.CurrentWorkbook(){[Name="XLGQuery_Parameters"]}[Content],
         ParamRow = Table.SelectRows(ParamSource, each ([Parameter]=ParameterName)),
-        Value= if Table.IsEmpty(ParamRow)=true 
+        Value= if Table.IsEmpty(ParamRow)=true
                 then null
                 else Record.Field(ParamRow{0},"Value")
     in  Value
@@ -1233,8 +1233,8 @@ fnVlookUp = Document(
 	    let colLookup = Table.Column(lookupTable, lookupColumnName),
 	        lookup = List.PositionOf(colLookup, lookupValue, 0),
             count = lookup >= 0
-	    in  if count then 
-                if returnColumnValue is null then 1 
+	    in  if count then
+                if returnColumnValue is null then 1
                     else Table.Column(lookupTable, returnColumnValue){lookup}
                 else null)
 ,
@@ -1303,29 +1303,29 @@ Text.SplitCamelCase = (text as nullable text) => if text is null then null else 
     let
         PreviousLetter = Text.End(state, 1),
         Ignore = (text as text) => text = " " or text = "."
-    in state & (if not Text.IsUpperCase(PreviousLetter) 
-                    and not Ignore(PreviousLetter) 
-                    and not Ignore(current) 
+    in state & (if not Text.IsUpperCase(PreviousLetter)
+                    and not Ignore(PreviousLetter)
+                    and not Ignore(current)
                     and Text.IsUpperCase(current)
                 then " " else "" ) &
         current),
 Text.SplitOnNotIn = (line as nullable text, validCharacters as text) => Splitter.SplitTextByNotIn(validCharacters)(line),
 Text.SplitOnNonAlpha = (line as nullable text) =>
-  if line is null then null else List.Accumulate(Text.ToList(line), {null} , (state, current) => 
+  if line is null then null else List.Accumulate(Text.ToList(line), {null} , (state, current) =>
     let
       doSkip = not Text.Contains(Text.Alphabet, current),
       lastItem = List.Last(state),
       appendLast = lastItem<>null
     in
-      if doSkip then 
-        if lastItem is null then 
-          state 
-        else 
+      if doSkip then
+        if lastItem is null then
+          state
+        else
           List.Combine({state, {null}})
       else
         if appendLast then
           List.Combine({List.RemoveLastN(state, 1), {lastItem & current}})
-        else  
+        else
           List.Combine({List.RemoveLastN(state, 1), {current}})),
 Text.Substring = (text as text, start as number, optional count as number) =>
    let
@@ -1384,7 +1384,7 @@ Text.EachBetween = (Haystack as text, After as text, Before as text) as list =>
         CutAfter = Text.Split(Haystack, After),
 	    SkipFirst = List.Skip(CutAfter),
         CutEach = List.Transform(SkipFirst, each Text.Split(_, Before){0})
-    in 
+    in
         CutEach,
 
 Text.EachFromTo = (Haystack as text, After as text, Before as text) as text =>
@@ -1457,9 +1457,9 @@ Inno.ParseInnoCom = Document(
             src = Web.BrowserContents(url),
             GetCounter = (i as number, HtmlOpen, HtmlClose) =>
                 let beetween = (txt) => [
-                        pn = Text.Trim(Text.BetweenDelimiters(txt, "Part No.: ", "</p>", 0)), 
-                        model = Text.Trim(Text.BetweenDelimiters(txt, "<p class=""h4"">", "</p>", 0)), 
-                        url = Text.BetweenDelimiters(txt, "btn-4"" href=""", """>", 0), 
+                        pn = Text.Trim(Text.BetweenDelimiters(txt, "Part No.: ", "</p>", 0)),
+                        model = Text.Trim(Text.BetweenDelimiters(txt, "<p class=""h4"">", "</p>", 0)),
+                        url = Text.BetweenDelimiters(txt, "btn-4"" href=""", """>", 0),
                         img_src  = Text.BetweenDelimiters(txt, "img src=""", """ class", 0) ],
                     CurrentGet = Text.BetweenDelimiters(src, HtmlOpen, HtmlClose, i)
                 in  if CurrentGet="" then {} else List.Combine({{beetween(CurrentGet)}, @GetCounter(i + 1, HtmlOpen, HtmlClose)}),
@@ -1495,7 +1495,7 @@ Web.GetAllLinks = Document(
     (SourceURL as text, optional AttributeDelimiter as text) =>
         let
             AttributeDelimiter = if AttributeDelimiter is null then """" else AttributeDelimiter,
-            Source = Text.FromBinary(Web.Contents(SourceURL)), 
+            Source = Text.FromBinary(Web.Contents(SourceURL)),
             GetLink = (Counter as number) =>
                 let CurrentLink = Text.BetweenDelimiters( Source, "href=" & AttributeDelimiter, AttributeDelimiter, Counter )
                 in  if CurrentLink = "" then {}
@@ -1539,9 +1539,9 @@ Web.RemoveHtmlTags = Document(
                 Documentation.Category= "Web.Modification",
                 Documentation.Source= "Inspired by a solution from Bill Szysz",
                 Documentation.Author= "Imke Feldmann: www.TheBIccountant.com & Mike Carlo: PowerBI.Tips",
-                Documentation.Examples= {[  
-                    Description="Function that enables one to pass in a column that has HTML tags.", 
-                    Code=	     "<div>my bit of text</div>", 
+                Documentation.Examples= {[
+                    Description="Function that enables one to pass in a column that has HTML tags.",
+                    Code=	     "<div>my bit of text</div>",
                     Result=	     "my bit of text"    ]}]
     in
         Value.ReplaceType(func, Value.ReplaceMetadata(Value.Type(func), documentation)))
@@ -1571,7 +1571,7 @@ Web.TableToMarkdown = Document(
 //             |_|
 // Minimal script loader
 ImportPq = Document(
-    "ImportPq", 
+    "ImportPq",
     "Most minimal external PQ script file loader.",
     "Files.Import",
     {[  Description="Load PQ file to Excel",
@@ -1579,7 +1579,7 @@ ImportPq = Document(
         Result =	"code from .pq file"    ]},
     (FilePath as text, optional Encoding as nullable number) => try Expression.Evaluate(Text.FromBinary(File.Contents(FilePath),(Encoding ?? TextEncoding.Utf8)),#shared) otherwise null),
 ImportPq.GitHubRaw = Document(
-    "ImportPq.GitHubRaw", 
+    "ImportPq.GitHubRaw",
     "Import file from GitHub.",
     "Web.Import",
     {[  Description="Load file from GitHub",
@@ -1672,16 +1672,16 @@ Value.WaitFor = (producer as function, interval as function, optional count as n
 ,
 
 
-//     ___ _____ _  _ ___ ___ 
+//     ___ _____ _  _ ___ ___
 //    / _ \_   _| || | __| _ \
 //   | (_) || | | __ | _||   /
 //    \___/ |_| |_||_|___|_|_\
-//                            
+//
 Type.ToText = (Type as any, optional Recurs as logical) as text =>
     let Recurs = if (Recurs<>null) then Recurs else false,
         CaseValues = {
             { (x)=> (try x)[HasError], "error" },
-            { (x)=> Type.Is(x, type type), "type"},    //if Recurs then  else 
+            { (x)=> Type.Is(x, type type), "type"},    //if Recurs then  else
             { (x)=> Type.Is(x, type function), "function"},
             { (x)=> Type.Is(x, type table), if Recurs then "table " & @Type.ToText(Type.TableRow(NonNull), Recurs) else "table"},
             { (x)=> Type.Is(x, type record), if Recurs then
@@ -1719,7 +1719,7 @@ Record.TransformJoin = (Rec as record, Lambda as function, optional Delimiter as
         Combined = Text.Combine(Transformed, Delimiter),
         Return = Combined
     in  Return
-,
+
 
 
 ],
