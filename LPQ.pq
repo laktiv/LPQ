@@ -906,8 +906,8 @@ Splitter.SplitTextByNotIn = Document(
 //     | |/ _ \| _ \ |__| _|
 //     |_/_/ \_\___/____|___|
 //
-shared Table.AddBlankRow = (table as table) => Table.Combine({table, Table.FromRecords({[]})}),
-shared Table.DrillIntoColumn = (table as table, columnName as text) =>
+Table.AddBlankRow = (table as table) => Table.Combine({table, Table.FromRecords({[]})}),
+Table.DrillIntoColumn = (table as table, columnName as text) =>
     let FindValue = (value as any) =>
         if value is list then
             if List.Count(value) = 1 then @FindValue(List.First(value))
@@ -921,7 +921,7 @@ shared Table.DrillIntoColumn = (table as table, columnName as text) =>
         Result = Table.TransformColumns(table, {{columnName, FindValue}})
     in  Result,
 
-shared Table.EnterDataFormula = Document(
+Table.EnterDataFormula = Document(
     "Table.EnterDataFormula",
     "Convert a table into a formula that's compatible with the Enter Data UI. This function returns an expression you can copy and paste to editthe " &
     " table using Enter Data. Paste the formula, then click the gear icon next to the step name. This is an easy way to allow people to customize a table you've queried",
