@@ -6,6 +6,7 @@ Extensions and Functions for Power Query
 
 - [ ] Develop main Addin file xlam
 - [ ] PowerQueryNet application
+- [ ] Web.RemoveShortCode from LPQ.pq??
 
 ## Лист переіменувань
 

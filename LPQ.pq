@@ -293,7 +293,7 @@ Inno.SortTablePn = Document(
         Result =	"New sorted table by column 'pn' with old filtered."    ]},
     (Table as table, PN as text, optional FilterOld as logical) =>
         let
-            oldList = {"C16", "C20", "207", "208", "106", "107", "108", "R"},
+            oldList = {"C30", "309", "308", "307", "306T", "20", "16", "10", "M", "R", "73P"},
             sortList = {"40", "30", "20", "16", "10", "73", "71", "21"},
             letterList = {"C", "N", "B", "M", "R"},
 
@@ -304,7 +304,7 @@ Inno.SortTablePn = Document(
                     Table.SelectRows(
                         Table.AddColumn(Table, "Filter",
                             (FindStrings) =>
-                            List.AnyTrue(List.Transform(oldList, each Text.Contains(Record.Field(FindStrings, PN), _, Comparer.OrdinalIgnoreCase))))
+                                List.AnyTrue(List.Transform(oldList, each Text.Contains(Text.Split(Record.Field(FindStrings,PN),"-"){0}, _, Comparer.OrdinalIgnoreCase))))
                         , each ([Filter] = false))
                     , {"Filter"}
                 ) else Table,
@@ -314,16 +314,15 @@ Inno.SortTablePn = Document(
                 each if Record.Field(_,PN)="TBC"
                         or Record.Field(_,PN)=null
                         or Record.Field(_,PN)=""
-                            then "A00003-01D5-1234552"
-                            else Record.Field(_,PN),
+                            then "A00003-01D5-1234552" else Record.Field(_,PN),
                 Replacer.ReplaceValue, {PN} ),
 
             Sorting = Table.Sort(ReplaceTable, {
                 { each List.PositionOf(letterList, Text.Start(Record.Field(_,PN), 1)), Order.Ascending },   // by first letter of PN
                 { each List.PositionOf(sortList, Text.Range(Record.Field(_,PN), 1,2)), Order.Ascending },   // by series
                 { each Text.Range(Record.Field(_,PN), 1,4), Order.Descending },                             // by gpu
-                //{ each Text.Middle(Text.Split(Record.Field(_,PN),"-"){0}, 5,1), Order.Descending },       // by fans
-                { each Text.Start(Text.Split(Record.Field(_,PN),"-"){1}, 2), Order.Descending },            // by mem
+                { each Number.From(Text.Select(Text.Start(Text.Split(Record.Field(_,PN),"-"){1},2),{"0".."9"})), Order.Descending },            // by mem
+                { each Text.Middle(Text.Split(Record.Field(_,PN),"-"){0}, 5,1), Order.Descending },         // by fans
                 { each Text.Select(Text.Split(Record.Field(_,PN),"-"){1}, {"X"}), Order.Descending } })     // by OC 
         in
             Sorting)
@@ -1237,7 +1236,6 @@ Text.FromList = (list as list) => List.Accumulate(list, "", (state, current) => 
 // Is text all uppercase? returns false if any non-alpha characters are present
 Text.IsUpperCase = (text as text) => List.AllTrue(List.Transform(Text.ToList(text), (letter)=>Text.Contains(Text.Alphabet, letter) and letter = Text.Upper(letter))),
 Text.IsAlpha = (text as text) => List.MatchesAll(Text.ToList(text), each Text.Contains(Text.Alphabet, _)),
-Text.RemoveExtraWhitespace = (text as text) => Text.Combine(Splitter.SplitTextByWhitespace()(text)," "),
 // Splits camelCased and PascalCased text and separates by a space. Ex: "thisIsAColumn" -> "this Is A Column"
 Text.SplitCamelCase = (text as nullable text) => if text is null then null else List.Accumulate(Text.ToList(text),"", (state, current) =>
     let
@@ -1272,6 +1270,7 @@ Text.Until = (text as text, endDelimiter as text, optional startIndex as number)
     in
         if text is null then null else Text.Range(textFromStart, 0, delimPosition),
 //
+Text.RemoveExtraWhitespace = (text as text) => Text.Combine(Splitter.SplitTextByWhitespace()(text)," "),
 Text.PowerTrim = (text as text, optional char_to_trim as text) =>
     let
         char = if char_to_trim = null then " " else char_to_trim,
@@ -1290,83 +1289,123 @@ Text.ReplaceByList = try (txt as text, replacementLists as list) as text => List
 //   | (_| (_) | |) | _|   / _ \| .` | |) |  \ \/\/ /| _|| _ \
 //    \___\___/|___/|___| /_/ \_\_|\_|___/    \_/\_/ |___|___/
 //
-Inno.ParseInnoCom = (url as text) =>
-    let
-        src = Table.FromColumns({Lines.FromBinary( Binary.Buffer( Web.Contents(url) ))}),
-        filtrTags = Table.SelectRows(src, each Text.Contains([Column1],"productBox") or Text.Contains([Column1],"<p class=""h4"">") or Text.Contains([Column1],"Part No.")),
-        addCol = Table.AddColumn(filtrTags,"src", each if Text.Contains([Column1],"href") then Text.BetweenDelimiters([Column1],"href=""",""">") else Text.BetweenDelimiters([Column1], ">","</")),
-        splitCols = Table.FromRows(List.Split(addCol[src], 3)),
-        cleanCol3 = Table.ReplaceValue(splitCols, each [Column3], each Text.PowerTrim(Text.AfterDelimiter([Column3],":")), Replacer.ReplaceValue, {"Column3"} ),
-        splitCol3 = Table.ExpandListColumn(Table.AddColumn(cleanCol3, "pn", each Text.SplitAny(Text.Remove([Column3], {" "}),"/")), "pn"),
-        res = Table.RenameColumnsAdv(Table.SelectColumns(splitCol3,{"pn","Column2","Column1"}), {"Column1","Column2"},{"url","model"})
+Inno.ParseInnoCom = Document(
+    "Inno.ParseInnoCom",
+    "INNO3D products parser from main site.",
+    "Web.Parser",
+    {[  Description="Add link to the products category with any filter applied.",
+        Code =		"LPQ[Inno.ParseInnoCom](""https://inno3d.com/en/product_list/index/GRAPHICS%20CARD"")",
+        Result =	"List of INNO products from site"    ]},
+    (url as text) =>
+        let
+            src = Web.BrowserContents(url),
+            GetCounter = (i as number, HtmlOpen, HtmlClose) =>
+                let beetween = (txt) => [
+                        pn = Text.Trim(Text.BetweenDelimiters(txt, "Part No.: ", "</p>", 0)), 
+                        model = Text.Trim(Text.BetweenDelimiters(txt, "<p class=""h4"">", "</p>", 0)), 
+                        url = Text.BetweenDelimiters(txt, "btn-4"" href=""", """>", 0), 
+                        img_src  = Text.BetweenDelimiters(txt, "img src=""", """ class", 0) ],
+                    CurrentGet = Text.BetweenDelimiters(src, HtmlOpen, HtmlClose, i)
+                in  if CurrentGet="" then {} else List.Combine({{beetween(CurrentGet)}, @GetCounter(i + 1, HtmlOpen, HtmlClose)}),
+            get = GetCounter(0, "col-md-6 col-lg-4 mb-4"">", "<div class=""form-check"),
+            Table = Table.FromList(get, Splitter.SplitByNothing(), {"col"}, null, ExtraValues.Error),
+            Unfold = Table.ExpandRecordColumn(Table, "col", {"pn","model","url","img_src"}),
+            SplitPn = Table.ExpandListColumn(Table.ReplaceValue(Unfold, each [pn], each Text.Split(Text.Remove([pn],{" "}),"/"),Replacer.ReplaceValue,{"pn"}), "pn"),
+            SortTablePn = Inno.SortTablePn(SplitPn,"pn",false)
+        in
+            SortTablePn),
+Inno.ParseInnoComSpecs = Document(
+    "Inno.ParseInnoComSpecs",
+    "Get Specs table from the product page at inno3d.com.",
+    "Web.Parser",
+    {[  Description="Add link to product page at inno3d.com.",
+        Code =		"LPQ[Inno.ParseInnoComSpecs](""https://inno3d.com/en/PRODUCT_INNO3D_GEFORCE_RTX_3060_8GB_TWIN_X2_2"")",
+        Result =	"Specs table from site"    ]},
+    (url as text) =>
+        let
+            src = Web.Page( Binary.Buffer( Web.Contents(url) ) ){0}[Data],
+            Rename = Table.RenameColumnsAdv(src,{"GPU Engine Specs:",""}, {"spec","value"}),
+            Replace = Text.BulkTableReplace(Rename, MyFindReplace_InnoSpecs, {"spec","value"})
+        in
+            Replace)
+,
+Web.GetAllLinks = Document(
+    "Web.GetAllLinks",
+    "Get all hyperlinks from the page.",
+    "Web.Hyperlinks",
+    {[  Description="Creates the list with all hyperlinks from the page in <a>.",
+        Code =		"LPQ[Web.GetAllLinks](""https://inno3d.com/en/product_list/index/GRAPHICS%20CARD"")",
+        Result =	"https://inno3d.com/en/PRODUCT_INNO3D_GEFORCE_RTX_3070_ICHILL_X3_LHR"    ]},
+    (SourceURL as text, optional AttributeDelimiter as text) =>
+        let
+            AttributeDelimiter = if AttributeDelimiter is null then """" else AttributeDelimiter,
+            Source = Text.FromBinary(Web.Contents(SourceURL)), 
+            GetLink = (Counter as number) =>
+                let CurrentLink = Text.BetweenDelimiters( Source, "href=" & AttributeDelimiter, AttributeDelimiter, Counter )
+                in  if CurrentLink = "" then {}
+                    else List.Combine({{CurrentLink}, @GetLink(Counter + 1)})
+        in  GetLink(0)),
+Web.StripHtmlList = Document(
+    "Web.StripHtmlList",
+    "Cleans all html tags in the column of the table.",
+    "Web.RemoveHtmlTags",
+    {[  Description="Cleans all html tags in the column of the table.",
+        Code =		"LPQ[Web.StripHtmlList](table, ""column name with html"")",
+        Result =	"https://inno3d.com/en/PRODUCT_INNO3D_GEFORCE_RTX_3070_ICHILL_X3_LHR"    ]},
+    (tbl as table, columnName as text) =>
+        let
+            t1 = Table.Column(tbl, columnName),
+            l1 = List.Select(List.Transform(t1, each Text.Clean(Text.PowerTrim(_))), each _ <> ""),
+            lBodyStart = List.PositionOf( l1, List.Select(l1, each Text.Contains(_, "<body", Comparer.OrdinalIgnoreCase)){0} ),
+            lBodyEnd = List.PositionOf(l1, List.Select(l1, each Text.Contains(_, "</body", Comparer.OrdinalIgnoreCase)){0} ),
+            L = List.Range(l1, lBodyStart, lBodyEnd - lBodyStart - 1)
+        in Table.FromList(L, Splitter.SplitByNothing(), null, null, ExtraValues.Error)),
+Web.RemoveHtmlTags = Document(
+    "Web.RemoveHtmlTags",
+    "Cleans all html tags in the text. With trim and clean of whitespace.",
+    "Web.RemoveHtmlTags",
+    {[  Description="Cleans all html tags in the text. ALso cleans and trims the text.",
+        Code =		"LPQ[Web.RemoveHtmlTags](""<p class='h4'>INNO3D GEFORCE GTX 1660 COMPACT</p><p class='small grayFont'>Part No.: N16601-06D5-1510VA29 / N16601-06D5-1521VA29</p>"")",
+        Result =	"INNO3D GEFORCE RTX 4090 ICHILL FROSTBITE PRO Part No.: C4090-246X-1833FBP"    ]},
+    let func = (HTML) =>
+        let
+            Check = if Value.Is(Value.FromText(HTML), type text) then HTML else "",
+            Source = Text.From(Check),
+            SplitAny = Text.SplitAny(Source,"<>"),
+            ListAlternate = List.Alternate(SplitAny,1,1,1),
+            ListSelect = List.Select(ListAlternate, each _<>"")
+        in
+            Text.RemoveExtraWhitespace(Text.Combine(ListSelect, "")),
+            documentation = [
+                Documentation.Name= "Web.RemoveHtmlTags",
+                Documentation.Description= "Remove Html Tags",
+                Documentation.LongDescription= "Removes all Html tags from a text",
+                Documentation.Category= "Web.Modification",
+                Documentation.Source= "Inspired by a solution from Bill Szysz",
+                Documentation.Author= "Imke Feldmann: www.TheBIccountant.com & Mike Carlo: PowerBI.Tips",
+                Documentation.Examples= {[  
+                    Description="Function that enables one to pass in a column that has HTML tags.", 
+                    Code=	     "<div>my bit of text</div>", 
+                    Result=	     "my bit of text"    ]}]
     in
-        res
+        Value.ReplaceType(func, Value.ReplaceMetadata(Value.Type(func), documentation)))
 ,
-Inno.ParseInnoComSpecs = (url as text) =>
-    let
-        //url = "https://inno3d.com/en/PRODUCT_INNO3D_GEFORCE_RTX_3060_8GB_TWIN_X2_2",
-        src = Web.Page( Binary.Buffer( Web.Contents(url) ) ){0}[Data],
-        Rename = Table.RenameColumnsAdv(src,{"GPU Engine Specs:",""}, {"spec","value"}),
-        Replace = Text.BulkTableReplace(Rename, MyFindReplace_InnoSpecs, {"spec","value"})
-    in
-        Replace
+Web.TableToMarkdown = Document(
+    "Web.TableToMarkdown",
+    "Converts table to text table with Markdown syntax.",
+    "Web.Convertion",
+    {[  Description="Creates Markdown table.",
+        Code =		"LPQ[Web.TableToMarkdown](table)",
+        Result =	"| Опис та коментарь | TODO    |#(lf)| ----------------- | ------- |"    ]},
+    (Table as table) =>
+        let
+            TableValues = Table.AddColumn(Table, "Custom", each Text.Combine(Record.FieldValues(_), " | ")),
+            HyphenLine = Text.Combine(List.Transform(Table.ColumnNames(Table), each Text.Repeat("-",Text.Length(_))), " | "),
+            CombineList = List.Combine({{Text.Combine(Table.ColumnNames(Table), " | ")}, {HyphenLine}, TableValues[Custom]}),
+            TransferToMarkdown = Text.Combine(CombineList, "#(lf)")
+        in
+            TransferToMarkdown)
 ,
-
-Web.GetAllLinks = (SourceURL as text, optional AttributeDelimiter as text) =>
-    let
-        AttributeDelimiter = if AttributeDelimiter is null then """" else AttributeDelimiter,
-        //Get File.GetExcelDataFile("goods", "shortCode") source
-        Source = Text.FromBinary(Web.Contents(SourceURL)),
-        //Function to find each link
-        GetLink = (Counter as number) =>
-            let CurrentLink = Text.BetweenDelimiters( Source, "href=" & AttributeDelimiter, AttributeDelimiter, Counter )
-            in  if CurrentLink = "" then {}
-                else List.Combine({{CurrentLink}, @GetLink(Counter + 1)})
-    in  GetLink(0)
-,
-Web.StripHtmlList = (tbl as table) =>
-	let
-		t1 = Table.Column(tbl, "Column1"),
-		l1 = List.Select(List.Transform(t1, each Text.Clean(Text.PowerTrim(_))), each _ <> ""),
-		lBodyStart = List.PositionOf( l1, List.Select(l1, each Text.Contains(_, "<body", Comparer.OrdinalIgnoreCase)){0} ),
-		lBodyEnd = List.PositionOf(l1, List.Select(l1, each Text.Contains(_, "</body", Comparer.OrdinalIgnoreCase)){0} ),
-		L = List.Range(l1, lBodyStart, lBodyEnd - lBodyStart - 1)
-	in Table.FromList(L, Splitter.SplitByNothing(), null, null, ExtraValues.Error)
-,
-Web.RemoveHtmlTags = let func = (HTML) =>
-    let
-        Check = if Value.Is(Value.FromText(HTML), type text) then HTML else "",
-        Source = Text.From(Check),
-        //TextRemove = Text.Replace(Text.Replace(Source, "!--",""), "--",""),
-        SplitAny = Text.SplitAny(Source,"<>"),
-        ListAlternate = List.Alternate(SplitAny,1,1,1),
-        ListSelect = List.Select(ListAlternate, each _<>"")
-    in
-        Text.Combine(ListSelect, ""),
-        documentation = [
-            Documentation.Name= "Web.RemoveHtmlTags",
-            Documentation.Description= "Remove Html Tags",
-            Documentation.LongDescription= "Removes all Html tags from a text",
-            Documentation.Category= "Web.Modification",
-            Documentation.Source= "Inspired by a solution from Bill Szysz",
-            Documentation.Author= "Imke Feldmann: www.TheBIccountant.com & Mike Carlo: PowerBI.Tips",
-            Documentation.Examples= {[  
-                Description="Function that enables one to pass in a column that has HTML tags.", 
-                Code=	     "<div>my bit of text</div>", 
-                Result=	     "my bit of text"    ]}]
-    in
-        Value.ReplaceType(func, Value.ReplaceMetadata(Value.Type(func), documentation))
-,
-Web.TableToMarkdown = (Table as table) =>
-    let
-        TableValues = Table.AddColumn(Table, "Custom", each Text.Combine(Record.FieldValues(_), " | ")),
-        HyphenLine = Text.Combine(List.Transform(Table.ColumnNames(Table), each Text.Repeat("-",Text.Length(_))), " | "),
-        CombineList = List.Combine({{Text.Combine(Table.ColumnNames(Table), " | ")}, {HyphenLine}, TableValues[Custom]}),
-        TransferToMarkdown = Text.Combine(CombineList, "#(lf)")
-    in
-        TransferToMarkdown
-,
-// Web.RemoveShortCode??
 
 
 //    ___                     _     ___  ___
