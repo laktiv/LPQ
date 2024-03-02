@@ -209,7 +209,7 @@ File.GetFilesFolder = Document(
     "File.GetFilesFolder",
     "Gets files from folder with parameters.",
     "Files.Import",
-    {[  Description="Inno.SortTablePn",
+    {[  Description="File.GetFilesFolder",
         Code =	    "LPQ[File.GetFilesFolder](""C:\Users\Laktionov.I\OneDrive\INNO\"", ""price"", ""xlsx"", ""INNO3D"", true, true, false)",
         Result =	"Table with price lists, only from RootFOlder and latest"   ]},
     (RootFolder as text, FolderName as text, ExtensionsList as any, FilterNames as any, rootOnly as logical, latestOnly as logical, optional sortNames as logical) =>
@@ -297,40 +297,34 @@ Inno.SortTablePn = Document(
             sortList = {"40", "30", "20", "16", "10", "73", "71", "21"},
             letterList = {"C", "N", "B", "M", "R"},
 
-            fltrV = if (FilterOld ?? {FilterOld=""}{1}?) = null then false else FilterOld,
+            fltrV = if (FilterOld ?? {FilterOld=""}{1}?)=null then false else FilterOld,
 
-            Filtered = if fltrV
-                then
+            Filtered = if fltrV then
                 Table.RemoveColumns(
-                Table.SelectRows(
-                Table.AddColumn(Table, "Filter",
-                    (FindStrings) =>
-                    List.AnyTrue(List.Transform(oldList, each Text.Contains(Record.Field(FindStrings, PN), _, Comparer.OrdinalIgnoreCase))))
-                , each ([Filter] = false))
-                , {"Filter"})
+                    Table.SelectRows(
+                        Table.AddColumn(Table, "Filter",
+                            (FindStrings) =>
+                            List.AnyTrue(List.Transform(oldList, each Text.Contains(Record.Field(FindStrings, PN), _, Comparer.OrdinalIgnoreCase))))
+                        , each ([Filter] = false))
+                    , {"Filter"}
+                ) else Table,
 
-                else Table,
-
-            ReplaceTable = Table.ReplaceValue(
-                Filtered,
+            ReplaceTable = Table.ReplaceValue(Filtered,
                 each Record.Field(_,PN),
                 each if Record.Field(_,PN)="TBC"
                         or Record.Field(_,PN)=null
                         or Record.Field(_,PN)=""
                             then "A00003-01D5-1234552"
                             else Record.Field(_,PN),
-                Replacer.ReplaceValue,
-                {PN}
-            ),
+                Replacer.ReplaceValue, {PN} ),
 
             Sorting = Table.Sort(ReplaceTable, {
                 { each List.PositionOf(letterList, Text.Start(Record.Field(_,PN), 1)), Order.Ascending },   // by first letter of PN
                 { each List.PositionOf(sortList, Text.Range(Record.Field(_,PN), 1,2)), Order.Ascending },   // by series
                 { each Text.Range(Record.Field(_,PN), 1,4), Order.Descending },                             // by gpu
-                { each Text.Middle(Text.Split(Record.Field(_,PN),"-"){0}, 5,1), Order.Descending },         // by fans
+                //{ each Text.Middle(Text.Split(Record.Field(_,PN),"-"){0}, 5,1), Order.Descending },       // by fans
                 { each Text.Start(Text.Split(Record.Field(_,PN),"-"){1}, 2), Order.Descending },            // by mem
-                { each Text.Select(Text.Split(Record.Field(_,PN),"-"){1}, {"X"}), Order.Descending }        // by OC
-            })
+                { each Text.Select(Text.Split(Record.Field(_,PN),"-"){1}, {"X"}), Order.Descending } })     // by OC 
         in
             Sorting)
 ,
@@ -1298,7 +1292,7 @@ Text.ReplaceByList = try (txt as text, replacementLists as list) as text => List
 //
 Inno.ParseInnoCom = (url as text) =>
     let
-        src = Table.FromColumns({Lines.FromBinary( Binary.Buffer( Web.Contents(url ) ))}),
+        src = Table.FromColumns({Lines.FromBinary( Binary.Buffer( Web.Contents(url) ))}),
         filtrTags = Table.SelectRows(src, each Text.Contains([Column1],"productBox") or Text.Contains([Column1],"<p class=""h4"">") or Text.Contains([Column1],"Part No.")),
         addCol = Table.AddColumn(filtrTags,"src", each if Text.Contains([Column1],"href") then Text.BetweenDelimiters([Column1],"href=""",""">") else Text.BetweenDelimiters([Column1], ">","</")),
         splitCols = Table.FromRows(List.Split(addCol[src], 3)),
