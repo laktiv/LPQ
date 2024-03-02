@@ -140,6 +140,12 @@ TestResults =
 
 _extensionLibrary = [
 
+
+//    ___  ___ ___ ___ _  _ ___  ___ _  _  ___ ___ ___ ___ 
+//   |   \| __| _ \ __| \| |   \| __| \| |/ __|_ _| __/ __|
+//   | |) | _||  _/ _|| .` | |) | _|| .` | (__ | || _|\__ \
+//   |___/|___|_| |___|_|\_|___/|___|_|\_|\___|___|___|___/
+//                                                         
 Document = (name as text, description as text, category as text, valueOrExample as any, optional valueIfExample as any) =>
     let
         value = if valueIfExample is null then valueOrExample else valueIfExample,
@@ -153,6 +159,35 @@ Document = (name as text, description as text, category as text, valueOrExample 
             Documentation.Category = category,
             Documentation.Examples = examples
         ])
+,
+Switch = Document(
+    "Switch",
+    "Given a value, find it's paired item <br>"&
+    "Switch(value as any, cases as list, results as list, optional default as any) <br>" &
+    "Switch(value as any, pairs as list, optional default as any)",
+    "Development",
+    { [ Description="Using separate lists", 
+        Code =		"LPQ[Switch](1, {1, 2, 3}, {""A"", ""B"", ""C""})", 
+        Result =	"A"     ],
+      [ Description="Using one paired list", 
+        Code =		"LPQ[Switch](1, {{1, ""A""}, {2, ""B""}, {3, ""C""}})", 
+        Result =	"A"     ]},
+    (value as any, casesOrPairs as list, optional resultsOrDefault as any, optional default as any) =>
+        let
+            hasPairs = List.First(casesOrPairs) is list,
+            usingPairs =
+                let
+                    targetPosition = List.PositionOf(casesOrPairs, value, Occurrence.First, (case, theValue) => theValue = case{0})
+                in
+                    if targetPosition = -1 then resultsOrDefault else casesOrPairs{targetPosition}{1},
+            usingCases =
+                let
+                    cases = casesOrPairs,
+                    results = resultsOrDefault
+                in
+                    if List.IsEmpty(cases) or List.IsEmpty(results) then default else if value = List.First(cases) then List.First(results) else @Switch(value, List.Skip(cases, 1), List.Skip(results, 1), default)
+        in
+            if hasPairs then usingPairs else usingCases)
 ,
 
 
@@ -672,7 +707,11 @@ Date.DayName = Document(
     {[  Description="Get the day name", 
         Code =		"LPQ[Date.DayName](""9/9/2016"")", 
         Result =	"Friday"    ]},
-    (date as any) => Switch(Date.DayOfWeek(DateTime.From(date)), {0, 1, 2, 3, 4, 5, 6}, {"Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"}, null)),
+    (date as any) => 
+        let Eng = {"Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"},
+            Ukr = {"Неділя","Понеділок","Вівторок","Середа","Четвер","Пятниця","Субота"},
+            Lang = Eng,
+        in  Switch(Date.DayOfWeek(DateTime.From(date)), {0,1,2,3,4,5,6}, Lang, null)),
 Date.MonthName = Document(
     "Date.MonthName",
     "Returns the English month name for a date",
@@ -728,20 +767,33 @@ List.ToText = Document(
         Code =		"LPQ[List.ToText]({ 1, 2, 3})",
         Result =	"""{1, 2, 3}"""     ]},
     (list as list) => List.Accumulate(list, "{", (state, current) => current & Text.From(current)) & "}"),
-// INNO
+List.Swap = (_,_from as number ,_to as number) => 
+    let
+        from = List.Min({_from,_to}),
+        to = List.Max({_from,_to})                        
+    in if from=to then _ else
+        List.Range(_,0,from)
+        &{_{to}}
+        &List.Range(_,from+1,to-from-1)
+        &{_{from}}
+        &List.Range(_,to+1),
+List.Shuffle = (n) => List.Accumulate({0..(n-2)},{0..n},(_,iterator)=> 
+                        List.Swap(List.Buffer(_),
+                            Number.Round(Number.RandomBetween(iterator,n)),
+                            iterator
+                            ))
+,
 List.CompareListsCheck = (ListSource as list, ListCompare as list, optional CaseIgnore as logical) =>
     //fxList = (l) => try Text.Combine( List.Transform(List.Distinct(List.Transform(l, each Text.Split(_, " "){1})), each Text.From(_)), "," ) otherwise "",
     if (CaseIgnore ?? {CaseIgnore=""}{1}?) <> null
         then List.ContainsAny(ListSource, ListCompare, (x, y) => Text.Contains(x, y, Comparer.OrdinalIgnoreCase))
-        else List.ContainsAny(ListSource, ListCompare, (x, y) => x=y)
-,
+        else List.ContainsAny(ListSource, ListCompare, (x, y) => x=y),
 List.CompareListsMatches = (ListSource as list, ListCompare as list, optional CaseIgnore as logical) =>
     //fxList = (l) => try Text.Combine( List.Transform(List.Distinct(List.Transform(l, each Text.Split(_, " "){1})), each Text.From(_)), "," ) otherwise "",
     if (CaseIgnore ?? {CaseIgnore=""}{1}?) <> null
         then List.Select(ListSource, each List.Contains(ListCompare, _, (x,y) => Text.Contains(x, y, Comparer.OrdinalIgnoreCase)))
         else List.Select(ListSource, each List.Contains(ListCompare, _, (x,y) => Text.Contains(x, y, Comparer.Equals)))
 ,
-
 
 
 //    _  _ _   _ __  __ ___ ___ ___  ___
@@ -814,7 +866,7 @@ Number.ProperNumber = Document(
 //
 Splitter.SplitTextByNonAlpha = Document(
     "Splitter.SplitTextByNonAlpha",
-    "Splits text by characters that aren't [A-Za-z]",
+    "Splits text by characters that aren't [A-Za-zА-Яа-я]",
     "Splitter.Transformation",
     {[  Description="Split text",
         Code =		"LPQ[Splitter.SplitTextByNonAlpha](""A1B,C"")",
@@ -849,68 +901,49 @@ Splitter.SplitTextByNotIn = Document(
 ,
 
 
-//    _____      _____ _____ ___ _  _
-//   / __\ \    / /_ _|_   _/ __| || |
-//   \__ \\ \/\/ / | |  | || (__| __ |
-//   |___/ \_/\_/ |___| |_| \___|_||_|
-//
-Switch = Document(
-    "Switch",
-    "Given a value, find it's paired item <br>"&
-    "Switch(value as any, cases as list, results as list, optional default as any) <br>" &
-    "Switch(value as any, pairs as list, optional default as any)",
-    "Development",
-    { [ Description="Using separate lists", 
-        Code =		"LPQ[Switch](1, {1, 2, 3}, {""A"", ""B"", ""C""})", 
-        Result =	"A"     ],
-      [ Description="Using one paired list", 
-        Code =		"LPQ[Switch](1, {{1, ""A""}, {2, ""B""}, {3, ""C""}})", 
-        Result =	"A"     ]},
-    (value as any, casesOrPairs as list, optional resultsOrDefault as any, optional default as any) =>
-        let
-            hasPairs = List.First(casesOrPairs) is list,
-            usingPairs =
-                let
-                    targetPosition = List.PositionOf(casesOrPairs, value, Occurrence.First, (case, theValue) => theValue = case{0})
-                in
-                    if targetPosition = -1 then resultsOrDefault else casesOrPairs{targetPosition}{1},
-            usingCases =
-                let
-                    cases = casesOrPairs,
-                    results = resultsOrDefault
-                in
-                    if List.IsEmpty(cases) or List.IsEmpty(results) then default else if value = List.First(cases) then List.First(results) else @Switch(value, List.Skip(cases, 1), List.Skip(results, 1), default)
-        in
-            if hasPairs then usingPairs else usingCases)
-,
-
-
 //    _____ _   ___ _    ___
 //   |_   _/_\ | _ ) |  | __|
 //     | |/ _ \| _ \ |__| _|
 //     |_/_/ \_\___/____|___|
 //
-Table.TrimHeader = (Table as table) =>
-    let hRaw = Table.ColumnNames(Table),
-        hTrim = List.Transform(hRaw, each Text.Trim(_))
-    in  if List.Count(List.Difference(hRaw, hTrim)) > 0
-            then Table.RenameColumns(Table, List.Zip({hRaw, hTrim}))
-            else Table
-,
-// Replaces a value if it matches a predicate
-Table.ReplaceValueIf = (table as table, replaceIf as function, after as any, columnNameOrList as any) =>
-    Table.ReplaceValue(table, null,after, (text, old, new)=>if replaceIf(text) then new else text, if columnNameOrList is list then columnNameOrList else {columnNameOrList})
-,
-// Splits camelCased and PascalCased column names.
-Table.SplitColumnNames = (table as table) => Table.RenameColumns(table, List.Transform(Table.ColumnNames(table), each {_, Text.SplitCamelCase(_)}))
-,
-// Splits camelCased and PascalCased text in a column.
-Table.SplitColumnText = (table as table, columns as list) => if List.Count(columns) = 0 then table else Table.TransformColumns(@Table.SplitColumnText(table, List.Skip(columns, 1)), {{List.First(columns), Text.SplitCamelCase}})
-,
-Table.TransformColumn = (table as table, column as text, transform as function) => Table.TransformColumns(table, {{column, transform}})
-,
-Table.RenameAndTransformColumn = (table, currentName as text, newName as text, transform as function) => Table.TransformColumn(Table.RenameColumns(table, {currentName, newName}), newName, transform)
-,
+shared Table.AddBlankRow = (table as table) => Table.Combine({table, Table.FromRecords({[]})}),
+shared Table.DrillIntoColumn = (table as table, columnName as text) =>
+    let FindValue = (value as any) => 
+        if value is list then
+            if List.Count(value) = 1 then @FindValue(List.First(value)) 
+            else if List.Count(value) = 0 then null
+            else error "Couldn't find single value"
+        else if value is table then
+            if Table.RowCount(value) = 1 then @FindValue(List.First(Table.ToColumns(value)))
+                                    else if Table.RowCount(value) = 0 then null 
+            else error "Couldn't find single value"
+        else  value,
+        Result = Table.TransformColumns(table, {{columnName, FindValue}})
+    in  Result,
+    
+shared Table.EnterDataFormula = Document(
+    "Table.EnterDataFormula",
+    "Convert a table into a formula that's compatible with the Enter Data UI. This function returns an expression you can copy and paste to editthe " &
+    " table using Enter Data. Paste the formula, then click the gear icon next to the step name. This is an easy way to allow people to customize a table you've queried",
+    {[ Description= "Simple table", 
+        Code=        "Web.Page(Web.Contents(""https://en.wikipedia.org/wiki/List_of_Super_Bowl_champions"")){3}[Data]", 
+        Result=      "Table.FromRows(Json.Document(Binary.Decompress(Binary.FromText(""jVVtb9s2EP4rRD4aRqI3S9TH2Gm7ZWkb1MGGom6Aq83IhBkyoOik2a8fT6Ski6Fu+yDdWea9Pffc8du3M342P7uVzrU/jrbZs7UTQgnb+q+lfzL/nFeLxIu0ror55pglWcK8viA6J3o96vVwJksSqvNRT5Ognn2fh1yuQClo2cq8/DCvmMbCPzmmUWaLkEYyn2GkNIhFEFUQvBN1FkQexGI2uP8kXtg73SjQO3YLzkrjMEgRn/NFEmrlpL66JLmnRM+JXhC9IvWR82lxWqvQz8KypTV6a9pYJxZ5nlex1mpMg5dEp98p5OR7TWEmqaYLkgY2eQ2avbegt7LdGlbUof1dApgLz/MASQCcF0EEpH3wDuJiNkfXWUAabT9YITRbwqvHeXsIPovBZ4S5jDWl3kdZjbqHfBbKmXUkGd1iA78ae2AfJGg36ZRH46QzTqKIrtLR1Wc4IA82FzemZZe68cRv2ReQu5Bs3vO/7JOt5kixEt886d45Vp1kg8u/oN1L3Tij2Rexaw9ST3qqAj95FIGmPFC4Jhl+lPAo2ZVRT/vgKeuHoeg9pWT2MqLnhCDkO6ccROSWoJx8NFZsLn7XO48pPBklcQCV6yNmdDJKPrbJj+LIejol9UmUj1Jr0RoH7E/pQWnQc9LPXNJ7ronngEkVyFaVszHh48MDKMOWUqlJN3VCZoDAUxMY6pwkiIASCmwu1u6c3ZijRDY8tpFeHQh5nIUq0r4O3Iotw//WApxTgnm5h5fDhHW3DGdhKDtRBOuMdsNHfhZDy7vCYoEdo8dhzkghePQP0C3uT+le2WovxUOfQfqmieX8Hkeuvh8M/eEtNB5XAXbShoesk3JM93YvFewE0hPYO2g8ejHbjHaExxEkha6kXzdag5M+oG5ATRuS9nF+UukKrGeqBr9ftNuHmT3xgDs6LKZ4BaR0g1wL1xdKAUaK3w+n7+DxCbo1tjxut6CFsFNGuAXehvhslfC9YGuQejIOjslogkv4SgrfgNUebDOWk77hNh1f/OfS+RXmx+o9qK3R0zZ8jHIncA5bIdiddPCL8/VpDCv/Nh5nD/jO460mrPBSD1Hw10qJZ9Fdsf5qexmi4IOuUxzXT5uLy8HgSjhrpGM30vyP09f+PmmNfvYLQLBraI5g/9voN3NscS3fiZ/wbzG+/wM="", BinaryEncoding.Base64), Compression.Deflate)), let _t = ((type text) meta [Serialized.Text = true]) in type table [Appearances = _t, Team = _t, Wins = _t, Losses = _t, Winning percentage = _t, Season(s) = _t])"    ]},
+    (table as table) =>
+        let
+            Encoded = Table.JsonEncode(table),
+            ColumnMeta= "[" & Text.Range(List.Accumulate(Table.ColumnNames(table), "", (state, current) => state & ", " & current & " = _t"), 2) & "]",
+            Text = 
+                "Table.FromRows(Json.Document(Binary.Decompress(Binary.FromText(""" & Encoded & """, BinaryEncoding.Base64), Compression.Deflate))," & 
+                " let _t = ((type text) meta [Serialized.Text = true]) in type table " & ColumnMeta & ")"
+        in
+            Text),
+// if fieldNames aren't specified, use the field names from the first row of the column.
+// Perform a cross join of lists. Example usage:
+// Table.FromListCrossJoin({ {ColorsTable[ColorName], "Color"}, {NumbersTable[Number], "Number"}})
+// Will give me a new table with two columns, "Color" and "Number" which contains one row for each possible
+// combination of colors and numbers
+// Table.FromListCrossJoin({{"Red", "Blue"}, "Color"}, {{1,2,3}, "Number"}}) = 
+//    Table.FromRecords({[Color="Red", Number=1],[Color="Red", Number = 2],[Color="Red", Number = 3],[Color="Blue", Number=1],[Color="Blue", Number=2],[Color="Blue", Number=3]})
 Table.FromListCrossJoin = (listColumnNamePairs as any) =>
    let remainingPairs = List.Skip(listColumnNamePairs, 1),
        current = List.First(listColumnNamePairs),
@@ -937,7 +970,34 @@ Table.JsonEncode = (table as table) =>
         Compressed = Binary.Compress(Json, Compression.Deflate),
         Encoded = Binary.ToText(Compressed, BinaryEncoding.Base64)
     in  Encoded,
-
+// Replaces a value if it matches a predicate
+Table.ReplaceValueIf = (table as table, replaceIf as function, after as any, columnNameOrList as any) =>
+    Table.ReplaceValue(table, null,after, (text, old, new)=>if replaceIf(text) then new else text, if columnNameOrList is list then columnNameOrList else {columnNameOrList}),
+// Splits camelCased and PascalCased column names.
+Table.SplitColumnNames = (table as table) => Table.RenameColumns(table, List.Transform(Table.ColumnNames(table), each {_, Text.SplitCamelCase(_)})),
+// Splits camelCased and PascalCased text in a column.
+Table.SplitColumnText = (table as table, columns as list) => if List.Count(columns) = 0 then table else Table.TransformColumns(@Table.SplitColumnText(table, List.Skip(columns, 1)), {{List.First(columns), Text.SplitCamelCase}}),
+Table.TransformColumn = (table as table, column as text, transform as function) => Table.TransformColumns(table, {{column, transform}}),
+Table.RenameAndTransformColumn = (table, currentName as text, newName as text, transform as function) => Table.TransformColumn(Table.RenameColumns(table, {currentName, newName}), newName, transform)
+,
+Table.ToXml = (t) =>
+        "<table>"&
+        {List.Accumulate(
+            Table.ToRecords(t),
+            "",
+            (state,curr)=>state&
+            "<row>"&
+                {List.Accumulate(
+                        Record.FieldNames(curr),
+                "",
+                (s,c)=>s&Text.Format("<#{0}>#{1}</#{0}>",
+                                    {c,
+                                Record.Field(curr,c)})
+                )}
+            &"</row>"
+        )}
+    &"</table>"
+,
 
 Table.NumberColumns = (table as table, columns as list) as table =>
     let
@@ -946,6 +1006,13 @@ Table.NumberColumns = (table as table, columns as list) as table =>
         NumberNotNull = (number) => if number is null then 0 else number,
         DataNoNulls = Table.TransformColumns( DataWithTypes, List.Zip({ columns, List.Repeat({NumberNotNull}, List.Count(columns)), NumberTypes }) )
     in  Table.ReplaceErrorValues(DataNoNulls, List.Transform(columns, each {_,0}))
+,
+Table.TrimHeader = (Table as table) =>
+    let hRaw = Table.ColumnNames(Table),
+        hTrim = List.Transform(hRaw, each Text.Trim(_))
+    in  if List.Count(List.Difference(hRaw, hTrim)) > 0
+            then Table.RenameColumns(Table, List.Zip({hRaw, hTrim}))
+            else Table
 ,
 // Renaming columns
 Table.RenameColumn = Document(
@@ -1077,8 +1144,6 @@ Table.RemoveEmptyColumns = (tbl as table) =>
 Table.ReplaceAllErrorsInTable = (tbl as table, optional replacer_value) => Table.ReplaceErrorValues(tbl, List.Transform(Table.ColumnNames(tbl), each {_, replacer_value}))
 ,
 
-
-
 Table.RunningTotalfunction = (TabName as table, RT_Amt_ColumnName as text, Added_Col_RT_Name as text)=>
     /**
     *   TabName = Name of the Table to implement running total on
@@ -1123,8 +1188,6 @@ Table.GroupedRunningTotal = (values as list, grouping as list) as list =>
     in
         GRTList
 ,
-
-
 Table.GetParameter = (ParameterName as text) =>
     // Query written by Ken Puls, FCPA, FCMA, MS MVP (Excel) (www.excelguru.ca)
     // Injected into this workbook via Monkey Tools at the model designer's request
@@ -1151,7 +1214,6 @@ Table.GetParameter = (ParameterName as text) =>
                 else Record.Field(ParamRow{0},"Value")
     in  Value
 ,
-
 
 
 //      _   ___ ___    ___   _____
@@ -1195,7 +1257,6 @@ fnCheckInList = Document(
         in
             try result otherwise null)
 ,
-
 Text.RegExp = (txt as text, regex as text, delim as text) =>
     let RegExp =
         Web.Page(
@@ -1224,7 +1285,6 @@ Text.GetMatch = (Text as text, List as list) =>
 ,
 
 
-
 //    _____ _____  _______
 //   |_   _| __\ \/ /_   _|
 //     | | | _| >  <  | |
@@ -1233,9 +1293,11 @@ Text.GetMatch = (Text as text, List as list) =>
 Text.Alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz" & "АБВГДЕЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯабвгдежзийклмнопрстуфхцчшщъыьэюя",
 Text.AlphaNumeric = Text.Alphabet & "0123456789",
 Text.FromList = (list as list) => List.Accumulate(list, "", (state, current) => state & Text.From(current)),
+Text.IsNumber = (text as text) => try Number.FromText(text) is number otherwise false,
 // Is text all uppercase? returns false if any non-alpha characters are present
 Text.IsUpperCase = (text as text) => List.AllTrue(List.Transform(Text.ToList(text), (letter)=>Text.Contains(Text.Alphabet, letter) and letter = Text.Upper(letter))),
 Text.IsAlpha = (text as text) => List.MatchesAll(Text.ToList(text), each Text.Contains(Text.Alphabet, _)),
+Text.RemoveExtraWhitespace = (text as text) => Text.Combine(Splitter.SplitTextByWhitespace()(text)," "),
 // Splits camelCased and PascalCased text and separates by a space. Ex: "thisIsAColumn" -> "this Is A Column"
 Text.SplitCamelCase = (text as nullable text) => if text is null then null else List.Accumulate(Text.ToList(text),"", (state, current) =>
     let
@@ -1246,8 +1308,25 @@ Text.SplitCamelCase = (text as nullable text) => if text is null then null else 
                     and not Ignore(current) 
                     and Text.IsUpperCase(current)
                 then " " else "" ) &
-        current)
-,
+        current),
+Text.SplitOnNotIn = (line as nullable text, validCharacters as text) => Splitter.SplitTextByNotIn(validCharacters)(line),
+Text.SplitOnNonAlpha = (line as nullable text) =>
+  if line is null then null else List.Accumulate(Text.ToList(line), {null} , (state, current) => 
+    let
+      doSkip = not Text.Contains(Text.Alphabet, current),
+      lastItem = List.Last(state),
+      appendLast = lastItem<>null
+    in
+      if doSkip then 
+        if lastItem is null then 
+          state 
+        else 
+          List.Combine({state, {null}})
+      else
+        if appendLast then
+          List.Combine({List.RemoveLastN(state, 1), {lastItem & current}})
+        else  
+          List.Combine({List.RemoveLastN(state, 1), {current}})),
 Text.Substring = (text as text, start as number, optional count as number) =>
    let
       start = if start >= 0 then start else error "start index should be >= 0",
@@ -1255,7 +1334,6 @@ Text.Substring = (text as text, start as number, optional count as number) =>
       textList = Text.ToList(text),
       substr = Text.FromList(List.FirstN(List.Skip(textList, start), end - start))
    in substr,
-Text.IsNumber = (text as text) => try Number.FromText(text) is number otherwise false,
 Text.PositionAfter = (text as nullable text, substring as text) =>
     let
         firstIndex = Text.PositionOf(text, substring),
@@ -1269,8 +1347,88 @@ Text.Until = (text as text, endDelimiter as text, optional startIndex as number)
         delimPosition = if Text.PositionOf(textFromStart, endDelimiter) >= 0 then Text.PositionOf(textFromStart, endDelimiter) else Text.Length(textFromStart)
     in
         if text is null then null else Text.Range(textFromStart, 0, delimPosition),
-//
-Text.RemoveExtraWhitespace = (text as text) => Text.Combine(Splitter.SplitTextByWhitespace()(text)," "),
+Text.AsciiOnly = (s as text) as text =>
+    let
+        Listified = Text.ToList(s),
+        Numbered = List.Transform(Listified, each Character.ToNumber(_)),
+        Filtered = List.Select(Numbered, each _ <= 255),
+        Stringified = List.Transform(Filtered, each Character.FromNumber(_)),
+        Joined = Text.Combine(Stringified, ""),
+        Return = Joined
+    in
+        Return,
+
+Text.Between = (Haystack as text, After as text, Before as text) as text =>
+    let
+        CutAfter = Text.Split(Haystack, After),
+        CutBefore = Text.Split(CutAfter{1}, Before),
+        Needle = if List.Count(CutAfter) > 1
+        then (if List.Count(CutBefore) > 1 then CutBefore{0} else Error.Record("FindTextFailed","The text did not contain the keyword " & Before, Haystack))
+        else error Error.Record("FindTextFailed","The text did not contain the keyword " & After, Haystack)
+    in Needle,
+
+Text.ContainsAny = (str as text, needles as list) as logical =>
+    let count = List.Count(needles)
+    in  List.AnyTrue(
+	    List.Generate(
+		    ()=>[i=0],
+		    each [i] < count,
+		    each [i=[i]+1],
+		    each Text.Contains(str,needles{[i]}) )),
+
+Text.Count = (Haystack as text, Needle as text) as number =>
+    List.Count(Text.Split(Haystack, Needle)) - 1,
+
+Text.EachBetween = (Haystack as text, After as text, Before as text) as list =>
+    let
+        CutAfter = Text.Split(Haystack, After),
+	    SkipFirst = List.Skip(CutAfter),
+        CutEach = List.Transform(SkipFirst, each Text.Split(_, Before){0})
+    in 
+        CutEach,
+
+Text.EachFromTo = (Haystack as text, After as text, Before as text) as text =>
+    let CutAfter = Text.Split(Haystack, After),
+	    SkipFirst = List.Skip(CutAfter),
+        CutEach = List.Transform(SkipFirst, each After & Text.Split(_, Before){0} & Before)
+    in  CutEach,
+
+Text.FromTo = (Haystack as text, From as text, UpTo as text) as text =>
+    let
+        CutAfter = Text.Split(Haystack, From),
+        CutBefore = Text.Split(CutAfter{1}, UpTo),
+        Needle = if List.Count(CutAfter) > 1
+        then (if List.Count(CutBefore) > 1 then From & CutBefore{0} & UpTo else Error.Record("FindTextFailed","The text did not contain the keyword " & UpTo, Haystack))
+        else error Error.Record("FindTextFailed","The text did not contain the keyword " & From, Haystack)
+    in Needle,
+
+Text.RemoveSymbols = (inputtext as text) as text =>
+    let
+        //get a list of lists containing the numbers of Unicode punctuation characters
+        numberlists = {{0..31},{33..47},{58..64},{91..96},{123..191}},
+        //turn this into a single list
+        combinedlist = List.Combine(numberlists),
+        //get a list of all the punctuation characters that these numbers represent
+        punctuationlist = List.Transform(combinedlist, each Character.FromNumber(_)),
+        //some text to test this on
+        //inputtext = "Hello! My name is Chris, and I'm hoping that this *cool* post will help you!",
+        //the text with punctuation removed
+        outputtext = Text.Remove(inputtext, punctuationlist)
+    in
+        outputtext,
+
+Text.ReplaceAll = (str as text, Replacements as list) as text =>
+    let count = List.Count(Replacements)
+    in List.Last(
+	    List.Generate(
+		    ()=>[i=0, s=str],
+		    each [i] <= count,
+		    each [
+			    s=Text.Replace([s],Replacements{[i]}{0},Replacements{[i]}{1}),
+			    i=[i]+1
+		    ],
+		    each [s] ))
+,
 Text.PowerTrim = (text as text, optional char_to_trim as text) =>
     let
         char = if char_to_trim = null then " " else char_to_trim,
@@ -1280,8 +1438,6 @@ Text.PowerTrim = (text as text, optional char_to_trim as text) =>
         Text.Combine(removeblanks, char),
 Text.ReplaceByList = try (txt as text, replacementLists as list) as text => List.Accumulate(replacementLists, txt, (s,x) => Text.Replace(s,x{0},x{1})) otherwise null
 ,
-
-
 
 
 //     ___ ___  ___  ___     _   _  _ ___   __      _____ ___
@@ -1456,10 +1612,117 @@ Value.TypeText = (value as any) =>
     if value is time then "time" else
     if value is type then "type" else
     if value is any then "any"
-    else error "unknown -- not a primitive type!"
+    else error "unknown -- not a primitive type!",
 
-]
+Value.ToText = (Val as any, optional RecursTypes as logical) as text =>
+    let RecursTypes = if (RecursTypes<>null) then RecursTypes else false,
+        Tried = (try Val),
+        Value = if Tried[HasError] then Tried[Error] else Tried[Value],
+        CaseValues = {
+            { (x)=> Value.Is(x, type type), Type.ToText(Value, RecursTypes) },
+            { (x)=> Value.Is(x, type function),
+                let
+                    Type = Value.Type(Value),
+                    Params = Type.FunctionParameters(Type),
+                    Reqd = Type.FunctionRequiredParameters(Type),
+                    Ret = Type.FunctionReturn(Type)
+                in
+                "function (" &
+                Record.TransformJoin(Params, (k,v) =>
+                    (if List.PositionOf(Record.FieldNames(Params), k) >= Reqd then "optional " else "") &
+                    k & " as " & @Value.ToText(v, RecursTypes)
+                )
+                & ") as " & @Value.ToText(Ret, RecursTypes)
+            },
+            { (x)=> Value.Is(x, type table), "#table(" & @Value.ToText(Table.ColumnNames(Value), RecursTypes) & ", " & @Value.ToText(Table.ToRows(Value), RecursTypes) & ")"},
+            { (x)=> Value.Is(x, type record), "[" &
+                Record.TransformJoin(Value, (k,v) => k & "=" & @Value.ToText(v, RecursTypes))
+            & "]" },
+            { (x)=> Value.Is(x, type list), "{" & Text.Combine(List.Transform(Value, each @Value.ToText(_, RecursTypes)), ", ") & "}" },
+            { (x)=> x = null, "null" },
+            { (x)=> true, Expression.Constant(Value) }
+        },
+        Return = List.First(List.Select(CaseValues, each _{0}(Value))){1}
+    in  Return,
+
+Value.TypeToText = (Value as any, optional Recurs as logical) as text =>
+    let
+        Recurs = if (Recurs<>null) then Recurs else false,
+        Type = Value.Type(Value),
+        ToText = if Value.Is(Value, type type) and Recurs then
+            "type " & Type.ToText(Value, Recurs)
+        else
+            Type.ToText(Type, Recurs),
+        Return = ToText
+    in Return,
+
+Value.WaitFor = (producer as function, interval as function, optional count as number) as any =>
+    let list = List.Generate(
+            //start: first try, no result
+            () => {0, null},
+            //condition: stop if we have the result (try count null'd) or we've exceeded the max tries
+            (state) => state{0} <> null and (count = null or state{0} < count),
+            //next: stop try tally if we have our result, otherwise check again and tally a try
+            (state) => if state{1} <> null
+                then {null, state{1}}
+                else {1 + state{0}, Function.InvokeAfter(() => producer(state{0}), interval(state{0}))},
+            //transformer: only return the result, not try tally
+            (state) => state{1})
+    in  List.Last(list)
 ,
+
+
+//     ___ _____ _  _ ___ ___ 
+//    / _ \_   _| || | __| _ \
+//   | (_) || | | __ | _||   /
+//    \___/ |_| |_||_|___|_|_\
+//                            
+Type.ToText = (Type as any, optional Recurs as logical) as text =>
+    let Recurs = if (Recurs<>null) then Recurs else false,
+        CaseValues = {
+            { (x)=> (try x)[HasError], "error" },
+            { (x)=> Type.Is(x, type type), "type"},    //if Recurs then  else 
+            { (x)=> Type.Is(x, type function), "function"},
+            { (x)=> Type.Is(x, type table), if Recurs then "table " & @Type.ToText(Type.TableRow(NonNull), Recurs) else "table"},
+            { (x)=> Type.Is(x, type record), if Recurs then
+                let
+                    Record = Type.RecordFields(NonNull)
+                in "[" & Record.TransformJoin(Record, (k,v) =>
+                    (if v[Optional] then "optional " else "") & Expression.Identifier(k) & " = " & @Type.ToText(v[Type], Recurs)
+                ) & "]"
+            else "record"},
+            { (x)=> Type.Is(x, type list), if Recurs then "{" & @Type.ToText(Type.ListItem(NonNull), Recurs) & "}" else "list"},
+            { (x)=> Type.Is(x, type binary), "binary"},
+            { (x)=> Type.Is(x, type logical), "logical"},
+            { (x)=> Type.Is(x, type number), "number"},
+            { (x)=> Type.Is(x, type text), "text"},
+            { (x)=> Type.Is(x, type date), "date"},
+            { (x)=> Type.Is(x, type time), "time"},
+            { (x)=> Type.Is(x, type datetime), "datetime"},
+            { (x)=> Type.Is(x, type datetimezone), "datetimezone"},
+            { (x)=> Type.Is(x, type duration), "duration"},
+            { (x)=> Type.Is(type anynonnull, x), "anynonnull"},
+            { (x)=> Type.Is(type null, x), "null"},
+            { (x)=> Type.Is(None.Type, x), "none"},
+            { (x)=> true, "?"}
+        },
+        NonNull = Type.NonNullable(Type),
+        Return = if Type.Is(type any, Type) then "any"
+        else (if Type.IsNullable(Type) then "nullable " else "")
+        & List.First(List.Select(CaseValues, each _{0}(NonNull))){1}
+    in  Return,
+
+Record.TransformJoin = (Rec as record, Lambda as function, optional Delimiter as text) as text =>
+    let Delimiter = if (Delimiter<>null) then Delimiter else ", ",
+        Keys = Record.FieldNames(Rec),
+        Transformed = List.Transform(Keys, each Lambda(_, Record.Field(Rec,_))),
+        Combined = Text.Combine(Transformed, Delimiter),
+        Return = Combined
+    in  Return
+,
+
+
+],
 
 Result = _extensionLibrary
 
