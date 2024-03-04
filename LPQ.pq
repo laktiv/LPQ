@@ -548,7 +548,29 @@ Text.BulkTableReplace =
 //   | (_ |  _/ |_| | > _|_ _| | .` |\ V /  \__ \ _||   /| || _|\__ \
 //    \___|_|  \___/  \_____|  |_|\_| \_/   |___/___|_|_\___|___|___/
 //
-//   Checks GPU
+// Search in the Model Name
+Inno.fnGetGpuFromName = (Model as any) => 
+    let listReplacement = {
+            {"|"," "},{","," "},{","," "},{"-"," "},
+            {"RTX","RTX "},
+            {"2G ","2GB "},{"G ","GB "},
+            {"TI"," TI"},{"TI-","TI "},
+            {"SUPER"," SUPER"}  },
+        ModelRep = Text.ReplaceByList(Text.Upper(Text.BeforeDelimiter(Model,"GB")), listReplacement),
+        List = Text.Split(Text.PowerTrim(ModelRep)," "),        
+        ListSearch = List.Select(List, (x) => List.AnyTrue(List.Transform({"RTX","GTX","TI","SUPER"}, each x = _))),
+        iRow = List.Zip({List, {0..-1 + List.Count(List)}}),
+        Filtered = List.Select(iRow, each List.Contains(ListSearch, _{0})),
+        Max = if List.Count(Filtered)>1 then List.Last(Filtered){1} else List.First(Filtered){1} +1,
+        Generate = List.Generate( ()=>List.First(Filtered){1}, each _ <= Max, each _ + 1),
+        SelectL = List.Select(iRow, each List.Contains(Generate, _{1}))
+    in  try Text.ReplaceByList(Text.Combine(List.Transform(SelectL, each _{0})," "), {{"TI","Ti"},{"Ti Ti","Ti"},{"SUPER","Super"},{"Super Super","Super"}}) otherwise null,
+Inno.fnGetMemoryFromName = (Model as any) => try Number.From(
+        List.RemoveItems(List.Transform(List.Select(Text.Split(Text.ReplaceByList(Model,{{"-O"," "},{"-8"," 8"},{"G-","G "},{"GB-","GB "},{" GB","GB"}})," "), 
+        (x) => List.AnyTrue(List.Transform({"GB","G"}, each Text.EndsWith(x,_)))), each Text.Select(_,{"0".."9"})),{"",null}){0})
+    otherwise null,
+Inno.fnGetOcFromName = (Model as any) => if List.CompareListsCheck(Text.Split(Text.Lower(Model)," "), {"oc","ichill","overclock"}, false) then "OC" else null,
+// Checks GPU
 fxGpuSeries = (Product as text) =>
     let p = Text.Lower(Product), //Text.Remove(, {" "})
         posG = if Text.Contains(p, "RTX") then Text.PositionOf(p, "RTX")
