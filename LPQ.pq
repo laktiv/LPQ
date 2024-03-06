@@ -1020,7 +1020,6 @@ Table.ToXml = (t) =>
         )}
     &"</table>"
 ,
-
 Table.NumberColumns = (table as table, columns as list) as table =>
     let
         NumberTypes = List.Repeat({type number}, List.Count(columns)),
@@ -1086,7 +1085,6 @@ Table.RenameColumnsByOrder = (InputTable as table, ColumnNumbers as list, NewCol
     in
         RenamedColumns
 ,
-
 Table.TrimHeaders = (Table as table) =>
     let hRaw = Table.ColumnNames(Table),
         hTrim = List.Transform(hRaw, each Text.Trim(_))
@@ -1119,7 +1117,6 @@ Table.SelectHeaders = (List as list, ColumnStart as text, ColumnEnd as text, opt
         range = List.Range(List, pos1 + 1, pos2 - pos1 - 1)
     in  if Index=null then range else List.Union({{Index}, range})
 ,
-
 Table.RemoveEmptyRows = (tbl as table) =>
     // return a table with empty rows removed
     let
@@ -1165,7 +1162,24 @@ Table.RemoveEmptyColumns = (tbl as table) =>
 // return a table with all errors replaced with specified value or null
 Table.ReplaceAllErrorsInTable = (tbl as table, optional replacer_value) => Table.ReplaceErrorValues(tbl, List.Transform(Table.ColumnNames(tbl), each {_, replacer_value}))
 ,
-
+// Sort table
+Table.SortColumnByList = Document(
+    "Table.SortColumnByList",
+    "Sort table's column text by List.",
+    "Table.Sorting",
+    {[  Description="Sort table's column text by List.",
+        Code =		"LPQ[Table.SortColumnByList](Table, ""Category"", ""{""File"",""Edit""}"", True)",
+        Result =	"Sorted table Table in column 'Category' by List sort order Ascending."     ]},
+    (Table as table, ColumnName as text, ListSort as list, Order as logical) => 
+        Table.RemoveColumns(
+            Table.Sort( 
+                Table.AddIndexColumn(Table,"i",0,1,Int64.Type), {
+                    {each List.PositionOf(ListSort, Record.Field(_,ColumnName)), if Order then Order.Ascending else Order.Descending },
+                    {"i",Order.Ascending}   }
+                ), 
+            {"i"}
+        ),
+// Running Totals
 Table.RunningTotalfunction = (TabName as table, RT_Amt_ColumnName as text, Added_Col_RT_Name as text)=>
     /**
     *   TabName = Name of the Table to implement running total on
