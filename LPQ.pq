@@ -1178,7 +1178,8 @@ Table.SortColumnByList = Document(
                     {"i",Order.Ascending}   }
                 ), 
             {"i"}
-        ),
+        )
+),
 // Running Totals
 Table.RunningTotalfunction = (TabName as table, RT_Amt_ColumnName as text, Added_Col_RT_Name as text)=>
     /**
