@@ -262,7 +262,7 @@ File.GetFilesFolder = Document(
                     else
                         try List.Transform(Text.Split(FilterNames, ","), each Text.Trim(_))
                         otherwise {""},
-            Folder = Folder.Files(if Text.EndsWith(RootFolder,"\") then RootFolder&"\" else RootFolder & Name),
+            Folder = Folder.Files(if not Text.EndsWith(RootFolder,"\") then RootFolder&"\" else RootFolder & Name),
 
             fnTable = (Table as table) as table =>
                 let ListComb = Table.AddColumn(Table, "my", each
