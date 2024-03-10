@@ -321,8 +321,8 @@ File.GetFilesFolder = Document(
 ,
 Inno.SortTablePn = Document(
     "Inno.SortTablePn",
-    "Returns sorted table by INNO partnumbers in proper order. Also could filter-out old models.",
-    "Products.Specs",
+    "Returns sorted table by INNO3D partnumbers in proper order. Also could filter-out old models.",
+    "Table.Transformation",
     {[  Description="Inno.SortTablePn",
         Code =		"LPQ[Inno.TableTypes](Table, ""pn"", true)",
         Result =	"New sorted table by column 'pn' with old filtered."    ]},
@@ -645,7 +645,7 @@ tblBrandsFans =
         Lower = Table.TransformColumns(Table, {
             {"brand", Text.Lower, type text},
             {"series", Text.Lower, type text} })
-    in  Lower
+    in  Table.Buffer( Lower )
 ,
 //Grouped table by Brand/Series and # Fans
 tblBrandsFansGrouped =
@@ -653,7 +653,7 @@ tblBrandsFansGrouped =
         Lower = Table.TransformColumns(Table, {
             {"brand", Text.Lower, type text},
             {"series", Text.Lower, type text} })
-    in  Lower
+    in  Table.Buffer( Lower )
 ,
 // INNO FANS
 tblInnoFans =
@@ -792,7 +792,7 @@ List.ToText = Document(
         Code =		"LPQ[List.ToText]({ 1, 2, 3})",
         Result =	"""{1, 2, 3}"""     ]},
     (list as list) => List.Accumulate(list, "{", (state, current) => current & Text.From(current)) & "}"),
-List.Swap = (_,_from as number ,_to as number) =>
+    List.Swap = (_,_from as number ,_to as number) =>
     let
         from = List.Min({_from,_to}),
         to = List.Max({_from,_to})
@@ -802,11 +802,11 @@ List.Swap = (_,_from as number ,_to as number) =>
         &List.Range(_,from+1,to-from-1)
         &{_{from}}
         &List.Range(_,to+1),
-List.Shuffle = (n) => List.Accumulate({0..(n-2)},{0..n},(_,iterator)=>
-                        List.Swap(List.Buffer(_),
-                            Number.Round(Number.RandomBetween(iterator,n)),
-                            iterator
-                            ))
+        List.Shuffle = (n) => List.Accumulate({0..(n-2)},{0..n},(_,iterator)=>
+                                List.Swap(List.Buffer(_),
+                                    Number.Round(Number.RandomBetween(iterator,n)),
+                                    iterator
+                                    ))
 ,
 List.CompareListsCheck = (ListSource as list, ListCompare as list, optional CaseIgnore as logical) =>
     //fxList = (l) => try Text.Combine( List.Transform(List.Distinct(List.Transform(l, each Text.Split(_, " "){1})), each Text.From(_)), "," ) otherwise "",
