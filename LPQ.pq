@@ -683,6 +683,14 @@ Date.DateFromISOwn = Document(
             w1 = if Date.AddDays(wn1Start,3) < #date(yr,1,1) then Date.AddDays(wn1Start,7) else wn1Start
             //-2 if not 01.01.01 start of the year(?)
         in Date.AddDays(w1, 7*(wn-1)) ),
+DateTime.FromUnix = Document(
+    "DateTime.FromUnix",
+    "Converts UNIX timestamp to DateTime.",
+    "Date.Transformation",
+    {[  Description="Converts UNIX timestamp to DateTime.",
+        Code =		"LPQ[DateTime.FromUnix](""1710291332078"")",
+        Result =	"2024-03-13T00:55:32.0780000"   ]},
+    (ts) => #datetime(1970,1,1,0,0,0) + #duration(0,0,0,Number.FromText(ts)/1000) ),
 // Basic calendar
 Date.Calendar = Document(
     "Date.Calendar",
