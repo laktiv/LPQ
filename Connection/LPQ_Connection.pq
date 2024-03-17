@@ -1,0 +1,1 @@
+Expression.Evaluate(Text.FromBinary(Web.Contents(Json.Document(Web.Contents("https://api.github.com/gists/700a6d65e098189881ecd77e585b233a"))[files][LPQ.pq][raw_url])),#shared)
