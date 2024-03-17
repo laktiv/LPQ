@@ -140,26 +140,22 @@ TestResults =
 
 _extensionLibrary = [
 
-
-//    ___  ___ ___ ___ _  _ ___  ___ _  _  ___ ___ ___ ___
-//   |   \| __| _ \ __| \| |   \| __| \| |/ __|_ _| __/ __|
-//   | |) | _||  _/ _|| .` | |) | _|| .` | (__ | || _|\__ \
-//   |___/|___|_| |___|_|\_|___/|___|_|\_|\___|___|___|___/
-//
+/**   ___  ___ ___ ___ _  _ ___  ___ _  _  ___ ___ ___ ___
+*    |   \| __| _ \ __| \| |   \| __| \| |/ __|_ _| __/ __|
+*    | |) | _||  _/ _|| .` | |) | _|| .` | (__ | || _|\__ \
+*    |___/|___|_| |___|_|\_|___/|___|_|\_|\___|___|___|___/
+**/
 Document = (name as text, description as text, category as text, valueOrExample as any, optional valueIfExample as any) =>
-    let
-        value = if valueIfExample is null then valueOrExample else valueIfExample,
+    let value = if valueIfExample is null then valueOrExample else valueIfExample,
         examples = if valueIfExample is null then {} else valueOrExample,
         category = if category is null then {} else category
-    in
-        Value.ReplaceType(value, Value.Type(value) meta [
+    in  Value.ReplaceType(value, Value.Type(value) meta [
             // [Description="", Code="", Result=""]
             Documentation.Name = name,
             Documentation.Description= description,
             Documentation.Category = category,
             Documentation.Examples = examples
-        ])
-,
+        ]),
 Switch = Document(
     "Switch",
     "Given a value, find it's paired item <br>"&
@@ -187,15 +183,14 @@ Switch = Document(
                 in
                     if List.IsEmpty(cases) or List.IsEmpty(results) then default else if value = List.First(cases) then List.First(results) else @Switch(value, List.Skip(cases, 1), List.Skip(results, 1), default)
         in
-            if hasPairs then usingPairs else usingCases)
-,
+            if hasPairs then usingPairs else usingCases),
 
 
-//    ___ _  _ _  _  ___
-//   |_ _| \| | \| |/ _ \
-//    | || .` | .` | (_) |
-//   |___|_|\_|_|\_|\___/
-//
+/**   ___ _  _ _  _  ___
+*    |_ _| \| | \| |/ _ \
+*     | || .` | .` | (_) |
+*    |___|_|\_|_|\_|\___/
+**/
 // Extended script loader with auto data types
 File.GetExcelDataFile = Document(
     "File.GetExcelDataFile",
@@ -238,8 +233,7 @@ File.GetExcelDataFile = Document(
                 ConvertedTable,
             Result = fnDetectAndTransformTypes(dataTable)
         in
-            Result)
-,
+            Result),
 File.GetFilesFolder = Document(
     "File.GetFilesFolder",
     "Gets files from folder with parameters.",
@@ -317,8 +311,7 @@ File.GetFilesFolder = Document(
 
             Result = Table.SelectColumns(selectLast, {"Folder Path","Name"})
         in
-            Result)
-,
+            Result),
 Inno.SortTablePn = Document(
     "Inno.SortTablePn",
     "Returns sorted table by INNO3D partnumbers in proper order. Also could filter-out old models.",
@@ -360,8 +353,7 @@ Inno.SortTablePn = Document(
                 { each Text.Middle(Text.Split(Record.Field(_,PN),"-"){0}, 5,1), Order.Descending },         // by fans
                 { each Text.Select(Text.Split(Record.Field(_,PN),"-"){1}, {"X"}), Order.Descending } })     // by OC
         in
-            Sorting)
-,
+            Sorting),
 Inno.TableTypes = Document(
     "Inno.TableTypes",
     "Converts types of columns in the table",
@@ -403,8 +395,13 @@ Inno.TableTypes = Document(
                         )
                     )
                 else Type
-        in  Result)
-,
+        in  Result),
+Inno.CleanTable = (Table as table) =>
+    let order = {"Name","customer","country","pn","product","gpu","quantity","d_date","d_week","d_month","d_year","partner"},
+        headers = Table.ColumnNames(Table),
+        Quantity = Table.SelectRows(Table, each [quantity]<>0 and [quantity]<>null and [quantity]<>"" )
+    in  Table.SelectColumns(Quantity, List.RemoveMatchingItems(order, List.Difference(order,headers)) ),
+// Online
 Inno.Online = Document(
     "Inno.Online",
     "Table for calculations.",
@@ -412,11 +409,11 @@ Inno.Online = Document(
     {[  Description="Margin, VAT, Currencies",
         Code =		"Tables",
         Result =	"Table"     ]},
-    ImportPq.GitHubRaw("https://raw.githubusercontent.com/laktiv/LPQ/main/Inno.TablesOnline.pq"))
-,
+    ImportPq.GitHubRaw("https://raw.githubusercontent.com/laktiv/LPQ/main/Inno.TablesOnline.pq")),
 fCur = (cur) => Inno.Online[CUR][Rate]{List.PositionOf(Inno.Online[CUR][Curr], cur)},
 fVat = (vat) => Inno.Online[VAT][k]{List.PositionOf(Inno.Online[VAT][VAT], vat)},
 fMar = (mar) => Inno.Online[MARG][k]{List.PositionOf(Inno.Online[MARG][Marg], mar)},
+// Get Products Info
 Inno.GetGpuCode = Document(
     "Inno.GetGpuCode",
     "Table for calculations.",
@@ -465,11 +462,9 @@ Inno.GetGpuCode = Document(
                             then goodsShort{pos}[gpu]
                             else null
         in
-            result)
-,
+            result),
 Inno.GetCooler = (Product as text) =>
-    let
-        split = Text.Split(Product, " "),
+    let split = Text.Split(Product, " "),
         cool =  if List.ContainsAny({"Frostbite","Black"}, split, Comparer.OrdinalIgnoreCase) then "WB"
                 else if List.ContainsAny({"X4"}, split, Comparer.OrdinalIgnoreCase) then "X4"
                 else if List.ContainsAny({"X3","GAMING OC","iCHILL"}, split, Comparer.OrdinalIgnoreCase) then "X3"
@@ -478,23 +473,11 @@ Inno.GetCooler = (Product as text) =>
                     else null,
         oc = if List.ContainsAny({"OC","iCHILL","Pro","Ultra","Frostbite","Black"}, split, Comparer.OrdinalIgnoreCase)
                 then "OC" else null,
-        color = if Text.Contains(Product, "White", Comparer.OrdinalIgnoreCase)
-                then "White" else null,
-        result = [
+        color = if Text.Contains(Product, "White", Comparer.OrdinalIgnoreCase) then "White" else null
+    in  result = [
             oc = oc,
             fans = cool,
-            color = color
-        ]
-    in
-        result
-,
-Inno.CleanTable = (Table as table) =>
-    let
-        order = {"Name","customer","country","pn","product","gpu","quantity","d_date","d_week","d_month","d_year","partner"},
-        headers = Table.ColumnNames(Table),
-        Quantity = Table.SelectRows(Table, each [quantity]<>0 and [quantity]<>null and [quantity]<>"" )
-    in  Table.SelectColumns(Quantity, List.RemoveMatchingItems(order, List.Difference(order,headers)) )
-,
+            color = color ],
 // BULK REPLACE & TABLES
 MyFindReplace =
     let table = Table.FromRows(Json.Document(Binary.Decompress(Binary.FromText("JcpBDoIwEIXhq5iuJMGF8QRQSpxYW0LHuCAsEFk0Ykuwxus7Lbs33/xdxxBYztCyPu8YOOdPFd2glKYRDX/WxeIOamv4GaQksduIZr7LtBKZWyPaJNy/l2EMZFxfm4Jj0nIexhdZKQt+SVKv/hMeNkykdasNloAiffbHg5l92ImnDda7jIJIUuNOVICgVcb6/g8=", BinaryEncoding.Base64), Compression.Deflate)), let _t = ((type nullable text) meta [Serialized.Text = true]) in type table [Find = _t, Replace = _t])
@@ -542,17 +525,16 @@ Text.BulkTableReplace =
         in
             Output
     in
-        BulkReplace
-,
+        BulkReplace,
 
 
-//     ___ ___ _   _   __       _  ___   __  ___ ___ ___ ___ ___ ___
-//    / __| _ \ | | | / _|___  | \| \ \ / / / __| __| _ \_ _| __/ __|
-//   | (_ |  _/ |_| | > _|_ _| | .` |\ V /  \__ \ _||   /| || _|\__ \
-//    \___|_|  \___/  \_____|  |_|\_| \_/   |___/___|_|_\___|___|___/
-//
+/**    ___ ___ _   _   __       _  ___   __  ___ ___ ___ ___ ___ ___
+*     / __| _ \ | | | / _|___  | \| \ \ / / / __| __| _ \_ _| __/ __|
+*    | (_ |  _/ |_| | > _|_ _| | .` |\ V /  \__ \ _||   /| || _|\__ \
+*     \___|_|  \___/  \_____|  |_|\_| \_/   |___/___|_|_\___|___|___/
+**/
 // Search in the Model Name
-Inno.fnGetGpuFromName = (Model as any) => 
+Inno.fnGetGpuFromName = (Model as any) =>
     let listReplacement = {
             {"|"," "},{","," "},{","," "},{"-"," "},
             {"RTX","RTX "},
@@ -560,7 +542,7 @@ Inno.fnGetGpuFromName = (Model as any) =>
             {"TI"," TI"},{"TI-","TI "},
             {"SUPER"," SUPER"}  },
         ModelRep = Text.ReplaceByList(Text.Upper(Text.BeforeDelimiter(Model,"GB")), listReplacement),
-        List = Text.Split(Text.PowerTrim(ModelRep)," "),        
+        List = Text.Split(Text.PowerTrim(ModelRep)," "),
         ListSearch = List.Select(List, (x) => List.AnyTrue(List.Transform({"RTX","GTX","TI","SUPER"}, each x = _))),
         iRow = List.Zip({List, {0..-1 + List.Count(List)}}),
         Filtered = List.Select(iRow, each List.Contains(ListSearch, _{0})),
@@ -569,7 +551,7 @@ Inno.fnGetGpuFromName = (Model as any) =>
         SelectL = List.Select(iRow, each List.Contains(Generate, _{1}))
     in  try Text.ReplaceByList(Text.Combine(List.Transform(SelectL, each _{0})," "), {{"TI","Ti"},{"Ti Ti","Ti"},{"SUPER","Super"},{"Super Super","Super"}}) otherwise null,
 Inno.fnGetMemoryFromName = (Model as any) => try Number.From(
-        List.RemoveItems(List.Transform(List.Select(Text.Split(Text.ReplaceByList(Model,{{"-O"," "},{"-8"," 8"},{"G-","G "},{"GB-","GB "},{" GB","GB"}})," "), 
+        List.RemoveItems(List.Transform(List.Select(Text.Split(Text.ReplaceByList(Model,{{"-O"," "},{"-8"," 8"},{"G-","G "},{"GB-","GB "},{" GB","GB"}})," "),
         (x) => List.AnyTrue(List.Transform({"GB","G"}, each Text.EndsWith(x,_)))), each Text.Select(_,{"0".."9"})),{"",null}){0})
     otherwise null,
 Inno.fnGetOcFromName = (Model as any) => if List.CompareListsCheck(Text.Split(Text.Lower(Model)," "), {"oc","ichill","overclock"}, false) then "OC" else null,
@@ -585,16 +567,15 @@ fxGpuSeries = (Product as text) =>
                 else if Text.Contains(p, "super", Comparer.OrdinalIgnoreCase) then 6
                 else 0,
         gpu = Text.Middle(Product, posG, 4 + 4 + posE)
-    in  Text.Trim(Text.Replace(p,"SUPER","Super"))
-,
+    in  Text.Trim(Text.Replace(p,"SUPER","Super")),
 
 
-//    ___ _   _  _       __       _____     _    _
-//   | __/_\ | \| |___  / _|___  |_   _|_ _| |__| |___ ___
-//   | _/ _ \| .` (_-<  > _|_ _|   | |/ _` | '_ \ / -_|_-<
-//   |_/_/ \_\_|\_/__/  \_____|    |_|\__,_|_.__/_\___/__/
-//
-//   SEARCH # OF FANS BY FILLED BRAND/SERIES TABLES
+/**   ___ _   _  _       __       _____     _    _
+*    | __/_\ | \| |___  / _|___  |_   _|_ _| |__| |___ ___
+*    | _/ _ \| .` (_-<  > _|_ _|   | |/ _` | '_ \ / -_|_-<
+*    |_/_/ \_\_|\_/__/  \_____|    |_|\__,_|_.__/_\___/__/
+**/
+// SEARCH # OF FANS BY FILLED BRAND/SERIES TABLES
 // Search full product name at Geizhals.eu, scrape result from specs table by coolers
 fsGeizFans = (Product as text) =>
     let
@@ -606,8 +587,7 @@ fsGeizFans = (Product as text) =>
         Split = if Text.EndsWith(txt,"x")
                     then "X" & Text.Select(Text.Split(Cooler," "){0},{"0".."9"})
                     else txt
-    in  try Split otherwise null
-,
+    in  try Split otherwise null,
 // Search by Matching Series/Brand in the Table 'tblBrandsFans'
 fsGetFansAdv = (Product as text) =>
     let srcTable = Table.Buffer( tblBrandsFans ),
@@ -629,45 +609,40 @@ fsGetFansAdv = (Product as text) =>
                 Matching = if List.ContainsAny(ml, listLook, (x,y) => x=y) then tbl[fans]{i} else null,
                 Checking = Matching ?? {i<Table.RowCount(tbl)}{1}? ?? @fMatchFib(ml, b, i+1) //Recurse
             in  try Checking otherwise null
-    in  fMatchFib(mList,"") ?? fMatchFib(mList,brand)
-,
+    in  fMatchFib(mList,"") ?? fMatchFib(mList,brand),
 // Simplier search
 fsGetFans = (Brand as text, Fans as text, Product as text) =>
 	let srcTable = Table.Buffer( tblBrandsFans ),
         Table = Table.SelectRows(srcTable,
 			each [brand] = Text.Lower(Brand) and Text.Lower([fans]) = Text.Lower(Fans) )
 	in	Result = List.AnyTrue(
-			List.Transform(Table[series], each Text.Contains(Product,_,Comparer.OrdinalIgnoreCase)) )
-,
+			List.Transform(Table[series], each Text.Contains(Product,_,Comparer.OrdinalIgnoreCase)) ),
 // Flat table # Fans by brands
 tblBrandsFans =
     let Table = Table.FromRows(Json.Document(Binary.Decompress(Binary.FromText("fZbRcuIgFEB/JeNzZ3aq+wMYMbImIRtIzW6nD9GyNVMNOxhn698vEE2TeuEFkzmHcLnAxefnCWIFmzxM8EcrVFMd9GNUHevmLdge5O59SF4eensz1w1rVf0RxKF5r7QTzG2PgVbOdJNUxtMPSCh5RzMlkWpdlPGclBCc6mZRoNjF1hQij2bAvRQNHI/BvMjnYN/pNxsRL5ZDGiGSblC+6KdTNe1eKK+y1448+pW7GIeKmWC0l6fWJdh5irfqdD6NFBKh+S+ObwtoV+2PVDsBLOFAtjEhnFPHxzpOc5sop4BjYl+cQoQSkkYBDX1SghjHuc94IozQ1GeUPMeJM5RpH4rLMOnVnPg4P6utdA7R7SWMotgdRudsSLpY0jwceSRN6WxxW8b5obIHtVvB1WWr6ldAW4mqPdXN+/Dx3loqva+2dQttid4sv9+a+5C6DM9gZnLL/9WNm9oGYCanoTz+rXatW/ghPNA2PVsv0bTPzOVVSSiBQylDjJEn/DV7V8VOeFYCI3QrXQa6qo7rwphHLrSiSxdizk6MQ8Q0UzBGW07PtvqDDI96JYzcsqV/Y/KzIAtgu4w1hlGwQpu1UxzWABaT5H7EbmpFljuhvi6oA12/DEzEceIHkOtTCKBHoCzeenWn9wmnfFwVM6TLYJ/yLzdYD82XWSvVsfTjAObX0c2Wy7tL3Ofoyz5T0ifpc6Uve1GNLq3flKOwP+tknIYR1P8glDgKJ+eqbur2AnJbDpLMx4JQKvjjduuGcGBQKeqhTTCNP3u+/Ac=", BinaryEncoding.Base64), Compression.Deflate)), let _t = ((type nullable text) meta [Serialized.Text = true]) in type table [brand = _t, fans = _t, series = _t, #"type" = _t]),
         Lower = Table.TransformColumns(Table, {
             {"brand", Text.Lower, type text},
             {"series", Text.Lower, type text} })
-    in  Table.Buffer( Lower )
-,
+    in  Table.Buffer( Lower ),
 //Grouped table by Brand/Series and # Fans
 tblBrandsFansGrouped =
     let Table = Table.FromRows(Json.Document(Binary.Decompress(Binary.FromText("fZbRcuIgFEB/JeNzZ3aq+wMYMbImIRtIzW6nD9GyNVMNOxhn698vEE2TeuEFkzmHcLnAxefnCWIFmzxM8EcrVFMd9GNUHevmLdge5O59SF4eensz1w1rVf0RxKF5r7QTzG2PgVbOdJNUxtMPSCh5RzMlkWpdlPGclBCc6mZRoNjF1hQij2bAvRQNHI/BvMjnYN/pNxsRL5ZDGiGSblC+6KdTNe1eKK+y1448+pW7GIeKmWC0l6fWJdh5irfqdD6NFBKh+S+ObwtoV+2PVDsBLOFAtjEhnFPHxzpOc5sop4BjYl+cQoQSkkYBDX1SghjHuc94IozQ1GeUPMeJM5RpH4rLMOnVnPg4P6utdA7R7SWMotgdRudsSLpY0jwceSRN6WxxW8b5obIHtVvB1WWr6ldAW4mqPdXN+/Dx3loqva+2dQttid4sv9+a+5C6DM9gZnLL/9WNm9oGYCanoTz+rXatW/ghPNA2PVsv0bTPzOVVSSiBQylDjJEn/DV7V8VOeFYCI3QrXQa6qo7rwphHLrSiSxdizk6MQ8Q0UzBGW07PtvqDDI96JYzcsqV/Y/KzIAtgu4w1hlGwQpu1UxzWABaT5H7EbmpFljuhvi6oA12/DEzEceIHkOtTCKBHoCzeenWn9wmnfFwVM6TLYJ/yLzdYD82XWSvVsfTjAObX0c2Wy7tL3Ofoyz5T0ifpc6Uve1GNLq3flKOwP+tknIYR1P8glDgKJ+eqbur2AnJbDpLMx4JQKvjjduuGcGBQKeqhTTCNP3u+/Ac=", BinaryEncoding.Base64), Compression.Deflate)), let _t = ((type nullable text) meta [Serialized.Text = true]) in type table [brand = _t, fans = _t, series = _t, #"type" = _t]),
         Lower = Table.TransformColumns(Table, {
             {"brand", Text.Lower, type text},
             {"series", Text.Lower, type text} })
-    in  Table.Buffer( Lower )
-,
+    in  Table.Buffer( Lower ),
 // INNO FANS
 tblInnoFans =
     let Tbl = Table.FromRows(Json.Document(Binary.Decompress(Binary.FromText("i45WSspJTM5W0lEKd1KK1YlWSivKLy5JyixJRQgl5+cWJCaXAAUiDMECEUYgthGEbQxiG0PYJiC2iVJsLAA=", BinaryEncoding.Base64), Compression.Deflate)), let _t = ((type nullable text) meta [Serialized.Text = true]) in type table [series = _t, fans = _t]),
         Type = Table.TransformColumnTypes(Tbl,{{"series", type text}, {"fans", type text}})
-    in  Table.Buffer( Type )
-,
+    in  Table.Buffer( Type ),
 
 
-//    ___   _ _____ ___
-//   |   \ /_\_   _| __|
-//   | |) / _ \| | | _|
-//   |___/_/ \_\_| |___|
-//
+/**   ___   _ _____ ___
+*    |   \ /_\_   _| __|
+*    | |) / _ \| | | _|
+*    |___/_/ \_\_| |___|
+**/
 // Inno
 Date.DateFromISOwn = Document(
     "Date.DateFromISOwn",
@@ -757,15 +732,14 @@ Date.MonthName = Document(
             ukr = {"Січень","Лютий","Березень","Квітень","Травень","Червень","Липень","Серпень","Вересень","Жовтень","Листопад","Грудень"},
             Lang = if lang is null or lang="" then eng else ukr,
             monthNumber = if date is number then date else Date.Month(DateTime.From(date))
-        in  Switch(monthNumber, {1,2,3,4,5,6,7,8,9,10,11,12}, Lang, null))
-,
+        in  Switch(monthNumber, {1,2,3,4,5,6,7,8,9,10,11,12}, Lang, null)),
 
 
-//    _    ___ ___ _____
-//   | |  |_ _/ __|_   _|
-//   | |__ | |\__ \ | |
-//   |____|___|___/ |_|
-//
+/**   _    ___ ___ _____
+*    | |  |_ _/ __|_   _|
+*    | |__ | |\__ \ | |
+*    |____|___|___/ |_|
+**/
 List.Flatten = Document(
     "List.Flatten",
     "Recursively flattens list elements. The end result is a single list",
@@ -801,21 +775,20 @@ List.ToText = Document(
         Result =	"""{1, 2, 3}"""     ]},
     (list as list) => List.Accumulate(list, "{", (state, current) => current & Text.From(current)) & "}"),
     List.Swap = (_,_from as number ,_to as number) =>
-    let
-        from = List.Min({_from,_to}),
-        to = List.Max({_from,_to})
-    in if from=to then _ else
-        List.Range(_,0,from)
-        &{_{to}}
-        &List.Range(_,from+1,to-from-1)
-        &{_{from}}
-        &List.Range(_,to+1),
-        List.Shuffle = (n) => List.Accumulate({0..(n-2)},{0..n},(_,iterator)=>
-                                List.Swap(List.Buffer(_),
-                                    Number.Round(Number.RandomBetween(iterator,n)),
-                                    iterator
-                                    ))
-,
+        let
+            from = List.Min({_from,_to}),
+            to = List.Max({_from,_to})
+        in if from=to then _ else
+            List.Range(_,0,from)
+            &{_{to}}
+            &List.Range(_,from+1,to-from-1)
+            &{_{from}}
+            &List.Range(_,to+1),
+            List.Shuffle = (n) => List.Accumulate({0..(n-2)},{0..n},(_,iterator)=>
+                                    List.Swap(List.Buffer(_),
+                                        Number.Round(Number.RandomBetween(iterator,n)),
+                                        iterator
+                                        )),
 List.CompareListsCheck = (ListSource as list, ListCompare as list, optional CaseIgnore as logical) =>
     //fxList = (l) => try Text.Combine( List.Transform(List.Distinct(List.Transform(l, each Text.Split(_, " "){1})), each Text.From(_)), "," ) otherwise "",
     if (CaseIgnore ?? {CaseIgnore=""}{1}?) <> null
@@ -825,15 +798,14 @@ List.CompareListsMatches = (ListSource as list, ListCompare as list, optional Ca
     //fxList = (l) => try Text.Combine( List.Transform(List.Distinct(List.Transform(l, each Text.Split(_, " "){1})), each Text.From(_)), "," ) otherwise "",
     if (CaseIgnore ?? {CaseIgnore=""}{1}?) <> null
         then List.Select(ListSource, each List.Contains(ListCompare, _, (x,y) => Text.Contains(x, y, Comparer.OrdinalIgnoreCase)))
-        else List.Select(ListSource, each List.Contains(ListCompare, _, (x,y) => Text.Contains(x, y, Comparer.Equals)))
-,
+        else List.Select(ListSource, each List.Contains(ListCompare, _, (x,y) => Text.Contains(x, y, Comparer.Equals))),
 
 
-//    _  _ _   _ __  __ ___ ___ ___  ___
-//   | \| | | | |  \/  | _ ) __| _ \/ __|
-//   | .` | |_| | |\/| | _ \ _||   /\__ \
-//   |_|\_|\___/|_|  |_|___/___|_|_\|___/
-//
+/**   _  _ _   _ __  __ ___ ___ ___  ___
+*    | \| | | | |  \/  | _ ) __| _ \/ __|
+*    | .` | |_| | |\/| | _ \ _||   /\__ \
+*    |_|\_|\___/|_|  |_|___/___|_|_\|___/
+**/
 Number.Digits = {0,1,2,3,4,5,6,7,8,9},
 Number.ParseText = Document(
     "Number.ParseText",
@@ -888,15 +860,14 @@ Number.ProperNumber = Document(
         _allowCharacters = if allowCharacters is null then {} else allowCharacters,
         numberSeries = List.FirstN(List.Skip(Text.ToList(consider), each not Text.IsNumber(_)), each Text.IsNumber(_) or List.Contains(_allowCharacters, _))
     in
-        if text is null then null else Number.Round(Text.FromList(numberSeries), after))
-,
+        if text is null then null else Number.Round(Text.FromList(numberSeries), after)),
 
 
-//    ___ ___ _    ___ _____ _____ ___ ___  ___
-//   / __| _ \ |  |_ _|_   _|_   _| __| _ \/ __|
-//   \__ \  _/ |__ | |  | |   | | | _||   /\__ \
-//   |___/_| |____|___| |_|   |_| |___|_|_\|___/
-//
+/**   ___ ___ _    ___ _____ _____ ___ ___  ___
+*    / __| _ \ |  |_ _|_   _|_   _| __| _ \/ __|
+*    \__ \  _/ |__ | |  | |   | | | _||   /\__ \
+*    |___/_| |____|___| |_|   |_| |___|_|_\|___/
+**/
 Splitter.SplitTextByNonAlpha = Document(
     "Splitter.SplitTextByNonAlpha",
     "Splits text by characters that aren't [A-Za-zА-Яа-я]",
@@ -930,15 +901,14 @@ Splitter.SplitTextByNotIn = Document(
                 else if appendLast then
                     List.Combine({List.RemoveLastN(state, 1), {lastItem & current}})
                 else
-                    List.Combine({List.RemoveLastN(state, 1), {current}})))
-,
+                    List.Combine({List.RemoveLastN(state, 1), {current}}))),
 
 
-//    _____ _   ___ _    ___
-//   |_   _/_\ | _ ) |  | __|
-//     | |/ _ \| _ \ |__| _|
-//     |_/_/ \_\___/____|___|
-//
+/**   _____ _   ___ _    ___
+*    |_   _/_\ | _ ) |  | __|
+*      | |/ _ \| _ \ |__| _|
+*      |_/_/ \_\___/____|___|
+**/
 Table.AddBlankRow = (table as table) => Table.Combine({table, Table.FromRecords({[]})}),
 Table.DrillIntoColumn = (table as table, columnName as text) =>
     let FindValue = (value as any) =>
@@ -1012,8 +982,6 @@ Table.SplitColumnNames = (table as table) => Table.RenameColumns(table, List.Tra
 // Splits camelCased and PascalCased text in a column.
 Table.SplitColumnText = (table as table, columns as list) => if List.Count(columns) = 0 then table else Table.TransformColumns(@Table.SplitColumnText(table, List.Skip(columns, 1)), {{List.First(columns), Text.SplitCamelCase}}),
 Table.TransformColumn = (table as table, column as text, transform as function) => Table.TransformColumns(table, {{column, transform}}),
-Table.RenameAndTransformColumn = (table, currentName as text, newName as text, transform as function) => Table.TransformColumn(Table.RenameColumns(table, {currentName, newName}), newName, transform)
-,
 Table.ToXml = (t) =>
         "<table>"&
         {List.Accumulate(
@@ -1030,23 +998,14 @@ Table.ToXml = (t) =>
                 )}
             &"</row>"
         )}
-    &"</table>"
-,
+    &"</table>",
 Table.NumberColumns = (table as table, columns as list) as table =>
     let
         NumberTypes = List.Repeat({type number}, List.Count(columns)),
         DataWithTypes = Table.TransformColumnTypes( table, List.Zip({columns, NumberTypes}) ),
         NumberNotNull = (number) => if number is null then 0 else number,
         DataNoNulls = Table.TransformColumns( DataWithTypes, List.Zip({ columns, List.Repeat({NumberNotNull}, List.Count(columns)), NumberTypes }) )
-    in  Table.ReplaceErrorValues(DataNoNulls, List.Transform(columns, each {_,0}))
-,
-Table.TrimHeader = (Table as table) =>
-    let hRaw = Table.ColumnNames(Table),
-        hTrim = List.Transform(hRaw, each Text.Trim(_))
-    in  if List.Count(List.Difference(hRaw, hTrim)) > 0
-            then Table.RenameColumns(Table, List.Zip({hRaw, hTrim}))
-            else Table
-,
+    in  Table.ReplaceErrorValues(DataNoNulls, List.Transform(columns, each {_,0})),
 // Renaming columns
 Table.RenameColumn = Document(
     "Table.RenameColumn",
@@ -1076,8 +1035,7 @@ Table.RenameColumnsAdv = Document(
             SelectTable = if selectColumns then Table.SelectColumns(Table, selectHeaders) else Table.SelectColumns(Table, headers),
             // Rename columns
             RenameTable = Table.RenameColumns(SelectTable, columnsZip)
-        in  try RenameTable otherwise null)
-,
+        in  try RenameTable otherwise null),
 Table.RenameColumnsByIndices = (Source as table, Indices as list, ColumnNamesNew as list) =>
     let
         ColumnNames = Table.ColumnNames(Source),
@@ -1087,48 +1045,39 @@ Table.RenameColumnsByIndices = (Source as table, Indices as list, ColumnNamesNew
     in
         #"Renamed Columns",
 Table.RenameColumnsByOrder = (InputTable as table, ColumnNumbers as list, NewColumnNames as list) =>
-    let
-        OldColumnNames = Table.ColumnNames(InputTable),
+    let OldColumnNames = Table.ColumnNames(InputTable),
         Indexed = List.Zip({OldColumnNames, {0..-1+List.Count(OldColumnNames)}}),
         Filtered = List.Select(Indexed, each List.Contains(ColumnNumbers,_{1})),
         IndexRemoved = List.Transform(Filtered, each _{0}),
         RenameList = List.Zip({IndexRemoved,NewColumnNames}),
         RenamedColumns = Table.RenameColumns(InputTable, RenameList)
-    in
-        RenamedColumns
-,
+    in  RenamedColumns,
+Table.RenameAndTransformColumn = (table, currentName as text, newName as text, transform as function) => Table.TransformColumn(Table.RenameColumns(table, {currentName, newName}), newName, transform),
 Table.TrimHeaders = (Table as table) =>
     let hRaw = Table.ColumnNames(Table),
         hTrim = List.Transform(hRaw, each Text.Trim(_))
-    in  if List.Count(List.Difference(hRaw, hTrim)) > 0 then Table.RenameColumns(Table, List.Zip({hRaw, hTrim})) else Table
-,
+    in  if List.Count(List.Difference(hRaw, hTrim)) > 0
+            then Table.RenameColumns(Table, List.Zip({hRaw, hTrim})) else Table,
 Table.PromoteHeadersNonEmpty = (table as table) as table =>
     /**
-    Promote the first table row as column names, but keep the current header
-    if the value in the first row is empty.
+    Promote the first table row as column names, but keep the current header if the value in the first row is empty.
     For simpler use cases check built-in function `Table.PromoteHeaders`
     **/
-    let
-        ExtraHeaders = Table.First(table),
+    let ExtraHeaders = Table.First(table),
         OldHeaders = Table.ColumnNames(table),
         NewHeaders = List.Transform( OldHeaders, (CurrentHeader) =>
-            let
-                Current = CurrentHeader,
+            let Current = CurrentHeader,
                 Candidate = Record.Field(ExtraHeaders, CurrentHeader)
-            in
-                if Candidate <> "" and Candidate <> null and Candidate <> 0
-                then Text.From(Candidate)
-                else Current
-        ),
-        RenamedColumns = Table.RenameColumns( Table.Skip(table, 1), List.Zip({OldHeaders, NewHeaders}) )
-    in  RenamedColumns
-,
+            in  if Candidate <> "" and Candidate <> null and Candidate <> 0
+                    then Text.From(Candidate) else Current
+        )
+    in  RenamedColumns = Table.RenameColumns( Table.Skip(table, 1), List.Zip({OldHeaders, NewHeaders}) ),
 Table.SelectHeaders = (List as list, ColumnStart as text, ColumnEnd as text, optional Index as text) =>
     let pos1 = List.PositionOf(List, ColumnStart),
         pos2 = List.PositionOf(List, ColumnEnd),
         range = List.Range(List, pos1 + 1, pos2 - pos1 - 1)
-    in  if Index=null then range else List.Union({{Index}, range})
-,
+    in  if Index=null then range else List.Union({{Index}, range}),
+// Remove Empty
 Table.RemoveEmptyRows = (tbl as table) =>
     // return a table with empty rows removed
     let
@@ -1172,8 +1121,7 @@ Table.RemoveEmptyColumns = (tbl as table) =>
     in
         Table.SelectColumns(tbl, non_empty_columns(tbl_no_erors)),
 // return a table with all errors replaced with specified value or null
-Table.ReplaceAllErrorsInTable = (tbl as table, optional replacer_value) => Table.ReplaceErrorValues(tbl, List.Transform(Table.ColumnNames(tbl), each {_, replacer_value}))
-,
+Table.ReplaceAllErrorsInTable = (tbl as table, optional replacer_value) => Table.ReplaceErrorValues(tbl, List.Transform(Table.ColumnNames(tbl), each {_, replacer_value})),
 // Sort table
 Table.SortColumnByList = Document(
     "Table.SortColumnByList",
@@ -1182,16 +1130,15 @@ Table.SortColumnByList = Document(
     {[  Description="Sort table's column text by List.",
         Code =		"LPQ[Table.SortColumnByList](Table, ""Category"", ""{""File"",""Edit""}"", True)",
         Result =	"Sorted table Table in column 'Category' by List sort order Ascending."     ]},
-    (Table as table, ColumnName as text, ListSort as list, Order as logical) => 
+    (Table as table, ColumnName as text, ListSort as list, Order as logical) =>
         Table.RemoveColumns(
-            Table.Sort( 
+            Table.Sort(
                 Table.AddIndexColumn(Table,"i",0,1,Int64.Type), {
                     {each List.PositionOf(ListSort, Record.Field(_,ColumnName)), if Order then Order.Ascending else Order.Descending },
                     {"i",Order.Ascending}   }
-                ), 
+                ),
             {"i"}
-        )
-),
+        )),
 // Running Totals
 Table.RunningTotalfunction = (TabName as table, RT_Amt_ColumnName as text, Added_Col_RT_Name as text)=>
     /**
@@ -1215,8 +1162,7 @@ Table.RunningTotalfunction = (TabName as table, RT_Amt_ColumnName as text, Added
                     ) & {RT_List}, Table.ColumnNames(TabName) & {Added_Col_RT_Name}
                     )
     in
-        Consolidate
-,
+        Consolidate,
 Table.GroupedRunningTotal = (values as list, grouping as list) as list =>
     /* Written by Philip Treacy
         https://www.myonlinetraininghub.com/grouped-running-totals-in-power-query
@@ -1235,8 +1181,7 @@ Table.GroupedRunningTotal = (values as list, grouping as list) as list =>
             each [GRT]
         )
     in
-        GRTList
-,
+        GRTList,
 Table.GetParameter = (ParameterName as text) =>
     // Query written by Ken Puls, FCPA, FCMA, MS MVP (Excel) (www.excelguru.ca)
     // Injected into this workbook via Monkey Tools at the model designer's request
@@ -1261,15 +1206,14 @@ Table.GetParameter = (ParameterName as text) =>
         Value= if Table.IsEmpty(ParamRow)=true
                 then null
                 else Record.Field(ParamRow{0},"Value")
-    in  Value
-,
+    in  Value,
 
 
-//      _   ___ ___    ___   _____
-//     /_\ | _ \ _ \  /_\ \ / / __|
-//    / _ \|   /   / / _ \ V /\__ \
-//   /_/ \_\_|_\_|_\/_/ \_\_| |___/
-//
+/**     _   ___ ___    ___   _____
+*      /_\ | _ \ _ \  /_\ \ / / __|
+*     / _ \|   /   / / _ \ V /\__ \
+*    /_/ \_\_|_\_|_\/_/ \_\_| |___/
+**/
 // VLOOKUP in other table
 fnVlookUp = Document(
     "fnVlookUp",
@@ -1285,8 +1229,7 @@ fnVlookUp = Document(
 	    in  if count then
                 if returnColumnValue is null then 1
                     else Table.Column(lookupTable, returnColumnValue){lookup}
-                else null)
-,
+                else null),
 // Search Name in List
 fnCheckInList = Document(
     "fnCheckInList",
@@ -1304,8 +1247,8 @@ fnCheckInList = Document(
                 then List.ContainsAny(pList, List, (x,y) => Text.Contains(x,y,Comparer.OrdinalIgnoreCase))
                 else List.ContainsAny(pList, List, (x,y) => x=y)
         in
-            try result otherwise null)
-,
+            try result otherwise null),
+// Regexp
 Text.RegExp = (txt as text, regex as text, delim as text) =>
     let RegExp =
         Web.Page(
@@ -1320,25 +1263,22 @@ Text.RegExp = (txt as text, regex as text, delim as text) =>
         [Data]{0}[Children]{0}[Children]{1}[Text]{0},
         return = try RegExp otherwise null
     in
-        return
-,
+        return,
 Text.RegexMatch = (txt as text, regex as text, delim as text) => try
     Web.Page("<script>var x='"&txt&"';var delim='"&delim&"';var regex=/"&regex&"/gi;var result=x.match(regex).join(delim);document.write(result);</script>")[Data]{0}[Children]{0}[Children]{1}[Text]{0}
-    otherwise null
-,
+    otherwise null,
 Text.GetMatch = (Text as text, List as list) =>
     try List.Select(Text.Split(Text," "),
             each List.ContainsAny(List.LastN(Text.Split(_," "),1), List, (x,y) => Text.Contains(x,y,Comparer.OrdinalIgnoreCase))
         ){0}
-    otherwise null
-,
+    otherwise null,
 
 
-//    _____ _____  _______
-//   |_   _| __\ \/ /_   _|
-//     | | | _| >  <  | |
-//     |_| |___/_/\_\ |_|
-//
+/**   _____ _____  _______
+*    |_   _| __\ \/ /_   _|
+*      | | | _| >  <  | |
+*      |_| |___/_/\_\ |_|
+**/
 Text.Alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz" & "АБВГДЕЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯабвгдежзийклмнопрстуфхцчшщъыьэюя",
 Text.AlphaNumeric = Text.Alphabet & "0123456789",
 Text.FromList = (list as list) => List.Accumulate(list, "", (state, current) => state & Text.From(current)),
@@ -1476,8 +1416,7 @@ Text.ReplaceAll = (str as text, Replacements as list) as text =>
 			    s=Text.Replace([s],Replacements{[i]}{0},Replacements{[i]}{1}),
 			    i=[i]+1
 		    ],
-		    each [s] ))
-,
+		    each [s] )),
 Text.PowerTrim = (text as text, optional char_to_trim as text) =>
     let
         char = if char_to_trim = null then " " else char_to_trim,
@@ -1485,15 +1424,16 @@ Text.PowerTrim = (text as text, optional char_to_trim as text) =>
 		removeblanks = List.Select(split, each _ <> "")
 	in
         Text.Combine(removeblanks, char),
-Text.ReplaceByList = try (txt as text, replacementLists as list) as text => List.Accumulate(replacementLists, txt, (s,x) => Text.Replace(s,x{0},x{1})) otherwise null
-,
+Text.ReplaceByList = try (txt as text, replacementLists as list) as text => 
+    List.Accumulate(replacementLists, txt, (s,x) => Text.Replace(s,x{0},x{1})) otherwise null,
 
 
-//     ___ ___  ___  ___     _   _  _ ___   __      _____ ___
-//    / __/ _ \|   \| __|   /_\ | \| |   \  \ \    / / __| _ )
-//   | (_| (_) | |) | _|   / _ \| .` | |) |  \ \/\/ /| _|| _ \
-//    \___\___/|___/|___| /_/ \_\_|\_|___/    \_/\_/ |___|___/
-//
+/**    ___ ___  ___  ___     _   _  _ ___   __      _____ ___
+*     / __/ _ \|   \| __|   /_\ | \| |   \  \ \    / / __| _ )
+*    | (_| (_) | |) | _|   / _ \| .` | |) |  \ \/\/ /| _|| _ \
+*     \___\___/|___/|___| /_/ \_\_|\_|___/    \_/\_/ |___|___/
+**/
+// Parse inno3d.com
 Inno.ParseInnoCom = Document(
     "Inno.ParseInnoCom",
     "INNO3D products parser from main site.",
@@ -1532,12 +1472,12 @@ Inno.ParseInnoComSpecs = Document(
             Rename = Table.RenameColumnsAdv(src,{"GPU Engine Specs:",""}, {"spec","value"}),
             Replace = Text.BulkTableReplace(Rename, MyFindReplace_InnoSpecs, {"spec","value"})
         in
-            Replace)
-,
+            Replace),
+// Web
 Web.GetAllLinks = Document(
     "Web.GetAllLinks",
     "Get all hyperlinks from the page.",
-    "Web.Hyperlinks",
+    "Web.Links",
     {[  Description="Creates the list with all hyperlinks from the page in <a>.",
         Code =		"LPQ[Web.GetAllLinks](""https://inno3d.com/en/product_list/index/GRAPHICS%20CARD"")",
         Result =	"https://inno3d.com/en/PRODUCT_INNO3D_GEFORCE_RTX_3070_ICHILL_X3_LHR"    ]},
@@ -1593,12 +1533,12 @@ Web.RemoveHtmlTags = Document(
                     Code=	     "<div>my bit of text</div>",
                     Result=	     "my bit of text"    ]}]
     in
-        Value.ReplaceType(func, Value.ReplaceMetadata(Value.Type(func), documentation)))
-,
+        Value.ReplaceType(func, Value.ReplaceMetadata(Value.Type(func), documentation))),
+// Export to
 Web.TableToMarkdown = Document(
     "Web.TableToMarkdown",
     "Converts table to text table with Markdown syntax.",
-    "Web.Convertion",
+    "Web.Export",
     {[  Description="Creates Markdown table.",
         Code =		"LPQ[Web.TableToMarkdown](table)",
         Result =	"| Опис та коментарь | TODO    |#(lf)| ----------------- | ------- |"    ]},
@@ -1609,16 +1549,14 @@ Web.TableToMarkdown = Document(
             CombineList = List.Combine({{Text.Combine(Table.ColumnNames(Table), " | ")}, {HyphenLine}, TableValues[Custom]}),
             TransferToMarkdown = Text.Combine(CombineList, "#(lf)")
         in
-            TransferToMarkdown)
-,
+            TransferToMarkdown),
 
 
-//    ___                     _     ___  ___
-//   |_ _|_ __  _ __  ___ _ _| |_  | _ \/ _ \
-//    | || '  \| '_ \/ _ \ '_|  _| |  _/ (_) |
-//   |___|_|_|_| .__/\___/_|  \__| |_|  \__\_\
-//             |_|
-// Minimal script loader
+/**   ___                     _     ___  ___
+*    |_ _|_ __  _ __  ___ _ _| |_  | _ \/ _ \
+*     | || '  \| '_ \/ _ \ '_|  _| |  _/ (_) |
+*    |___|_|_|_| .__/\___/_|  \__| |_|  \__\_\
+**/             |_|
 ImportPq = Document(
     "ImportPq",
     "Most minimal external PQ script file loader.",
@@ -1634,15 +1572,14 @@ ImportPq.GitHubRaw = Document(
     {[  Description="Load file from GitHub",
         Code =		"LPQ[ImportPq.GitHubRaw](""https://github.com/laktiv/LPQ/blob/40a01a1998f1b88a03502e6f994625b108c8722b/LPQ.pq"")",
         Result =	"File from GitHub"    ]},
-    (URL as text) => try Expression.Evaluate(Text.FromBinary(Web.Contents(URL)),#shared) otherwise null)
-,
+    (URL as text) => try Expression.Evaluate(Text.FromBinary(Web.Contents(URL)),#shared) otherwise null),
 
 
-//   __   ___   _   _   _ ___
-//   \ \ / /_\ | | | | | | __|
-//    \ V / _ \| |_| |_| | _|
-//     \_/_/ \_\____\___/|___|
-//
+/**  __   ___   _   _   _ ___
+*    \ \ / /_\ | | | | | | __|
+*     \ V / _ \| |_| |_| | _|
+*      \_/_/ \_\____\___/|___|
+**/
 Value.TypeText = (value as any) =>
     if value is binary then "binary" else
     if value is date then "date" else
@@ -1717,15 +1654,14 @@ Value.WaitFor = (producer as function, interval as function, optional count as n
                 else {1 + state{0}, Function.InvokeAfter(() => producer(state{0}), interval(state{0}))},
             //transformer: only return the result, not try tally
             (state) => state{1})
-    in  List.Last(list)
-,
+    in  List.Last(list),
 
 
-//     ___ _____ _  _ ___ ___
-//    / _ \_   _| || | __| _ \
-//   | (_) || | | __ | _||   /
-//    \___/ |_| |_||_|___|_|_\
-//
+/**    ___ _____ _  _ ___ ___
+*     / _ \_   _| || | __| _ \
+*    | (_) || | | __ | _||   /
+*     \___/ |_| |_||_|___|_|_\
+**/
 Type.ToText = (Type as any, optional Recurs as logical) as text =>
     let Recurs = if (Recurs<>null) then Recurs else false,
         CaseValues = {
