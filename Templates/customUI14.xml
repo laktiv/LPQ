@@ -1,0 +1,149 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<customUI xmlns="http://schemas.microsoft.com/office/2009/07/customui" 
+					onLoad="ribbonLoaded">
+	<ribbon>
+		<tabs>
+			<tab id="myTabFavourites" label="Favorites"
+						insertAfterMso="TabAddIns"
+						getVisible="GetVisible" tag="MyHidden">
+				<group idMso="GroupFont" visible="true" />
+				<group idMso="GroupInsertTablesExcel" visible="true" />
+				<group idMso="GroupInsertChartsExcel" visible="true" />
+				<group idMso="GroupNumber" visible="true" />
+				<group idMso="GroupCode" visible="true" />
+				<group idMso="GroupStyles" visible="true" />
+			</tab>
+
+			<tab id="myTabAddins" label="MY-SUPER-TAB" 
+						insertAfterMso="TabAddIns">
+				<group id="grpLpqLibrary" label="Library">
+					<button id="Btn1"
+									image="LPQ"
+									getLabel="GetLabelBtn"
+									onAction="MyMacroBtn"
+									size="large" />
+					<dynamicMenu id="RDBDynamicMenu"
+									imageMso="GetExternalDataFromWeb"
+									label="Macro Menu"
+									supertip="Menu for your favorite macros"
+									getContent="RDBdynamicMenuContent"
+									size="large" />
+				</group>
+
+				<group id="grpFolders" label="Files and Folders" visible="true">
+					<dropDown id="DDF"
+							label="Folders"
+							getItemCount="GetItemCount"
+							getItemLabel="GetItemLabel"
+							getSelectedItemIndex="GetSelItemIndex"
+							onAction="MyMacroFolBtn"/>
+					<button id="btnCurrentFile"
+							label="Cur. Folder"
+							image="folder-meta-open"
+							onAction="OpenCurrentFileFolder"/>
+				</group>
+
+				<group id="grpDropdowns" label="Dropdowns">
+					<dropDown id="DD3" label="Functions"
+							getItemCount="GetItemCount"
+							getItemLabel="GetItemLabel"
+							getSelectedItemIndex="GetSelItemIndex"
+							screentip="LPQ Functions List"
+							sizeString="WWWWWWWWWWWWW"
+							onAction="MyMacroDD"/>
+					<dropDown id="DD1" label="Vb"
+							getItemCount="GetItemCount"
+							getItemLabel="GetItemLabel"
+							getSelectedItemIndex="GetSelItemIndex"
+							onAction="MyMacroDD"/>
+					<dropDown id="DD2" label="Fn"
+							getItemCount="GetItemCount"
+							getItemLabel="GetItemLabel"
+							getSelectedItemIndex="GetSelItemIndex"
+							onAction="MyMacroDD"/>
+				</group>
+
+				<group id="grpMacros2" label="Macro Buttons 2">
+					<button id="Btn7" 	size="large" getLabel="GetLabelBtn" getImage="getImageBtn" onAction="MyMacroBtn" />
+					<button id="Btn8" 	size="large" getLabel="GetLabelBtn" getImage="getImageBtn" onAction="MyMacroBtn" />
+					<button id="Btn9" 	size="large" getLabel="GetLabelBtn" getImage="getImageBtn" onAction="MyMacroBtn" />
+					<button id="Btn10" 	size="large" getLabel="GetLabelBtn" getImage="getImageBtn" onAction="MyMacroBtn" />
+				</group>
+
+				<group id="grpTextbox" label="Text Box">
+					<box id="myBox" boxStyle="horizontal">
+						<editBox id="EditBox1" label="Name" sizeString="mmmmmmmmmmm" showLabel="false" getText="InitialText" onChange="ChangedText" />
+					</box>
+					<labelControl id="label1" label="Dev" />
+					<button id="ConfirmButton" showLabel="false" imageMso="AcceptInvitation" size="normal" label="Confirm Name" onAction="ConfirmName" />
+				</group>
+
+				<group id="grpWebsites" label="Websites">
+					<button id="Web1"
+							getLabel="GetLabelWebBtn"
+							getImage="GetImageWebBtn"
+							onAction="MyMacroWebBtn"
+							screentip="Go to the Contextures Excel site"
+							supertip="Main page of Contextures Excel website."
+							size="large" />
+					<button id="Web2"
+							getLabel="GetLabelWebBtn"
+							image="pricer24"
+							onAction="MyMacroWebBtn"
+							size="large"/>
+				</group>
+
+				<group id="grpButtons" label="Buttons">
+					<button id="btnMenuCode"
+							label="MenuCode"
+							imageMso="FormControlCombinationListEdit"
+							onAction="WBDisplayPopUpRibbon"
+							size="large" />
+					<splitButton id="splitLpq1" size="large">
+						<button id="buttonSplitLpq" label="PQ's"
+								imageMso="GetExternalDataFromWeb"
+								onAction="ImportQueryLPQ" />
+						<menu id="splitMenu" itemSize="large">
+							<button id="splitbutt1" imageMso="AnimationAudio" label="Turn up the volume" onAction="TurnUpVol" />
+							<button id="splitbutt2" imageMso="AutoDial" label="Make a call" onAction="MakeACall" />
+							<button id="splitbutt3" imageMso="MarkAsUnread" label="Put it in the post" onAction="PutInPost" />
+							<menuSeparator id="sep1" />
+							<menu id="submenu1" label="Extra Items" imageMso="TentativeAcceptInvitation">
+								<button idMso="FileOpen" />
+								<button idMso="FilePrintPreview" />
+								<button idMso="FilePrintQuick" />
+							</menu>
+						</menu>
+					</splitButton>
+					<toggleButton id="toggle1"
+							label="imageMso"
+							imageMso="PictureInsertMenu"
+							onAction="DisplayRibbonTab"
+							getPressed="PressedState"
+							size="normal" />
+				</group>
+
+				<!--
+				<box id="boxFilesAndFolders1" boxStyle="vertical">
+					<button id="btnFolderInno3d" imageMso="FileOpen" label="INNO3DEE" onAction="OpenFolderButton" />
+					<button id="btnFolderInno" imageMso="FileOpen" label="INNO" onAction="OpenFolderButton" />
+					<button id="btnFolderP24" imageMso="Folder" label="Pricer24" onAction="OpenFolderButton" />
+				</box>
+
+				<group id="Group7" label="Check Boxes">
+					<checkBox id="chk1" label="Word Add-In" onAction="LoadWordAddIn" getPressed="WordAddInChecked" />
+					<checkBox id="chk2" label="PowerPoint Add-In" onAction="LoadPowerPointAddIn" getPressed="PowerPointAddInChecked" />
+					<checkBox id="chk3" label="Access Add-In" onAction="LoadAccessAddIn" getPressed="AccessAddInChecked" />
+				</group>
+
+				<separator id="separatorFilesAndFolders1" />
+				<box id="boxFilesAndFolders2" boxStyle="vertical">
+					<button id="button2B" label="Button 2" onAction="ButtonPressedMsgBox" />
+					<button id="button3B" label="Button 3" onAction="ButtonPressedMsgBox" />
+				</box>
+        -->
+
+			</tab>
+		</tabs>
+	</ribbon>
+</customUI>
