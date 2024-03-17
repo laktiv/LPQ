@@ -4,19 +4,16 @@
         fnCleanListGrp = (txt) => Text.Remove(txt, {"[", "]"}),
         // Переіменування стовбчиків
         fxRename = (tbl as table, listMatch as list, newName as list) =>
-            let
-                s = List.Select( Table.ColumnNames(tbl), (x) => List.AnyTrue(List.Transform(listMatch, each Text.Contains(x, _))) ),
+            let s = List.Select( Table.ColumnNames(tbl), (x) => List.AnyTrue(List.Transform(listMatch, each Text.Contains(x, _))) ),
                 Indices = List.PositionOf(Table.ColumnNames(tbl), s{0}),
                 ColumnNames = Table.ColumnNames(tbl),
                 ColumnNamesList = List.Transform({Indices}, each ColumnNames{_}),
                 ZippedList = List.Zip({ColumnNamesList, newName})
                 //ColumnNamesNew
-            in
-                Table.RenameColumns(tbl, ZippedList),
+            in  Table.RenameColumns(tbl, ZippedList),
         //
         fnHeaders = (tbl) =>
-            let
-                columns_filter = {"web-scraper-", "next-pagination"},
+            let columns_filter = {"web-scraper-", "next-pagination"},
                 columns_new = {
                     "gpu",
                     "brand",
@@ -41,9 +38,8 @@
                     "pn",
                     "kod"
                 },
-                columns_Filtered = List.Select(
-                    Table.ColumnNames(tbl), each
-                        not List.Contains(columns_filter, _, (x, y) => Text.StartsWith(y, x))
+                columns_Filtered = List.Select(Table.ColumnNames(tbl), each
+                    not List.Contains(columns_filter, _, (x,y) => Text.StartsWith(y,x))
                 ),
                 TBL = Table.SelectColumns(tbl, columns_Filtered),
                 columns_src = Table.ColumnNames(TBL),
@@ -62,8 +58,7 @@
                 Delete_Columns = Table.SelectColumns(TBL, List.Transform(Sort_byNewIndex, each _{0})),
                 Rename_Columns = fxRename(Delete_Columns, {"partnumber"}, {"pn"}),
                 Rename_Columns2 = fxRename(Rename_Columns, {"overclock", "ocl"}, {"oc"}),
-                rating = Table.ReplaceValue(
-                    Rename_Columns2,
+                rating = Table.ReplaceValue(Rename_Columns2,
                     each [rating],
                     each
                         if Text.StartsWith([rating], "[") then
@@ -73,8 +68,7 @@
                     Replacer.ReplaceValue,
                     {"rating"}
                 ),
-                cooling = Table.ReplaceValue(
-                    rating,
+                cooling = Table.ReplaceValue(rating,
                     each [cooling],
                     each
                         if Text.Contains([cooling], ",") then
@@ -90,32 +84,27 @@
                     Replacer.ReplaceValue,
                     {"cooling"}
                 ),
-                resTable = Table.TransformColumns(
-                    cooling,
-                    {
-                        {"brand", each Text.Upper(_), type text},
-                        {"model", each Text.Clean(_), type text},
-                        {"price", each fnPropNum(_), Currency.Type},
-                        //{ "price_novat", each fnPropNum(_), Currency.Type },
-                        {"memory", each Number.FromText(_), Int64.Type},
-                        //{"fans", each Number.FromText(_), Int64.Type},
-                        //{"kod", each _, type text},
-                        //{"rating", each fnPropNum(_), type number},
-                        {"reviews", each fnPropNum(_), Int64.Type}
-                    }
+                resTable = Table.TransformColumns(cooling, {
+                    {"brand", each Text.Upper(_), type text},
+                    {"model", each Text.Clean(_), type text},
+                    {"price", each fnPropNum(_), Currency.Type},
+                    //{ "price_novat", each fnPropNum(_), Currency.Type },
+                    {"memory", each Number.FromText(_), Int64.Type},
+                    //{"fans", each Number.FromText(_), Int64.Type},
+                    //{"kod", each _, type text},
+                    //{"rating", each fnPropNum(_), type number},
+                    {"reviews", each fnPropNum(_), Int64.Type} }
                 ),
-                result = Table.Sort(
-                    resTable, {{"gpu", Order.Descending}, {"memory", Order.Ascending},
+                result = Table.Sort(resTable, {
+                    {"gpu", Order.Descending}, 
+                    {"memory", Order.Descending},
                     //{"oc", Order.Ascending},
                     {"price", Order.Ascending}}
                 )
-            in
-                result,
+            in  result,
         Source = Table.PromoteHeaders(
-            Excel.Workbook(File.Contents(filepath), null, true){[Item = "Sheet1", Kind = "Sheet"]}[Data],
-            [
-                PromoteAllScalars = true
-            ]
+            Excel.Workbook(File.Contents(filepath),null,true){[Item="Sheet1",Kind="Sheet"]}[Data],
+            [PromoteAllScalars=true]
         ),
         Function = fnHeaders(Source)
     in
