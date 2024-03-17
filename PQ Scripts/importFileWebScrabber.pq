@@ -1,8 +1,8 @@
 (filepath as text) =>
     let
-        // Âèäàëåííÿ [] ³ç òåêñòó
+        // Ð’Ð¸Ð´Ð°Ð»ÐµÐ½Ð½Ñ [] Ñ–Ð· Ñ‚ÐµÐºÑÑ‚Ñƒ
         fnCleanListGrp = (txt) => Text.Remove(txt, {"[", "]"}),
-        // Ïåðå³ìåíóâàííÿ ñòîâá÷èê³â
+        // ÐŸÐµÑ€ÐµÑ–Ð¼ÐµÐ½ÑƒÐ²Ð°Ð½Ð½Ñ ÑÑ‚Ð¾Ð²Ð±Ñ‡Ð¸ÐºÑ–Ð²
         fxRename = (tbl as table, listMatch as list, newName as list) =>
             let
                 s = List.Select( Table.ColumnNames(tbl), (x) => List.AnyTrue(List.Transform(listMatch, each Text.Contains(x, _))) ),
