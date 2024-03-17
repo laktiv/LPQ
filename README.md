@@ -29,7 +29,7 @@ Extensions and Functions for Power Query
 
 ### PowerQueryNet
 
-- `#credetials.xml` лежить тут %AppData%\Local\Microsoft\Excel
+- `#credetials.xml` лежить тут `%AppData%\Local\Microsoft\Excel`
 
 ## Readme
 
