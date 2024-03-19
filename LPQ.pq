@@ -1556,7 +1556,8 @@ Web.TableToMarkdown = Document(
 *    |_ _|_ __  _ __  ___ _ _| |_  | _ \/ _ \
 *     | || '  \| '_ \/ _ \ '_|  _| |  _/ (_) |
 *    |___|_|_|_| .__/\___/_|  \__| |_|  \__\_\
-**/             |_|
+*            |_|
+**/        
 ImportPq = Document(
     "ImportPq",
     "Most minimal external PQ script file loader.",
@@ -1711,4 +1712,6 @@ Record.TransformJoin = (Rec as record, Lambda as function, optional Delimiter as
 
 Result = _extensionLibrary
 
-in Result
+in 
+  Result
+  
