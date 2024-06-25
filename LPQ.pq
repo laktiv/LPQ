@@ -1,7 +1,7 @@
 /**
 *  Inspired by Power-BI-Desktop-Query-Extensions - https://github.com/tnclark8012/Power-BI-Desktop-Query-Extensions
 *  Expression.Evaluate(Text.FromBinary(Web.Contents("https://gist.github.com/laktiv/700a6d65e098189881ecd77e585b233a")),#shared)
-*  ASCII - https://patorjk.com/software/taag/#p=display&c=c%2B%2B&f=Small&t=INNO
+*  ASCII - https://patorjk.com/software/taag/#p=display&h=0&v=0&c=c%2B%2B&f=Tmplr&t=VALUE
 **/
 
 let
@@ -135,17 +135,11 @@ TestResults =
                     if testResult[HasError] then Error.Record(suite[CaseName], testResult[Error][Message], null) else true),
             each _ <> true)
     in
-        if List.IsEmpty(failedTests) then "All " & Text.From(List.Count(Tests)) & " tests passed! :)" else failedTests
-,
+        if List.IsEmpty(failedTests) then "All " & Text.From(List.Count(Tests)) & " tests passed! :)" else failedTests,
 
 _extensionLibrary = [
 
-
-//    ___  ___ ___ ___ _  _ ___  ___ _  _  ___ ___ ___ ___
-//   |   \| __| _ \ __| \| |   \| __| \| |/ __|_ _| __/ __|
-//   | |) | _||  _/ _|| .` | |) | _|| .` | (__ | || _|\__ \
-//   |___/|___|_| |___|_|\_|___/|___|_|\_|\___|___|___|___/
-//
+// DEPENDENCIES
 Document = (name as text, description as text, category as text, valueOrExample as any, optional valueIfExample as any) =>
     let
         value = if valueIfExample is null then valueOrExample else valueIfExample,
@@ -158,8 +152,7 @@ Document = (name as text, description as text, category as text, valueOrExample 
             Documentation.Description= description,
             Documentation.Category = category,
             Documentation.Examples = examples
-        ])
-,
+        ]),
 Switch = Document(
     "Switch",
     "Given a value, find it's paired item <br>"&
@@ -191,10 +184,8 @@ Switch = Document(
 ,
 
 
-//    ___ _  _ _  _  ___
-//   |_ _| \| | \| |/ _ \
-//    | || .` | .` | (_) |
-//   |___|_|\_|_|\_|\___/
+// █ █▄░█ █▄░█ █▀█
+// █ █░▀█ █░▀█ █▄█
 //
 // Extended script loader with auto data types
 File.GetExcelDataFile = Document(
@@ -546,10 +537,8 @@ Text.BulkTableReplace =
 ,
 
 
-//     ___ ___ _   _   __       _  ___   __  ___ ___ ___ ___ ___ ___
-//    / __| _ \ | | | / _|___  | \| \ \ / / / __| __| _ \_ _| __/ __|
-//   | (_ |  _/ |_| | > _|_ _| | .` |\ V /  \__ \ _||   /| || _|\__ \
-//    \___|_|  \___/  \_____|  |_|\_| \_/   |___/___|_|_\___|___|___/
+// █▀▀ █▀█ █░█   ▄▀█ █▄░█ █▀▄   █▄░█ █░█   █▀ █▀▀ █▀█ █ █▀▀ █▀
+// █▄█ █▀▀ █▄█   █▀█ █░▀█ █▄▀   █░▀█ ▀▄▀   ▄█ ██▄ █▀▄ █ ██▄ ▄█
 //
 // Search in the Model Name
 Inno.fnGetGpuFromName = (Model as any) => 
@@ -589,10 +578,8 @@ fxGpuSeries = (Product as text) =>
 ,
 
 
-//    ___ _   _  _       __       _____     _    _
-//   | __/_\ | \| |___  / _|___  |_   _|_ _| |__| |___ ___
-//   | _/ _ \| .` (_-<  > _|_ _|   | |/ _` | '_ \ / -_|_-<
-//   |_/_/ \_\_|\_/__/  \_____|    |_|\__,_|_.__/_\___/__/
+// █▀▀ ▄▀█ █▄░█ █▀   ▄▀█ █▄░█ █▀▄   ▀█▀ ▄▀█ █▄▄ █░░ █▀▀ █▀
+// █▀░ █▀█ █░▀█ ▄█   █▀█ █░▀█ █▄▀   ░█░ █▀█ █▄█ █▄▄ ██▄ ▄█
 //
 //   SEARCH # OF FANS BY FILLED BRAND/SERIES TABLES
 // Search full product name at Geizhals.eu, scrape result from specs table by coolers
@@ -663,10 +650,8 @@ tblInnoFans =
 ,
 
 
-//    ___   _ _____ ___
-//   |   \ /_\_   _| __|
-//   | |) / _ \| | | _|
-//   |___/_/ \_\_| |___|
+// █▀▄ ▄▀█ ▀█▀ █▀▀
+// █▄▀ █▀█ ░█░ ██▄
 //
 // Inno
 Date.DateFromISOwn = Document(
@@ -761,10 +746,8 @@ Date.MonthName = Document(
 ,
 
 
-//    _    ___ ___ _____
-//   | |  |_ _/ __|_   _|
-//   | |__ | |\__ \ | |
-//   |____|___|___/ |_|
+// █░░ █ █▀ ▀█▀
+// █▄▄ █ ▄█ ░█░
 //
 List.Flatten = Document(
     "List.Flatten",
@@ -829,10 +812,8 @@ List.CompareListsMatches = (ListSource as list, ListCompare as list, optional Ca
 ,
 
 
-//    _  _ _   _ __  __ ___ ___ ___  ___
-//   | \| | | | |  \/  | _ ) __| _ \/ __|
-//   | .` | |_| | |\/| | _ \ _||   /\__ \
-//   |_|\_|\___/|_|  |_|___/___|_|_\|___/
+// █▄░█ █░█ █▀▄▀█ █▄▄ █▀▀ █▀█ █▀
+// █░▀█ █▄█ █░▀░█ █▄█ ██▄ █▀▄ ▄█
 //
 Number.Digits = {0,1,2,3,4,5,6,7,8,9},
 Number.ParseText = Document(
@@ -892,10 +873,8 @@ Number.ProperNumber = Document(
 ,
 
 
-//    ___ ___ _    ___ _____ _____ ___ ___  ___
-//   / __| _ \ |  |_ _|_   _|_   _| __| _ \/ __|
-//   \__ \  _/ |__ | |  | |   | | | _||   /\__ \
-//   |___/_| |____|___| |_|   |_| |___|_|_\|___/
+// █▀ █▀█ █░░ █ ▀█▀ ▀█▀ █▀▀ █▀█ █▀
+// ▄█ █▀▀ █▄▄ █ ░█░ ░█░ ██▄ █▀▄ ▄█
 //
 Splitter.SplitTextByNonAlpha = Document(
     "Splitter.SplitTextByNonAlpha",
@@ -934,10 +913,8 @@ Splitter.SplitTextByNotIn = Document(
 ,
 
 
-//    _____ _   ___ _    ___
-//   |_   _/_\ | _ ) |  | __|
-//     | |/ _ \| _ \ |__| _|
-//     |_/_/ \_\___/____|___|
+// ▀█▀ ▄▀█ █▄▄ █░░ █▀▀
+// ░█░ █▀█ █▄█ █▄▄ ██▄
 //
 Table.AddBlankRow = (table as table) => Table.Combine({table, Table.FromRecords({[]})}),
 Table.DrillIntoColumn = (table as table, columnName as text) =>
@@ -1265,10 +1242,8 @@ Table.GetParameter = (ParameterName as text) =>
 ,
 
 
-//      _   ___ ___    ___   _____
-//     /_\ | _ \ _ \  /_\ \ / / __|
-//    / _ \|   /   / / _ \ V /\__ \
-//   /_/ \_\_|_\_|_\/_/ \_\_| |___/
+// ▄▀█ █▀█ █▀█ ▄▀█ █▄█ █▀
+// █▀█ █▀▄ █▀▄ █▀█ ░█░ ▄█
 //
 // VLOOKUP in other table
 fnVlookUp = Document(
@@ -1334,10 +1309,8 @@ Text.GetMatch = (Text as text, List as list) =>
 ,
 
 
-//    _____ _____  _______
-//   |_   _| __\ \/ /_   _|
-//     | | | _| >  <  | |
-//     |_| |___/_/\_\ |_|
+// ▀█▀ █▀▀ ▀▄▀ ▀█▀
+// ░█░ ██▄ █░█ ░█░
 //
 Text.Alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz" & "АБВГДЕЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯабвгдежзийклмнопрстуфхцчшщъыьэюя",
 Text.AlphaNumeric = Text.Alphabet & "0123456789",
@@ -1489,10 +1462,8 @@ Text.ReplaceByList = try (txt as text, replacementLists as list) as text => List
 ,
 
 
-//     ___ ___  ___  ___     _   _  _ ___   __      _____ ___
-//    / __/ _ \|   \| __|   /_\ | \| |   \  \ \    / / __| _ )
-//   | (_| (_) | |) | _|   / _ \| .` | |) |  \ \/\/ /| _|| _ \
-//    \___\___/|___/|___| /_/ \_\_|\_|___/    \_/\_/ |___|___/
+// █▀▀ █▀█ █▀▄ █▀▀   ▄▀█ █▄░█ █▀▄   █░█░█ █▀▀ █▄▄
+// █▄▄ █▄█ █▄▀ ██▄   █▀█ █░▀█ █▄▀   ▀▄▀▄▀ ██▄ █▄█
 //
 Inno.ParseInnoCom = Document(
     "Inno.ParseInnoCom",
@@ -1613,10 +1584,8 @@ Web.TableToMarkdown = Document(
 ,
 
 
-//    ___                     _     ___  ___
-//   |_ _|_ __  _ __  ___ _ _| |_  | _ \/ _ \
-//    | || '  \| '_ \/ _ \ '_|  _| |  _/ (_) |
-//   |___|_|_|_| .__/\___/_|  \__| |_|  \__\_\
+// █ █▀▄▀█ █▀█ █▀█ █▀█ ▀█▀   █▀█ █▀█
+// █ █░▀░█ █▀▀ █▄█ █▀▄ ░█░   █▀▀ ▀▀█
 //             |_|
 // Minimal script loader
 ImportPq = Document(
@@ -1638,10 +1607,8 @@ ImportPq.GitHubRaw = Document(
 ,
 
 
-//   __   ___   _   _   _ ___
-//   \ \ / /_\ | | | | | | __|
-//    \ V / _ \| |_| |_| | _|
-//     \_/_/ \_\____\___/|___|
+// █░█ ▄▀█ █░░ █░█ █▀▀
+// ▀▄▀ █▀█ █▄▄ █▄█ ██▄
 //
 Value.TypeText = (value as any) =>
     if value is binary then "binary" else
@@ -1721,10 +1688,8 @@ Value.WaitFor = (producer as function, interval as function, optional count as n
 ,
 
 
-//     ___ _____ _  _ ___ ___
-//    / _ \_   _| || | __| _ \
-//   | (_) || | | __ | _||   /
-//    \___/ |_| |_||_|___|_|_\
+// █▀█ ▀█▀ █░█ █▀▀ █▀█
+// █▄█ ░█░ █▀█ ██▄ █▀▄
 //
 Type.ToText = (Type as any, optional Recurs as logical) as text =>
     let Recurs = if (Recurs<>null) then Recurs else false,
