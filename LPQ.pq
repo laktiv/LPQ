@@ -1501,7 +1501,7 @@ Inno.ParseInnoComSpecs = Document(
         let
             src = Web.Page( Binary.Buffer( Web.Contents(url) ) ){0}[Data],
             Rename = Table.RenameColumnsAdv(src,{"GPU Engine Specs:",""}, {"spec","value"}),
-            Replace = Text.BulkTableReplace(Rename, MyFindReplace_InnoSpecs, {"spec","value"})
+            Replace = BulkTableReplace(Rename, MyFindReplace_InnoSpecs, {"spec","value"})
         in
             Replace)
 ,
