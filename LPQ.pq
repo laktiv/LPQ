@@ -434,7 +434,7 @@ Inno.GetGpuCode = Document(
                 split = Text.Split(PN, "-"),
                 pn_first = split{0},
                 pn_firstEnds =
-                    if List.Contains({"T", "0", "S"}, Text.End(pn_first, 1)) then 1
+                    if List.Contains({"T","0","S"}, Text.End(pn_first, 1)) then 1
                         else if Text.Length(pn_first) > 6 and Text.End(pn_first, 1) = "K" then 3
                     else 2,
                 range = Text.Range(split{0}, 1, Text.Length(pn_first) - pn_firstEnds),
@@ -593,8 +593,7 @@ fsGeizFans = (Product as text) =>
         Split = if Text.EndsWith(txt,"x")
                     then "X" & Text.Select(Text.Split(Cooler," "){0},{"0".."9"})
                     else txt
-    in  try Split otherwise null
-,
+    in  try Split otherwise null,
 // Search by Matching Series/Brand in the Table 'tblBrandsFans'
 fsGetFansAdv = (Product as text) =>
     let srcTable = Table.Buffer( tblBrandsFans ),
@@ -616,32 +615,28 @@ fsGetFansAdv = (Product as text) =>
                 Matching = if List.ContainsAny(ml, listLook, (x,y) => x=y) then tbl[fans]{i} else null,
                 Checking = Matching ?? {i<Table.RowCount(tbl)}{1}? ?? @fMatchFib(ml, b, i+1) //Recurse
             in  try Checking otherwise null
-    in  fMatchFib(mList,"") ?? fMatchFib(mList,brand)
-,
+    in  fMatchFib(mList,"") ?? fMatchFib(mList,brand),
 // Simplier search
 fsGetFans = (Brand as text, Fans as text, Product as text) =>
 	let srcTable = Table.Buffer( tblBrandsFans ),
         Table = Table.SelectRows(srcTable,
 			each [brand] = Text.Lower(Brand) and Text.Lower([fans]) = Text.Lower(Fans) )
 	in	Result = List.AnyTrue(
-			List.Transform(Table[series], each Text.Contains(Product,_,Comparer.OrdinalIgnoreCase)) )
-,
+			List.Transform(Table[series], each Text.Contains(Product,_,Comparer.OrdinalIgnoreCase)) ),
 // Flat table # Fans by brands
 tblBrandsFans =
     let Table = Table.FromRows(Json.Document(Binary.Decompress(Binary.FromText("fZbRcuIgFEB/JeNzZ3aq+wMYMbImIRtIzW6nD9GyNVMNOxhn698vEE2TeuEFkzmHcLnAxefnCWIFmzxM8EcrVFMd9GNUHevmLdge5O59SF4eensz1w1rVf0RxKF5r7QTzG2PgVbOdJNUxtMPSCh5RzMlkWpdlPGclBCc6mZRoNjF1hQij2bAvRQNHI/BvMjnYN/pNxsRL5ZDGiGSblC+6KdTNe1eKK+y1448+pW7GIeKmWC0l6fWJdh5irfqdD6NFBKh+S+ObwtoV+2PVDsBLOFAtjEhnFPHxzpOc5sop4BjYl+cQoQSkkYBDX1SghjHuc94IozQ1GeUPMeJM5RpH4rLMOnVnPg4P6utdA7R7SWMotgdRudsSLpY0jwceSRN6WxxW8b5obIHtVvB1WWr6ldAW4mqPdXN+/Dx3loqva+2dQttid4sv9+a+5C6DM9gZnLL/9WNm9oGYCanoTz+rXatW/ghPNA2PVsv0bTPzOVVSSiBQylDjJEn/DV7V8VOeFYCI3QrXQa6qo7rwphHLrSiSxdizk6MQ8Q0UzBGW07PtvqDDI96JYzcsqV/Y/KzIAtgu4w1hlGwQpu1UxzWABaT5H7EbmpFljuhvi6oA12/DEzEceIHkOtTCKBHoCzeenWn9wmnfFwVM6TLYJ/yLzdYD82XWSvVsfTjAObX0c2Wy7tL3Ofoyz5T0ifpc6Uve1GNLq3flKOwP+tknIYR1P8glDgKJ+eqbur2AnJbDpLMx4JQKvjjduuGcGBQKeqhTTCNP3u+/Ac=", BinaryEncoding.Base64), Compression.Deflate)), let _t = ((type nullable text) meta [Serialized.Text = true]) in type table [brand = _t, fans = _t, series = _t, #"type" = _t]),
         Lower = Table.TransformColumns(Table, {
             {"brand", Text.Lower, type text},
             {"series", Text.Lower, type text} })
-    in  Table.Buffer( Lower )
-,
+    in  Table.Buffer( Lower ),
 //Grouped table by Brand/Series and # Fans
 tblBrandsFansGrouped =
     let Table = Table.FromRows(Json.Document(Binary.Decompress(Binary.FromText("fZbRcuIgFEB/JeNzZ3aq+wMYMbImIRtIzW6nD9GyNVMNOxhn698vEE2TeuEFkzmHcLnAxefnCWIFmzxM8EcrVFMd9GNUHevmLdge5O59SF4eensz1w1rVf0RxKF5r7QTzG2PgVbOdJNUxtMPSCh5RzMlkWpdlPGclBCc6mZRoNjF1hQij2bAvRQNHI/BvMjnYN/pNxsRL5ZDGiGSblC+6KdTNe1eKK+y1448+pW7GIeKmWC0l6fWJdh5irfqdD6NFBKh+S+ObwtoV+2PVDsBLOFAtjEhnFPHxzpOc5sop4BjYl+cQoQSkkYBDX1SghjHuc94IozQ1GeUPMeJM5RpH4rLMOnVnPg4P6utdA7R7SWMotgdRudsSLpY0jwceSRN6WxxW8b5obIHtVvB1WWr6ldAW4mqPdXN+/Dx3loqva+2dQttid4sv9+a+5C6DM9gZnLL/9WNm9oGYCanoTz+rXatW/ghPNA2PVsv0bTPzOVVSSiBQylDjJEn/DV7V8VOeFYCI3QrXQa6qo7rwphHLrSiSxdizk6MQ8Q0UzBGW07PtvqDDI96JYzcsqV/Y/KzIAtgu4w1hlGwQpu1UxzWABaT5H7EbmpFljuhvi6oA12/DEzEceIHkOtTCKBHoCzeenWn9wmnfFwVM6TLYJ/yLzdYD82XWSvVsfTjAObX0c2Wy7tL3Ofoyz5T0ifpc6Uve1GNLq3flKOwP+tknIYR1P8glDgKJ+eqbur2AnJbDpLMx4JQKvjjduuGcGBQKeqhTTCNP3u+/Ac=", BinaryEncoding.Base64), Compression.Deflate)), let _t = ((type nullable text) meta [Serialized.Text = true]) in type table [brand = _t, fans = _t, series = _t, #"type" = _t]),
         Lower = Table.TransformColumns(Table, {
             {"brand", Text.Lower, type text},
             {"series", Text.Lower, type text} })
-    in  Table.Buffer( Lower )
-,
+    in  Table.Buffer( Lower ),
 // INNO FANS
 tblInnoFans =
     let Tbl = Table.FromRows(Json.Document(Binary.Decompress(Binary.FromText("i45WSspJTM5W0lEKd1KK1YlWSivKLy5JyixJRQgl5+cWJCaXAAUiDMECEUYgthGEbQxiG0PYJiC2iVJsLAA=", BinaryEncoding.Base64), Compression.Deflate)), let _t = ((type nullable text) meta [Serialized.Text = true]) in type table [series = _t, fans = _t]),
@@ -809,6 +804,19 @@ List.CompareListsMatches = (ListSource as list, ListCompare as list, optional Ca
     if (CaseIgnore ?? {CaseIgnore=""}{1}?) <> null
         then List.Select(ListSource, each List.Contains(ListCompare, _, (x,y) => Text.Contains(x, y, Comparer.OrdinalIgnoreCase)))
         else List.Select(ListSource, each List.Contains(ListCompare, _, (x,y) => Text.Contains(x, y, Comparer.Equals)))
+,
+List.ToRecord = Document(
+    "List.ToRecord",
+    "Transform a list of strings to a record using a given lambda (passed values k). The built-in Record.FromList only takes static lists...",
+    "List.ToRecord",
+    {[  Description="Transform a list of strings to a record using a given lambda (passed values k)",
+        Code =		"LPQ[List.ToRecord]({""a"",""b""}, (k) => Text.Upper(k)))",
+        Result =	"[a=""A"", b=""B""]"     ]},
+    (List as list, Lambda as function) as record =>
+        let
+            Transformed = List.Transform(List, Lambda)	//each Lambda(_)
+        in
+            Record.FromList(Transformed, List))
 ,
 
 
@@ -1214,6 +1222,7 @@ Table.GroupedRunningTotal = (values as list, grouping as list) as list =>
     in
         GRTList
 ,
+/*
 Table.GetParameter = (ParameterName as text) =>
     // Query written by Ken Puls, FCPA, FCMA, MS MVP (Excel) (www.excelguru.ca)
     // Injected into this workbook via Monkey Tools at the model designer's request
@@ -1240,7 +1249,7 @@ Table.GetParameter = (ParameterName as text) =>
                 else Record.Field(ParamRow{0},"Value")
     in  Value
 ,
-
+*/
 
 // ▄▀█ █▀█ █▀█ ▄▀█ █▄█ █▀
 // █▀█ █▀▄ █▀▄ █▀█ ░█░ ▄█
@@ -1733,8 +1742,6 @@ Record.TransformJoin = (Rec as record, Lambda as function, optional Delimiter as
         Combined = Text.Combine(Transformed, Delimiter),
         Return = Combined
     in  Return
-
-
 
 ],
 
