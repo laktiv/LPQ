@@ -369,7 +369,7 @@ Inno.TableTypes = Document(
                 num = {"quantity", "d_week", "d_month", "d_year", "stock", "VAT", "memory"},
                 dec = {"k"},
                 cur = {"price", "amount", "rebate", "price_ddp", "price_deal", "deal_fob", "deal_ddp"},
-                dat = {"date", "Invoice Date (YYYY/MM/DD)", "short_date", "d_date"},
+                dat = {"date", "Invoice Date (YYYY/MM/DD)", "short_date", "d_date", "sale_date"},
                 order = {"customer", "country", "pn", "product", "gpu", "quantity", "d_date", "d_week", "d_month", "d_year", "partner"}
             ],
             headers = Table.ColumnNames(Table),
