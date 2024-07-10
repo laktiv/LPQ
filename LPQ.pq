@@ -315,7 +315,7 @@ Inno.SortTablePn = Document(
     "Returns sorted table by INNO3D partnumbers in proper order. Also could filter-out old models.",
     "Table.Transformation",
     {[  Description="Inno.SortTablePn",
-        Code =		"LPQ[Inno.TableTypes](Table, ""pn"", true)",
+        Code =		"LPQ[Inno.SortTablePn](Table, ""pn"", true)",
         Result =	"New sorted table by column 'pn' with old filtered."    ]},
     (Table as table, PN as text, optional FilterOld as logical) =>
         let
@@ -365,7 +365,7 @@ Inno.TableTypes = Document(
             toOrder = if (ToOrder ?? {ToOrder=""}{1}?) = null then false else ToOrder,
 
             lists = [
-                txt = {"customer", "country", "pn", "product", "gpu", "partner", "url", "name"},
+                txt = {"customer", "country", "pn", "product", "gpu", "gpu_deal", "partner", "url", "name"},
                 num = {"quantity", "d_week", "d_month", "d_year", "stock", "VAT", "memory"},
                 dec = {"k"},
                 cur = {"price", "amount", "rebate", "price_ddp", "price_deal", "deal_fob", "deal_ddp"},
@@ -493,7 +493,6 @@ MyFindReplace =
 MyFindReplace_Sample =
     let table = Table.FromRows(Json.Document(Binary.Decompress(Binary.FromText("TY7LDoIwFAV/hXQrxijInrY8GnkFKi4ICyQsGhUIYvh925JCdzOTe5NTVQCXBJgA1GYFQhxvXAauQpwpMg7GFnFuaWxrfNXYUezYkM1KMkSOnpLldA7gLhddLF3sXSjjRInkoPOHqe14CDw/zZEnK+n7wcI8kiRJOcivhfXi70GS9QaFJIp4YSuIVvzGbuKpuGdeLgsaPmPTiu0ojTMXUVnhu2lfvMHIRTdZ/Gn4zk82iyV+nhYUEsq31H8=", BinaryEncoding.Base64), Compression.Deflate)), let _t = ((type nullable text) meta [Serialized.Text = true]) in type table [Find = _t, Replace = _t])
     in  Table.ReplaceValue(table,"",null,Replacer.ReplaceValue,{"Replace"}),
-
 MyFindReplace_InnoSpecs =
     let table = Table.FromRows(Json.Document(Binary.Decompress(Binary.FromText("bY/PboJAEIdfZcKpjcQo9gVaOOiBlMSaHoiHLYxKxJ3NsqTi03f/AAumt5nv983Mbp4H8SF5h5gkNkFom+AY5sEHUaMgrqm4wku6fbzqcGBXZ7AGnTDmjrh43wpR4w25YrKDjH5R6iucY6FImlNPyA6leCNt261aGdt+pWK8ZLKEgRM/VWfv7asHTtfsuEJ5YgV65asTM8X08F2V6uIdPzY7mlSNqFk3/8Rnq0SrrLhN0h1Ey7Wmppyy1c8zZFPQb85IKlgv30yWZP8lPtjcQVemhfvGkmhCovFOCM7oTVjA7BkujoaxMT7+AQ==", BinaryEncoding.Base64), Compression.Deflate)), let _t = ((type nullable text) meta [Serialized.Text = true]) in type table [Find = _t, Replace = _t])
     in  Table.ReplaceValue(table,"",null,Replacer.ReplaceValue,{"Replace"}),
@@ -744,6 +743,18 @@ Date.MonthName = Document(
 // █░░ █ █▀ ▀█▀
 // █▄▄ █ ▄█ ░█░
 //
+// Compare
+List.CompareListsCheck = (ListSource as list, ListCompare as list, optional CaseIgnore as logical) =>
+    //fxList = (l) => try Text.Combine( List.Transform(List.Distinct(List.Transform(l, each Text.Split(_, " "){1})), each Text.From(_)), "," ) otherwise "",
+    if (CaseIgnore ?? {CaseIgnore=""}{1}?) <> null
+        then List.ContainsAny(ListSource, ListCompare, (x, y) => Text.Contains(x, y, Comparer.OrdinalIgnoreCase))
+        else List.ContainsAny(ListSource, ListCompare, (x, y) => x=y),
+List.CompareListsMatches = (ListSource as list, ListCompare as list, optional CaseIgnore as logical) =>
+    //fxList = (l) => try Text.Combine( List.Transform(List.Distinct(List.Transform(l, each Text.Split(_, " "){1})), each Text.From(_)), "," ) otherwise "",
+    if (CaseIgnore ?? {CaseIgnore=""}{1}?) <> null
+        then List.Select(ListSource, each List.Contains(ListCompare, _, (x,y) => Text.Contains(x, y, Comparer.OrdinalIgnoreCase)))
+        else List.Select(ListSource, each List.Contains(ListCompare, _, (x,y) => Text.Contains(x, y, Comparer.Equals))),
+// Transform
 List.Flatten = Document(
     "List.Flatten",
     "Recursively flattens list elements. The end result is a single list",
@@ -792,19 +803,7 @@ List.ToText = Document(
                                 List.Swap(List.Buffer(_),
                                     Number.Round(Number.RandomBetween(iterator,n)),
                                     iterator
-                                    ))
-,
-List.CompareListsCheck = (ListSource as list, ListCompare as list, optional CaseIgnore as logical) =>
-    //fxList = (l) => try Text.Combine( List.Transform(List.Distinct(List.Transform(l, each Text.Split(_, " "){1})), each Text.From(_)), "," ) otherwise "",
-    if (CaseIgnore ?? {CaseIgnore=""}{1}?) <> null
-        then List.ContainsAny(ListSource, ListCompare, (x, y) => Text.Contains(x, y, Comparer.OrdinalIgnoreCase))
-        else List.ContainsAny(ListSource, ListCompare, (x, y) => x=y),
-List.CompareListsMatches = (ListSource as list, ListCompare as list, optional CaseIgnore as logical) =>
-    //fxList = (l) => try Text.Combine( List.Transform(List.Distinct(List.Transform(l, each Text.Split(_, " "){1})), each Text.From(_)), "," ) otherwise "",
-    if (CaseIgnore ?? {CaseIgnore=""}{1}?) <> null
-        then List.Select(ListSource, each List.Contains(ListCompare, _, (x,y) => Text.Contains(x, y, Comparer.OrdinalIgnoreCase)))
-        else List.Select(ListSource, each List.Contains(ListCompare, _, (x,y) => Text.Contains(x, y, Comparer.Equals)))
-,
+                                    )),
 List.ToRecord = Document(
     "List.ToRecord",
     "Transform a list of strings to a record using a given lambda (passed values k). The built-in Record.FromList only takes static lists...",
@@ -1061,8 +1060,7 @@ Table.RenameColumnsAdv = Document(
             SelectTable = if selectColumns then Table.SelectColumns(Table, selectHeaders) else Table.SelectColumns(Table, headers),
             // Rename columns
             RenameTable = Table.RenameColumns(SelectTable, columnsZip)
-        in  try RenameTable otherwise null)
-,
+        in  try RenameTable otherwise null),
 Table.RenameColumnsByIndices = (Source as table, Indices as list, ColumnNamesNew as list) =>
     let
         ColumnNames = Table.ColumnNames(Source),
@@ -1080,13 +1078,11 @@ Table.RenameColumnsByOrder = (InputTable as table, ColumnNumbers as list, NewCol
         RenameList = List.Zip({IndexRemoved,NewColumnNames}),
         RenamedColumns = Table.RenameColumns(InputTable, RenameList)
     in
-        RenamedColumns
-,
+        RenamedColumns,
 Table.TrimHeaders = (Table as table) =>
     let hRaw = Table.ColumnNames(Table),
         hTrim = List.Transform(hRaw, each Text.Trim(_))
-    in  if List.Count(List.Difference(hRaw, hTrim)) > 0 then Table.RenameColumns(Table, List.Zip({hRaw, hTrim})) else Table
-,
+    in  if List.Count(List.Difference(hRaw, hTrim)) > 0 then Table.RenameColumns(Table, List.Zip({hRaw, hTrim})) else Table,
 Table.PromoteHeadersNonEmpty = (table as table) as table =>
     /**
     Promote the first table row as column names, but keep the current header
@@ -1106,14 +1102,12 @@ Table.PromoteHeadersNonEmpty = (table as table) as table =>
                 else Current
         ),
         RenamedColumns = Table.RenameColumns( Table.Skip(table, 1), List.Zip({OldHeaders, NewHeaders}) )
-    in  RenamedColumns
-,
+    in  RenamedColumns,
 Table.SelectHeaders = (List as list, ColumnStart as text, ColumnEnd as text, optional Index as text) =>
     let pos1 = List.PositionOf(List, ColumnStart),
         pos2 = List.PositionOf(List, ColumnEnd),
         range = List.Range(List, pos1 + 1, pos2 - pos1 - 1)
-    in  if Index=null then range else List.Union({{Index}, range})
-,
+    in  if Index=null then range else List.Union({{Index}, range}),
 Table.RemoveEmptyRows = (tbl as table) =>
     // return a table with empty rows removed
     let
@@ -1200,8 +1194,7 @@ Table.RunningTotalfunction = (TabName as table, RT_Amt_ColumnName as text, Added
                     ) & {RT_List}, Table.ColumnNames(TabName) & {Added_Col_RT_Name}
                     )
     in
-        Consolidate
-,
+        Consolidate,
 Table.GroupedRunningTotal = (values as list, grouping as list) as list =>
     /* Written by Philip Treacy
         https://www.myonlinetraininghub.com/grouped-running-totals-in-power-query
@@ -1458,15 +1451,19 @@ Text.ReplaceAll = (str as text, Replacements as list) as text =>
 			    s=Text.Replace([s],Replacements{[i]}{0},Replacements{[i]}{1}),
 			    i=[i]+1
 		    ],
-		    each [s] ))
-,
-Text.PowerTrim = (text as text, optional char_to_trim as text) =>
-    let
-        char = if char_to_trim = null then " " else char_to_trim,
-		split = Text.Split(text, char),
-		removeblanks = List.Select(split, each _ <> "")
-	in
-        Text.Combine(removeblanks, char),
+		    each [s] )),
+Text.PowerTrim = Document(
+    "Text.PowerTrim",
+    "Power Trim all text.",
+    "Text.Transform",
+    {[  Description="Power Trim all text.",
+        Code =		"LPQ[Text.PowerTrim](""      A   B  C "")",
+        Result =	"A B C"    ]},
+    (text as text, optional char_to_trim as text) =>
+		let char = if char_to_trim = null then " " else char_to_trim,
+			split = Text.Split(text, char),
+			removeblanks = List.Select(split, each _ <> "")
+		in  Text.Combine(removeblanks, char)),
 Text.ReplaceByList = try (txt as text, replacementLists as list) as text => List.Accumulate(replacementLists, txt, (s,x) => Text.Replace(s,x{0},x{1})) otherwise null
 ,
 
@@ -1482,8 +1479,7 @@ Inno.ParseInnoCom = Document(
         Code =		"LPQ[Inno.ParseInnoCom](""https://inno3d.com/en/product_list/index/GRAPHICS%20CARD"")",
         Result =	"List of INNO products from site"    ]},
     (url as text) =>
-        let
-            src = Web.BrowserContents(url),
+        let src = Web.BrowserContents(url),
             GetCounter = (i as number, HtmlOpen, HtmlClose) =>
                 let beetween = (txt) => [
                         pn = Text.Trim(Text.BetweenDelimiters(txt, "Part No.: ", "</p>", 0)),
@@ -1497,8 +1493,7 @@ Inno.ParseInnoCom = Document(
             Unfold = Table.ExpandRecordColumn(Table, "col", {"pn","model","url","img_src"}),
             SplitPn = Table.ExpandListColumn(Table.ReplaceValue(Unfold, each [pn], each Text.Split(Text.Remove([pn],{" "}),"/"),Replacer.ReplaceValue,{"pn"}), "pn"),
             SortTablePn = Inno.SortTablePn(SplitPn,"pn",false)
-        in
-            SortTablePn),
+        in  SortTablePn),
 Inno.ParseInnoComSpecs = Document(
     "Inno.ParseInnoComSpecs",
     "Get Specs table from the product page at inno3d.com.",
@@ -1507,12 +1502,10 @@ Inno.ParseInnoComSpecs = Document(
         Code =		"LPQ[Inno.ParseInnoComSpecs](""https://inno3d.com/en/PRODUCT_INNO3D_GEFORCE_RTX_3060_8GB_TWIN_X2_2"")",
         Result =	"Specs table from site"    ]},
     (url as text) =>
-        let
-            src = Web.Page( Binary.Buffer( Web.Contents(url) ) ){0}[Data],
+        let src = Web.Page( Binary.Buffer( Web.Contents(url) ) ){0}[Data],
             Rename = Table.RenameColumnsAdv(src,{"GPU Engine Specs:",""}, {"spec","value"}),
             Replace = BulkTableReplace(Rename, MyFindReplace_InnoSpecs, {"spec","value"})
-        in
-            Replace)
+        in 	Replace)
 ,
 Web.GetAllLinks = Document(
     "Web.GetAllLinks",
