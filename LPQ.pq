@@ -1324,8 +1324,7 @@ Text.IsAlpha = (text as text) => List.MatchesAll(Text.ToList(text), each Text.Co
 Text.RemoveExtraWhitespace = (text as text) => Text.Combine(Splitter.SplitTextByWhitespace()(text)," "),
 // Splits camelCased and PascalCased text and separates by a space. Ex: "thisIsAColumn" -> "this Is A Column"
 Text.SplitCamelCase = (text as nullable text) => if text is null then null else List.Accumulate(Text.ToList(text),"", (state, current) =>
-    let
-        PreviousLetter = Text.End(state, 1),
+    let PreviousLetter = Text.End(state, 1),
         Ignore = (text as text) => text = " " or text = "."
     in state & (if not Text.IsUpperCase(PreviousLetter)
                     and not Ignore(PreviousLetter)
@@ -1352,44 +1351,38 @@ Text.SplitOnNonAlpha = (line as nullable text) =>
         else
           List.Combine({List.RemoveLastN(state, 1), {current}})),
 Text.Substring = (text as text, start as number, optional count as number) =>
-   let
-      start = if start >= 0 then start else error "start index should be >= 0",
-      end = if count = null then Text.Length(text) else if count <= Text.Length(text) then count else error "count should be <= text length",
-      textList = Text.ToList(text),
-      substr = Text.FromList(List.FirstN(List.Skip(textList, start), end - start))
-   in substr,
+    let start = if start >= 0 then start else error "start index should be >= 0",
+        end = if count = null then Text.Length(text) else if count <= Text.Length(text) then count else error "count should be <= text length",
+        textList = Text.ToList(text),
+        substr = Text.FromList(List.FirstN(List.Skip(textList, start), end - start))
+    in  substr,
 Text.PositionAfter = (text as nullable text, substring as text) =>
-    let
-        firstIndex = Text.PositionOf(text, substring),
+    let firstIndex = Text.PositionOf(text, substring),
         indexAfter = if firstIndex >=0 then firstIndex + Text.Length(substring) else -1
     in
         if text is null then -1 else if indexAfter >= 0 and indexAfter < Text.Length(text) then indexAfter else -1,
 Text.Until = (text as text, endDelimiter as text, optional startIndex as number) =>
-    let
-        start = if startIndex = null then 0 else startIndex,
+    let start = if startIndex = null then 0 else startIndex,
         textFromStart = Text.Substring(text, start),
         delimPosition = if Text.PositionOf(textFromStart, endDelimiter) >= 0 then Text.PositionOf(textFromStart, endDelimiter) else Text.Length(textFromStart)
     in
         if text is null then null else Text.Range(textFromStart, 0, delimPosition),
 Text.AsciiOnly = (s as text) as text =>
-    let
-        Listified = Text.ToList(s),
+    let Listified = Text.ToList(s),
         Numbered = List.Transform(Listified, each Character.ToNumber(_)),
         Filtered = List.Select(Numbered, each _ <= 255),
         Stringified = List.Transform(Filtered, each Character.FromNumber(_)),
         Joined = Text.Combine(Stringified, ""),
         Return = Joined
-    in
-        Return,
+    in  Return,
 
 Text.Between = (Haystack as text, After as text, Before as text) as text =>
-    let
-        CutAfter = Text.Split(Haystack, After),
+    let CutAfter = Text.Split(Haystack, After),
         CutBefore = Text.Split(CutAfter{1}, Before),
         Needle = if List.Count(CutAfter) > 1
         then (if List.Count(CutBefore) > 1 then CutBefore{0} else Error.Record("FindTextFailed","The text did not contain the keyword " & Before, Haystack))
         else error Error.Record("FindTextFailed","The text did not contain the keyword " & After, Haystack)
-    in Needle,
+    in  Needle,
 
 Text.ContainsAny = (str as text, needles as list) as logical =>
     let count = List.Count(needles)
@@ -1404,12 +1397,10 @@ Text.Count = (Haystack as text, Needle as text) as number =>
     List.Count(Text.Split(Haystack, Needle)) - 1,
 
 Text.EachBetween = (Haystack as text, After as text, Before as text) as list =>
-    let
-        CutAfter = Text.Split(Haystack, After),
+    let CutAfter = Text.Split(Haystack, After),
 	    SkipFirst = List.Skip(CutAfter),
         CutEach = List.Transform(SkipFirst, each Text.Split(_, Before){0})
-    in
-        CutEach,
+    in  CutEach,
 
 Text.EachFromTo = (Haystack as text, After as text, Before as text) as text =>
     let CutAfter = Text.Split(Haystack, After),
@@ -1418,13 +1409,12 @@ Text.EachFromTo = (Haystack as text, After as text, Before as text) as text =>
     in  CutEach,
 
 Text.FromTo = (Haystack as text, From as text, UpTo as text) as text =>
-    let
-        CutAfter = Text.Split(Haystack, From),
+    let CutAfter = Text.Split(Haystack, From),
         CutBefore = Text.Split(CutAfter{1}, UpTo),
         Needle = if List.Count(CutAfter) > 1
         then (if List.Count(CutBefore) > 1 then From & CutBefore{0} & UpTo else Error.Record("FindTextFailed","The text did not contain the keyword " & UpTo, Haystack))
         else error Error.Record("FindTextFailed","The text did not contain the keyword " & From, Haystack)
-    in Needle,
+    in  Needle,
 
 Text.RemoveSymbols = (inputtext as text) as text =>
     let
@@ -1438,20 +1428,20 @@ Text.RemoveSymbols = (inputtext as text) as text =>
         //inputtext = "Hello! My name is Chris, and I'm hoping that this *cool* post will help you!",
         //the text with punctuation removed
         outputtext = Text.Remove(inputtext, punctuationlist)
-    in
-        outputtext,
+    in  outputtext,
 
 Text.ReplaceAll = (str as text, Replacements as list) as text =>
     let count = List.Count(Replacements)
-    in List.Last(
-	    List.Generate(
-		    ()=>[i=0, s=str],
-		    each [i] <= count,
-		    each [
-			    s=Text.Replace([s],Replacements{[i]}{0},Replacements{[i]}{1}),
-			    i=[i]+1
-		    ],
-		    each [s] )),
+    in  List.Last(
+	        List.Generate(
+		        ()=>[i=0, s=str],
+		        each [i] <= count,
+		        each [
+			        s=Text.Replace([s],Replacements{[i]}{0},Replacements{[i]}{1}),
+			        i=[i]+1
+		        ],
+		        each [s] )
+        ),
 Text.PowerTrim = Document(
     "Text.PowerTrim",
     "Power Trim all text.",
