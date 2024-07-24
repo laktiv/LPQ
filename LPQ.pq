@@ -113,7 +113,7 @@ TestResults =
 
 _extensionLibrary = [
 
-// DEPENDENCIES
+// #	DEPENDENCIES
 Document = (name as text, description as text, category as text, valueOrExample as any, optional valueIfExample as any) =>
 	let value = if valueIfExample is null then valueOrExample else valueIfExample,
 			examples = if valueIfExample is null then {} else valueOrExample,
@@ -149,7 +149,10 @@ Switch = Document(
 		in 	if hasPairs then usingPairs else usingCases)
 ,
 
-// # 		INNO
+// #	INNO
+// ## 	Constant Tables
+shortCode = Table.FromRows(Json.Document(Binary.Decompress(Binary.FromText("hZQxT8MwEIX/SpS5kc4OObsjSJAFCYlkqFR1Qh26IQT8ftIQ++75TNme/b57PsenHI/tHe2p3bWv86Gx8vHluT3trlCcshOpmb7ezx+1jfu3z8v3OdWQQlACF2YJD9TMlyIf94pSpMwKaTjHHFI/gRSCEjieO8fZZ2hmXTWOx4dKFcWbVbFWdKvC0NQdnEI0vRoFXUeR62mfelik6kFWaXR6GSorBYqSFyEvmrxInfPK16jz6+dCmP6CycB1EqAgnQboNJhOAykTpUAseQx5bPIYbs6k0e3m8EgLn6er5M1cFQBK4AYxS6k4L2/q4U29eVMvvxdf/l5gQxWQ8lEKFCQ1lKmhlhpI+SgFYknlMpVrqUzKR5kgx+sYjIuzyO3z4EqhkzbTeWZDFZDyUQo0SOpQpg611IGUj1KNgeNezFLmMBry9ZdBUtfPK4UqD2ViwnZOUwjVVuj/JVxyUORDKG2jkEZTtFF5NK6/3/Gp8b8nJLHapx8=", BinaryEncoding.Base64), Compression.Deflate)), let _t = ((type nullable text) meta [Serialized.Text=true]) in type table [pn_code=_t,gpu =_t,gpu_short=_t,eol=_t])
+,
 // ## 	Extended script loader with auto data types
 File.GetExcelDataFile = Document(
 	"File.GetExcelDataFile",
@@ -377,22 +380,16 @@ Inno.GetGpuCode = Document(
 	"Products.Specs",
 	{[Description="'3060, 3080' - add mem",
 		Code="LPQ[Inno.GetGpuCode](PN, *MemList list, *CoolerList list)",
-		Result="Get pn_code from PN, before first '-'"	 ]},
+		Result="Get pn_code from PN, before first '-'" ]},
 	(PN as text, optional AddMemoryList as text, optional AddCoolerList as text) =>
 		let
-			memList =
-				if AddMemoryList = null or AddMemoryList = "" then
-					false
-				else
-					List.Transform(Text.Split(AddMemoryList, ","), Text.Trim),
-			coolList =
-				if AddCoolerList = null or AddCoolerList = "" then
-					false
-				else
-					List.Transform(Text.Split(AddCoolerList, ","), Text.Trim),
-
-			goodsShort = File.GetExcelDataFile("goods", "shortCode"),
-
+			memList = if AddMemoryList = null or AddMemoryList = ""
+						then false
+						else List.Transform(Text.Split(AddMemoryList, ","), Text.Trim),
+			coolList = if AddCoolerList = null or AddCoolerList = ""
+						then false
+						else List.Transform(Text.Split(AddCoolerList, ","), Text.Trim),
+			goodsShort = try shortCode otherwise Table.Buffer(File.GetExcelDataFile("goods", "shortCode")),
 			func = [
 				split = Text.Split(PN, "-"),
 				pn_first = split{0},
@@ -418,8 +415,7 @@ Inno.GetGpuCode = Document(
 						else if pos >= 0
 							then goodsShort{pos}[gpu]
 							else null
-		in
-			result)
+		in 	result)
 ,
 Inno.GetCooler = (Product as text) =>
 	let
@@ -499,7 +495,7 @@ BulkTableReplace =
 ,
 
 
-// #	 	GPU AND NV SERIES */
+// #	GPU AND NV SERIES
 // ## 	Search in the Model Name
 Inno.fnGetGpuFromName = (Model as any) =>
 	let listReplacement = {
@@ -522,7 +518,7 @@ Inno.fnGetMemoryFromName = (Model as any) => try Number.From(
 		(x) => List.AnyTrue(List.Transform({"GB","G"}, each Text.EndsWith(x,_)))), each Text.Select(_,{"0".."9"})),{"",null}){0})
 	otherwise null,
 Inno.fnGetOcFromName = (Model as any) => if List.CompareListsCheck(Text.Split(Text.Lower(Model)," "), {"oc","ichill","overclock"}, false) then "OC" else null,
-// Checks GPU
+// ## 	Checks GPU
 fxGpuSeries = (Product as text) =>
 	let p = Text.Lower(Product), //Text.Remove(, {" "})
 		posG = if Text.Contains(p, "RTX") then Text.PositionOf(p, "RTX")
@@ -538,11 +534,9 @@ fxGpuSeries = (Product as text) =>
 ,
 
 
-// █▀▀ ▄▀█ █▄░█ █▀   ▄▀█ █▄░█ █▀▄   ▀█▀ ▄▀█ █▄▄ █░░ █▀▀ █▀
-// █▀░ █▀█ █░▀█ ▄█   █▀█ █░▀█ █▄▀   ░█░ █▀█ █▄█ █▄▄ ██▄ ▄█
-//
-//   SEARCH # OF FANS BY FILLED BRAND/SERIES TABLES
-// Search full product name at Geizhals.eu, scrape result from specs table by coolers
+// #	FANS AND TABLES
+// ## 	SEARCH # OF FANS BY FILLED BRAND/SERIES TABLES
+// ## 	Search full product name at Geizhals.eu, scrape result from specs table by coolers
 fsGeizFans = (Product as text) =>
 	let
 		searchstring = "https://geizhals.eu/?fs=" & Uri.EscapeDataString(Product) & "&hloc=pl",
@@ -554,7 +548,7 @@ fsGeizFans = (Product as text) =>
 					then "X" & Text.Select(Text.Split(Cooler," "){0},{"0".."9"})
 					else txt
 	in  try Split otherwise null,
-// Search by Matching Series/Brand in the Table 'tblBrandsFans'
+// ## 	Search by Matching Series/Brand in the Table 'tblBrandsFans'
 fsGetFansAdv = (Product as text) =>
 	let srcTable = Table.Buffer( tblBrandsFans ),
 		// small replace
@@ -576,14 +570,14 @@ fsGetFansAdv = (Product as text) =>
 				Checking = Matching ?? {i<Table.RowCount(tbl)}{1}? ?? @fMatchFib(ml, b, i+1) //Recurse
 			in  try Checking otherwise null
 	in  fMatchFib(mList,"") ?? fMatchFib(mList,brand),
-// Simplier search
+// ## 	Simplier search
 fsGetFans = (Brand as text, Fans as text, Product as text) =>
 	let srcTable = Table.Buffer( tblBrandsFans ),
 		Table = Table.SelectRows(srcTable,
 			each [brand] = Text.Lower(Brand) and Text.Lower([fans]) = Text.Lower(Fans) )
 	in	Result = List.AnyTrue(
 			List.Transform(Table[series], each Text.Contains(Product,_,Comparer.OrdinalIgnoreCase)) ),
-// Flat table # Fans by brands
+// ## 	Flat table # Fans by brands
 tblBrandsFans =
 	let Table = Table.FromRows(Json.Document(Binary.Decompress(Binary.FromText("fZbRcuIgFEB/JeNzZ3aq+wMYMbImIRtIzW6nD9GyNVMNOxhn698vEE2TeuEFkzmHcLnAxefnCWIFmzxM8EcrVFMd9GNUHevmLdge5O59SF4eensz1w1rVf0RxKF5r7QTzG2PgVbOdJNUxtMPSCh5RzMlkWpdlPGclBCc6mZRoNjF1hQij2bAvRQNHI/BvMjnYN/pNxsRL5ZDGiGSblC+6KdTNe1eKK+y1448+pW7GIeKmWC0l6fWJdh5irfqdD6NFBKh+S+ObwtoV+2PVDsBLOFAtjEhnFPHxzpOc5sop4BjYl+cQoQSkkYBDX1SghjHuc94IozQ1GeUPMeJM5RpH4rLMOnVnPg4P6utdA7R7SWMotgdRudsSLpY0jwceSRN6WxxW8b5obIHtVvB1WWr6ldAW4mqPdXN+/Dx3loqva+2dQttid4sv9+a+5C6DM9gZnLL/9WNm9oGYCanoTz+rXatW/ghPNA2PVsv0bTPzOVVSSiBQylDjJEn/DV7V8VOeFYCI3QrXQa6qo7rwphHLrSiSxdizk6MQ8Q0UzBGW07PtvqDDI96JYzcsqV/Y/KzIAtgu4w1hlGwQpu1UxzWABaT5H7EbmpFljuhvi6oA12/DEzEceIHkOtTCKBHoCzeenWn9wmnfFwVM6TLYJ/yLzdYD82XWSvVsfTjAObX0c2Wy7tL3Ofoyz5T0ifpc6Uve1GNLq3flKOwP+tknIYR1P8glDgKJ+eqbur2AnJbDpLMx4JQKvjjduuGcGBQKeqhTTCNP3u+/Ac=", BinaryEncoding.Base64), Compression.Deflate)), let _t = ((type nullable text) meta [Serialized.Text = true]) in type table [brand = _t, fans = _t, series = _t, #"type" = _t]),
 		Lower = Table.TransformColumns(Table, {
@@ -605,7 +599,7 @@ tblInnoFans =
 ,
 
 
-// #	 	DATE
+// #	DATE
 // ## 	Inno
 Date.DateFromISOwn = Document(
 	"Date.DateFromISOwn",
@@ -629,7 +623,7 @@ DateTime.FromUnix = Document(
 		Code="LPQ[DateTime.FromUnix](""1710291332078"")",
 		Result="2024-03-13T00:55:32.0780000"   ]},
 	(ts) => #datetime(1970,1,1,0,0,0) + #duration(0,0,0,Number.FromText(ts)/1000) ),
-// Basic calendar
+// ## 	Basic calendar
 Date.Calendar = Document(
 	"Date.Calendar",
 	"Generate a calendar table for a given date span - can be text or proper dates. Current columns are Date, DayOfWeek, Month, MonthNum, WeekStartData, WeekStart, Year, YearMonth",
@@ -652,8 +646,7 @@ Date.Calendar = Document(
 			Year = Table.AddColumn(WeekStart, "Year", each Date.Year([Date])),
 			YearMonth = Table.AddColumn(Year, "YearMonth", each Number.From(Text.From([Year]) & (if [MonthNumber] < 10 then "0" else "") & Text.From([MonthNumber]))),
 			Result = YearMonth
-		in
-			Result),
+		in 	Result),
 Date.DatesBetween = Document(
 	"Date.DatesBetween",
 	"Returns a list of dates in a given span (inclusive). Start and end parameters can be any order",
@@ -699,7 +692,7 @@ Date.MonthName = Document(
 ,
 
 
-// # 		LIST
+// #	LIST
 // ## 	Compare
 List.CompareListsCheck = (ListSource as list, ListCompare as list, optional CaseIgnore as logical) =>
 	//fxList = (l) => try Text.Combine( List.Transform(List.Distinct(List.Transform(l, each Text.Split(_, " "){1})), each Text.From(_)), "," ) otherwise "",
@@ -776,7 +769,7 @@ List.ToRecord = Document(
 ,
 
 
-// #	 NUMBERS
+// #	NUMBERS
 Number.Digits = {0,1,2,3,4,5,6,7,8,9},
 Number.ParseText = Document(
 	"Number.ParseText",
@@ -835,7 +828,7 @@ Number.ProperNumber = Document(
 ,
 
 
-// #	 SPLITTERS
+// #	SPLITTERS
 Splitter.SplitTextByNonAlpha = Document(
 	"Splitter.SplitTextByNonAlpha",
 	"Splits text by characters that aren't [A-Za-zА-Яа-я]",
@@ -873,7 +866,7 @@ Splitter.SplitTextByNotIn = Document(
 ,
 
 
-// #	 TABLE
+// #	TABLE
 Table.AddBlankRow = (table as table) => Table.Combine({table, Table.FromRecords({[]})}),
 Table.DrillIntoColumn = (table as table, columnName as text) =>
 	let FindValue = (value as any) =>
@@ -888,14 +881,13 @@ Table.DrillIntoColumn = (table as table, columnName as text) =>
 		else  value,
 		Result = Table.TransformColumns(table, {{columnName, FindValue}})
 	in  Result,
-
 Table.EnterDataFormula = Document(
 	"Table.EnterDataFormula",
 	"Convert a table into a formula that's compatible with the Enter Data UI. This function returns an expression you can copy and paste to editthe table using Enter Data. Paste the formula, then click the gear icon next to the step name. This is an easy way to allow people to customize a table you've queried",
 	"Table.Convertion",
-	{[Description= "Simple table",
-	   Code=		"Web.Page(Web.Contents(""https://en.wikipedia.org/wiki/List_of_Super_Bowl_champions"")){3}[Data]",
-	   Result=	  "Table.FromRows(Json.Document(Binary.Decompress(Binary.FromText(""jVVtb9s2EP4rRD4aRqI3S9TH2Gm7ZWkb1MGGom6Aq83IhBkyoOik2a8fT6Ski6Fu+yDdWea9Pffc8du3M342P7uVzrU/jrbZs7UTQgnb+q+lfzL/nFeLxIu0ror55pglWcK8viA6J3o96vVwJksSqvNRT5Ognn2fh1yuQClo2cq8/DCvmMbCPzmmUWaLkEYyn2GkNIhFEFUQvBN1FkQexGI2uP8kXtg73SjQO3YLzkrjMEgRn/NFEmrlpL66JLmnRM+JXhC9IvWR82lxWqvQz8KypTV6a9pYJxZ5nlex1mpMg5dEp98p5OR7TWEmqaYLkgY2eQ2avbegt7LdGlbUof1dApgLz/MASQCcF0EEpH3wDuJiNkfXWUAabT9YITRbwqvHeXsIPovBZ4S5jDWl3kdZjbqHfBbKmXUkGd1iA78ae2AfJGg36ZRH46QzTqKIrtLR1Wc4IA82FzemZZe68cRv2ReQu5Bs3vO/7JOt5kixEt886d45Vp1kg8u/oN1L3Tij2Rexaw9ST3qqAj95FIGmPFC4Jhl+lPAo2ZVRT/vgKeuHoeg9pWT2MqLnhCDkO6ccROSWoJx8NFZsLn7XO48pPBklcQCV6yNmdDJKPrbJj+LIejol9UmUj1Jr0RoH7E/pQWnQc9LPXNJ7ronngEkVyFaVszHh48MDKMOWUqlJN3VCZoDAUxMY6pwkiIASCmwu1u6c3ZijRDY8tpFeHQh5nIUq0r4O3Iotw//WApxTgnm5h5fDhHW3DGdhKDtRBOuMdsNHfhZDy7vCYoEdo8dhzkghePQP0C3uT+le2WovxUOfQfqmieX8Hkeuvh8M/eEtNB5XAXbShoesk3JM93YvFewE0hPYO2g8ejHbjHaExxEkha6kXzdag5M+oG5ATRuS9nF+UukKrGeqBr9ftNuHmT3xgDs6LKZ4BaR0g1wL1xdKAUaK3w+n7+DxCbo1tjxut6CFsFNGuAXehvhslfC9YGuQejIOjslogkv4SgrfgNUebDOWk77hNh1f/OfS+RXmx+o9qK3R0zZ8jHIncA5bIdiddPCL8/VpDCv/Nh5nD/jO460mrPBSD1Hw10qJZ9Fdsf5qexmi4IOuUxzXT5uLy8HgSjhrpGM30vyP09f+PmmNfvYLQLBraI5g/9voN3NscS3fiZ/wbzG+/wM="", BinaryEncoding.Base64), Compression.Deflate)), let _t = ((type text) meta [Serialized.Text = true]) in type table [Appearances = _t, Team = _t, Wins = _t, Losses = _t, Winning percentage = _t, Season(s) = _t])" ]},
+	{[Description="Simple table",
+		Code="Web.Page(Web.Contents(""https://en.wikipedia.org/wiki/List_of_Super_Bowl_champions"")){3}[Data]",
+		Result="Table.FromRows(Json.Document(Binary.Decompress(Binary.FromText(""jVVtb9s2EP4rRD4aRqI3S9TH2Gm7ZWkb1MGGom6Aq83IhBkyoOik2a8fT6Ski6Fu+yDdWea9Pffc8du3M342P7uVzrU/jrbZs7UTQgnb+q+lfzL/nFeLxIu0ror55pglWcK8viA6J3o96vVwJksSqvNRT5Ognn2fh1yuQClo2cq8/DCvmMbCPzmmUWaLkEYyn2GkNIhFEFUQvBN1FkQexGI2uP8kXtg73SjQO3YLzkrjMEgRn/NFEmrlpL66JLmnRM+JXhC9IvWR82lxWqvQz8KypTV6a9pYJxZ5nlex1mpMg5dEp98p5OR7TWEmqaYLkgY2eQ2avbegt7LdGlbUof1dApgLz/MASQCcF0EEpH3wDuJiNkfXWUAabT9YITRbwqvHeXsIPovBZ4S5jDWl3kdZjbqHfBbKmXUkGd1iA78ae2AfJGg36ZRH46QzTqKIrtLR1Wc4IA82FzemZZe68cRv2ReQu5Bs3vO/7JOt5kixEt886d45Vp1kg8u/oN1L3Tij2Rexaw9ST3qqAj95FIGmPFC4Jhl+lPAo2ZVRT/vgKeuHoeg9pWT2MqLnhCDkO6ccROSWoJx8NFZsLn7XO48pPBklcQCV6yNmdDJKPrbJj+LIejol9UmUj1Jr0RoH7E/pQWnQc9LPXNJ7ronngEkVyFaVszHh48MDKMOWUqlJN3VCZoDAUxMY6pwkiIASCmwu1u6c3ZijRDY8tpFeHQh5nIUq0r4O3Iotw//WApxTgnm5h5fDhHW3DGdhKDtRBOuMdsNHfhZDy7vCYoEdo8dhzkghePQP0C3uT+le2WovxUOfQfqmieX8Hkeuvh8M/eEtNB5XAXbShoesk3JM93YvFewE0hPYO2g8ejHbjHaExxEkha6kXzdag5M+oG5ATRuS9nF+UukKrGeqBr9ftNuHmT3xgDs6LKZ4BaR0g1wL1xdKAUaK3w+n7+DxCbo1tjxut6CFsFNGuAXehvhslfC9YGuQejIOjslogkv4SgrfgNUebDOWk77hNh1f/OfS+RXmx+o9qK3R0zZ8jHIncA5bIdiddPCL8/VpDCv/Nh5nD/jO460mrPBSD1Hw10qJZ9Fdsf5qexmi4IOuUxzXT5uLy8HgSjhrpGM30vyP09f+PmmNfvYLQLBraI5g/9voN3NscS3fiZ/wbzG+/wM="", BinaryEncoding.Base64), Compression.Deflate)), let _t = ((type text) meta [Serialized.Text = true]) in type table [Appearances = _t, Team = _t, Wins = _t, Losses = _t, Winning percentage = _t, Season(s) = _t])" ]},
 	(Table as table) =>
 		let
 			Encoded = Table.JsonEncode(Table),
@@ -939,12 +931,12 @@ Table.JsonEncode = (table as table) =>
 		Compressed = Binary.Compress(Json, Compression.Deflate),
 		Encoded = Binary.ToText(Compressed, BinaryEncoding.Base64)
 	in  Encoded,
-// Replaces a value if it matches a predicate
+// ## 	Replaces a value if it matches a predicate
 Table.ReplaceValueIf = (table as table, replaceIf as function, after as any, columnNameOrList as any) =>
 	Table.ReplaceValue(table, null,after, (text, old, new)=>if replaceIf(text) then new else text, if columnNameOrList is list then columnNameOrList else {columnNameOrList}),
-// Splits camelCased and PascalCased column names.
+// ## 	Splits camelCased and PascalCased column names.
 Table.SplitColumnNames = (table as table) => Table.RenameColumns(table, List.Transform(Table.ColumnNames(table), each {_, Text.SplitCamelCase(_)})),
-// Splits camelCased and PascalCased text in a column.
+// ## 	Splits camelCased and PascalCased text in a column.
 Table.SplitColumnText = (table as table, columns as list) => if List.Count(columns) = 0 then table else Table.TransformColumns(@Table.SplitColumnText(table, List.Skip(columns, 1)), {{List.First(columns), Text.SplitCamelCase}}),
 Table.TransformColumn = (table as table, column as text, transform as function) => Table.TransformColumns(table, {{column, transform}}),
 Table.RenameAndTransformColumn = (table, currentName as text, newName as text, transform as function) => Table.TransformColumn(Table.RenameColumns(table, {currentName, newName}), newName, transform)
@@ -968,21 +960,17 @@ Table.ToXml = (t) =>
 	&"</table>"
 ,
 Table.NumberColumns = (table as table, columns as list) as table =>
-	let
-		NumberTypes = List.Repeat({type number}, List.Count(columns)),
+	let	NumberTypes = List.Repeat({type number}, List.Count(columns)),
 		DataWithTypes = Table.TransformColumnTypes( table, List.Zip({columns, NumberTypes}) ),
 		NumberNotNull = (number) => if number is null then 0 else number,
 		DataNoNulls = Table.TransformColumns( DataWithTypes, List.Zip({ columns, List.Repeat({NumberNotNull}, List.Count(columns)), NumberTypes }) )
-	in  Table.ReplaceErrorValues(DataNoNulls, List.Transform(columns, each {_,0}))
-,
+	in	Table.ReplaceErrorValues(DataNoNulls, List.Transform(columns, each {_,0})),
 Table.TrimHeader = (Table as table) =>
-	let hRaw = Table.ColumnNames(Table),
+	let	hRaw = Table.ColumnNames(Table),
 		hTrim = List.Transform(hRaw, each Text.Trim(_))
-	in  if List.Count(List.Difference(hRaw, hTrim)) > 0
-			then Table.RenameColumns(Table, List.Zip({hRaw, hTrim}))
-			else Table
+	in	if List.Count(List.Difference(hRaw, hTrim)) > 0 then Table.RenameColumns(Table, List.Zip({hRaw, hTrim})) else Table
 ,
-// Renaming columns
+// ## 	Renaming columns
 Table.RenameColumn = Document(
 	"Table.RenameColumn",
 	"Simple rename 1 column in the table.",
@@ -1001,7 +989,7 @@ Table.RenameColumnsAdv = Document(
 		Result="Table with new column's names and Selected with only renamed columns.#(lf)" &
 					"|	new1   |	new2	|"	 ]},
 	(Table as table, OldColumns as list, NewColumns as list, optional SelectHeaders as logical) =>
-		let selectColumns = if (SelectHeaders ?? {SelectHeaders=""}{1}?) = null then false else SelectHeaders,
+		let	selectColumns = if (SelectHeaders ?? {SelectHeaders=""}{1}?) = null then false else SelectHeaders,
 			// Merge Old names and New names
 			columnsZip = List.Zip({ OldColumns, NewColumns }),
 			// Get table headers and Select list ny Old names
@@ -1011,15 +999,13 @@ Table.RenameColumnsAdv = Document(
 			SelectTable = if selectColumns then Table.SelectColumns(Table, selectHeaders) else Table.SelectColumns(Table, headers),
 			// Rename columns
 			RenameTable = Table.RenameColumns(SelectTable, columnsZip)
-		in  try RenameTable otherwise null),
+		in	try RenameTable otherwise null),
 Table.RenameColumnsByIndices = (Source as table, Indices as list, ColumnNamesNew as list) =>
-	let
-		ColumnNames = Table.ColumnNames(Source),
+	let	ColumnNames = Table.ColumnNames(Source),
 		ColumnNamesList = List.Transform(Indices, each ColumnNames{_} ),
 		ZippedList = List.Zip({ ColumnNamesList, ColumnNamesNew } ),
 		#"Renamed Columns" = Table.RenameColumns(Source, ZippedList )
-	in
-		#"Renamed Columns",
+	in 	#"Renamed Columns",
 Table.RenameColumnsByOrder = (InputTable as table, ColumnNumbers as list, NewColumnNames as list) =>
 	let
 		OldColumnNames = Table.ColumnNames(InputTable),
@@ -1035,11 +1021,7 @@ Table.TrimHeaders = (Table as table) =>
 		hTrim = List.Transform(hRaw, each Text.Trim(_))
 	in  if List.Count(List.Difference(hRaw, hTrim)) > 0 then Table.RenameColumns(Table, List.Zip({hRaw, hTrim})) else Table,
 Table.PromoteHeadersNonEmpty = (table as table) as table =>
-	/**
-	Promote the first table row as column names, but keep the current header
-	if the value in the first row is empty.
-	For simpler use cases check built-in function `Table.PromoteHeaders`
-	**/
+	/** Promote the first table row as column names, but keep the current header if the value in the first row is empty. For simpler use cases check built-in function `Table.PromoteHeaders` **/
 	let
 		ExtraHeaders = Table.First(table),
 		OldHeaders = Table.ColumnNames(table),
@@ -1101,17 +1083,17 @@ Table.RemoveEmptyColumns = (tbl as table) =>
 			in  List.Select(col_states, each _ <> null )
 	in
 		Table.SelectColumns(tbl, non_empty_columns(tbl_no_erors)),
-// return a table with all errors replaced with specified value or null
+// ## 	return a table with all errors replaced with specified value or null
 Table.ReplaceAllErrorsInTable = (tbl as table, optional replacer_value) => Table.ReplaceErrorValues(tbl, List.Transform(Table.ColumnNames(tbl), each {_, replacer_value}))
 ,
-// Sort table
+// ## 	Sort table
 Table.SortColumnByList = Document(
 	"Table.SortColumnByList",
 	"Sort table's column text by List.",
 	"Table.Sorting",
 	{[Description="Sort table's column text by List.",
 		Code="LPQ[Table.SortColumnByList](Table, ""Category"", ""{""File"",""Edit""}"", True)",
-		Result="Sorted table Table in column 'Category' by List sort order Ascending."	 ]},
+		Result="Sorted table Table in column 'Category' by List sort order Ascending." ]},
 	(Table as table, ColumnName as text, ListSort as list, Order as logical) =>
 		Table.RemoveColumns(
 			Table.Sort(
@@ -1119,9 +1101,7 @@ Table.SortColumnByList = Document(
 					{each List.PositionOf(ListSort, Record.Field(_,ColumnName)), if Order then Order.Ascending else Order.Descending },
 					{"i",Order.Ascending}   }
 				),
-			{"i"}
-		)
-),
+			{"i"})),
 // ## 	Running Totals
 Table.RunningTotalfunction = (TabName as table, RT_Amt_ColumnName as text, Added_Col_RT_Name as text)=>
 	/**
@@ -1195,8 +1175,8 @@ Table.GetParameter = (ParameterName as text) =>
 ,
 */
 
-// #	 ARRAYS
-// VLOOKUP in other table
+// #	ARRAYS
+// ## 	VLOOKUP in other table
 fnVlookUp = Document(
 	"fnVlookUp",
 	"LookUp or CheckUp value in other table (return value from other column or just search)",
@@ -1260,16 +1240,16 @@ Text.GetMatch = (Text as text, List as list) =>
 ,
 
 
-// #	 TEXT
+// #	TEXT
 Text.Alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz" & "АБВГДЕЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯабвгдежзийклмнопрстуфхцчшщъыьэюя",
 Text.AlphaNumeric = Text.Alphabet & "0123456789",
 Text.FromList = (list as list) => List.Accumulate(list, "", (state, current) => state & Text.From(current)),
 Text.IsNumber = (text as text) => try Number.FromText(text) is number otherwise false,
-// Is text all uppercase? returns false if any non-alpha characters are present
+// ## 	Is text all uppercase? returns false if any non-alpha characters are present
 Text.IsUpperCase = (text as text) => List.AllTrue(List.Transform(Text.ToList(text), (letter)=>Text.Contains(Text.Alphabet, letter) and letter = Text.Upper(letter))),
 Text.IsAlpha = (text as text) => List.MatchesAll(Text.ToList(text), each Text.Contains(Text.Alphabet, _)),
 Text.RemoveExtraWhitespace = (text as text) => Text.Combine(Splitter.SplitTextByWhitespace()(text)," "),
-// Splits camelCased and PascalCased text and separates by a space. Ex: "thisIsAColumn" -> "this Is A Column"
+// ## 	Splits camelCased and PascalCased text and separates by a space. Ex: "thisIsAColumn" -> "this Is A Column"
 Text.SplitCamelCase = (text as nullable text) => if text is null then null else List.Accumulate(Text.ToList(text),"", (state, current) =>
 	let
 		PreviousLetter = Text.End(state, 1),
@@ -1282,22 +1262,18 @@ Text.SplitCamelCase = (text as nullable text) => if text is null then null else 
 		current),
 Text.SplitOnNotIn = (line as nullable text, validCharacters as text) => Splitter.SplitTextByNotIn(validCharacters)(line),
 Text.SplitOnNonAlpha = (line as nullable text) =>
-  if line is null then null else List.Accumulate(Text.ToList(line), {null} , (state, current) =>
-	let
-	  doSkip = not Text.Contains(Text.Alphabet, current),
-	  lastItem = List.Last(state),
-	  appendLast = lastItem<>null
-	in
-	  if doSkip then
-		if lastItem is null then
-		  state
-		else
-		  List.Combine({state, {null}})
-	  else
-		if appendLast then
-		  List.Combine({List.RemoveLastN(state, 1), {lastItem & current}})
-		else
-		  List.Combine({List.RemoveLastN(state, 1), {current}})),
+	if line is null then null else List.Accumulate(Text.ToList(line), {null} , (state, current) =>
+		let
+			doSkip = not Text.Contains(Text.Alphabet, current),
+			lastItem = List.Last(state),
+			appendLast = lastItem<>null
+		in
+			if doSkip then
+				if lastItem is null then state
+				else List.Combine({state, {null}})
+			else if appendLast
+				then List.Combine({List.RemoveLastN(state, 1), {lastItem & current}})
+				else List.Combine({List.RemoveLastN(state, 1), {current}})),
 Text.Substring = (text as text, start as number, optional count as number) =>
    let
 	  start = if start >= 0 then start else error "start index should be >= 0",
@@ -1415,7 +1391,7 @@ Text.ReplaceByList = try (txt as text, replacementLists as list) as text => List
 ,
 
 
-// #	 CODE AND WEB
+// #	CODE AND WEB
 Inno.ParseInnoCom = Document(
 	"Inno.ParseInnoCom",
 	"INNO3D products parser from main site.",
@@ -1527,7 +1503,7 @@ Web.TableToMarkdown = Document(
 ,
 
 
-// #	 	IMPORT PQ
+// #	IMPORT PQ
 // ## 	Minimal script loader
 ImportPq = Document(
 	"ImportPq",
@@ -1551,7 +1527,7 @@ ImportPq.GitHubRepo = Document(
 	"ImportPq.GitHubRepo",
 	"Get list of files from GitHub repository.",
 	"Web.Import",
-	{[Description = "Load file from GitHub",
+	{[Description="Load file from GitHub",
 		Code="LPQ[ImportPq.GitHubRepo](""https://github.com/laktiv/LPQ/blob/40a01a1998f1b88a03502e6f994625b108c8722b/LPQ.pq"")",
 		Result="File list from GitHub repository." ]},
 	(GitHubUser as text, GitHubRepo as text) =>
@@ -1575,7 +1551,7 @@ ImportPq.GitHubRepo = Document(
 ,
 
 
-// #	 VALUE
+// #	VALUE
 Value.TypeText = (value as any) =>
 	if value is binary then "binary" else
 	if value is date then "date" else
@@ -1603,18 +1579,16 @@ Value.ToText = (Val as any, optional RecursTypes as logical) as text =>
 		CaseValues = {
 			{ (x)=> Value.Is(x, type type), Type.ToText(Value, RecursTypes) },
 			{ (x)=> Value.Is(x, type function),
-				let
-					Type = Value.Type(Value),
+				let Type = Value.Type(Value),
 					Params = Type.FunctionParameters(Type),
 					Reqd = Type.FunctionRequiredParameters(Type),
 					Ret = Type.FunctionReturn(Type)
-				in
-				"function (" &
-				Record.TransformJoin(Params, (k,v) =>
-					(if List.PositionOf(Record.FieldNames(Params), k) >= Reqd then "optional " else "") &
-					k & " as " & @Value.ToText(v, RecursTypes)
-				)
-				& ") as " & @Value.ToText(Ret, RecursTypes)
+				in 	"function (" &
+					Record.TransformJoin(Params, (k,v) =>
+						(if List.PositionOf(Record.FieldNames(Params), k) >= Reqd then "optional " else "") &
+						k & " as " & @Value.ToText(v, RecursTypes)
+					)
+					& ") as " & @Value.ToText(Ret, RecursTypes)
 			},
 			{ (x)=> Value.Is(x, type table), "#table(" & @Value.ToText(Table.ColumnNames(Value), RecursTypes) & ", " & @Value.ToText(Table.ToRows(Value), RecursTypes) & ")"},
 			{ (x)=> Value.Is(x, type record), "[" &
@@ -1654,7 +1628,7 @@ Value.WaitFor = (producer as function, interval as function, optional count as n
 ,
 
 
-// #	 OTHER
+// #	OTHER
 Type.ToText = (Type as any, optional Recurs as logical) as text =>
 	let Recurs = if (Recurs<>null) then Recurs else false,
 			CaseValues = {
@@ -1663,10 +1637,8 @@ Type.ToText = (Type as any, optional Recurs as logical) as text =>
 				{ (x)=> Type.Is(x, type function), "function"},
 				{ (x)=> Type.Is(x, type table), if Recurs then "table " & @Type.ToText(Type.TableRow(NonNull), Recurs) else "table"},
 				{ (x)=> Type.Is(x, type record), if Recurs then
-					let
-						Record = Type.RecordFields(NonNull)
-					in
-						"[" & Record.TransformJoin(Record, (k,v) =>
+					let Record = Type.RecordFields(NonNull)
+					in 	"[" & Record.TransformJoin(Record, (k,v) =>
 						(if v[Optional] then "optional " else "") & Expression.Identifier(k) & " = " & @Type.ToText(v[Type], Recurs)
 					) & "]"
 				else "record"},
