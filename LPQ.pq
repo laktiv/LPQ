@@ -371,9 +371,11 @@ Inno.Online = Document(
 		Result="Table"	 ]},
 	ImportPq.GitHubRaw("https://raw.githubusercontent.com/laktiv/LPQ/main/Inno.TablesOnline.pq"))
 ,
+// ## 	INNO Currency tables
 fCur = (cur) => Inno.Online[CUR][Rate]{List.PositionOf(Inno.Online[CUR][Curr], cur)},
 fVat = (vat) => Inno.Online[VAT][k]{List.PositionOf(Inno.Online[VAT][VAT], vat)},
 fMar = (mar) => Inno.Online[MARG][k]{List.PositionOf(Inno.Online[MARG][Marg], mar)},
+
 Inno.GetGpuCode = Document(
 	"Inno.GetGpuCode",
 	"Table for calculations.",
