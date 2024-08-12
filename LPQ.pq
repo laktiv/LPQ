@@ -158,7 +158,7 @@ File.GetExcelDataFile = Document(
 	"File.GetExcelDataFile",
 	"Call table from excel file in INNO folder.",
 	"Files.Import",
-	{[	Description="File GetExcelDataFile",
+	{[Description="File GetExcelDataFile",
 		Code="LPQ[File.GetExcelDataFile](""File name without extension"", ""Table name (table if null)"")",
 		Result="Imported table with types formated." ]},
 	(fileName as text, optional tableName as text) as table =>
@@ -201,7 +201,7 @@ File.GetFilesFolder = Document(
 	"File.GetFilesFolder",
 	"Gets files from folder with parameters.",
 	"Files.Import",
-	{[	Description="File.GetFilesFolder",
+	{[Description="File.GetFilesFolder",
 		Code="LPQ[File.GetFilesFolder](""C:\Users\Laktionov.I\OneDrive\INNO\"", ""price"", ""xlsx"", ""INNO3D"", true, true, false)",
 		Result="Table with price lists, only from RootFOlder and latest"   ]},
 	(RootFolder as text, FolderName as text, ExtensionsList as any, FilterNames as any, rootOnly as logical, latestOnly as logical, optional sortNames as logical) =>
@@ -263,7 +263,7 @@ Inno.SortTablePn = Document(
 	"Inno.SortTablePn",
 	"Returns sorted table by INNO3D partnumbers in proper order. Also could filter-out old models.",
 	"Table.Transformation",
-	{[	Description="Inno.SortTablePn",
+	{[Description="Inno.SortTablePn",
 		Code="LPQ[Inno.SortTablePn](Table, ""pn"", true)",
 		Result="New sorted table by column 'pn' with old filtered." ]},
 	(Table as table, PN as text, optional FilterOld as logical) =>
@@ -306,7 +306,7 @@ Inno.TableTypes = Document(
 	"Inno.TableTypes",
 	"Converts types of columns in the table",
 	"Tables.Transformation",
-	{[	Description="TableTypes",
+	{[Description="TableTypes",
 		Code="LPQ[Inno.TableTypes](Table)",
 		Result="New table"	 ]},
 	(Table as table, optional ToOrder as logical) as table =>
@@ -349,7 +349,7 @@ Inno.Online = Document(
 	"Inno.Online",
 	"Table for calculations.",
 	"Reference",
-	{[	Description="Margin, VAT, Currencies",
+	{[Description="Margin, VAT, Currencies",
 		Code="Tables",
 		Result="Table"	 ]},
 	ImportPq.GitHubRaw("https://raw.githubusercontent.com/laktiv/LPQ/main/Inno.TablesOnline.pq"))
@@ -362,7 +362,7 @@ Inno.GetGpuCode = Document(
 	"Inno.GetGpuCode",
 	"Table for calculations.",
 	"Products.Specs",
-	{[	Description="'3060, 3080' - add mem",
+	{[Description="'3060, 3080' - add mem",
 		Code="LPQ[Inno.GetGpuCode](PN, *MemList list, *CoolerList list)",
 		Result="Get pn_code from PN, before first '-'" ]},
 	(PN as text, optional AddMemoryList as text, optional AddCoolerList as text) =>
@@ -614,7 +614,7 @@ Date.DateFromISOwn = Document(
 	"Date.DateFromISOwn",
 	"Compute date of the first day of the week given an ISO weeknumber. If the Year is not entered, it will default to 'this' year.",
 	"Dates.Convertasion",
-	{[	Description="Year must be a full year: eg 2021 vs 21. The latter will not be interpreted as the year 2021.",
+	{[Description="Year must be a full year: eg 2021 vs 21. The latter will not be interpreted as the year 2021.",
 		Code="LPQ[Date.DateFromISOwn](""week number"", opt. ""year"")",
 		Result="Date on start of week #"   ]},
 	(wn as number, optional year as number) as date =>
@@ -628,7 +628,7 @@ DateTime.FromUnix = Document(
 	"DateTime.FromUnix",
 	"Converts UNIX timestamp to DateTime.",
 	"Date.Transformation",
-	{[	Description="Converts UNIX timestamp to DateTime.",
+	{[Description="Converts UNIX timestamp to DateTime.",
 		Code="LPQ[DateTime.FromUnix](""1710291332078"")",
 		Result="2024-03-13T00:55:32.0780000"   ]},
 	(ts) => #datetime(1970,1,1,0,0,0) + #duration(0,0,0,Number.FromText(ts)/1000) ),
@@ -637,7 +637,7 @@ Date.Calendar = Document(
 	"Date.Calendar",
 	"Generate a calendar table for a given date span - can be text or proper dates. Current columns are Date, DayOfWeek, Month, MonthNum, WeekStartData, WeekStart, Year, YearMonth",
 	"Dates.Date",
-	{[	Description="2024 calendar",
+	{[Description="2024 calendar",
 		Code="LPQ[Date.Calendar](""1/1/2024"", ""12/31/2024""",
 		Result="2024 calendar"	 ]},
 	(start as any, end as any) =>
@@ -660,7 +660,7 @@ Date.DatesBetween = Document(
 	"Date.DatesBetween",
 	"Returns a list of dates in a given span (inclusive). Start and end parameters can be any order",
 	"Dates.Date",
-	{[	Description="Date range",
+	{[Description="Date range",
 		Code="LPQ[Date.DatesBetween](""1/1/2016"", ""1/3/2016"")",
 		Result="{""1/1/2016"", ""1/2/2016"", ""1/3/2016""}" ]},
 	(start as any, end as any) =>
@@ -677,7 +677,7 @@ Date.DayName = Document(
 	"Date.DayName",
 	"Returns the English day of the week name for a date",
 	"Dates.Date",
-	{[	Description="Get the day name",
+	{[Description="Get the day name",
 		Code="LPQ[Date.DayName](""9/9/2016"")",
 		Result="Friday" ]},
 	(date as any) =>
@@ -689,7 +689,7 @@ Date.MonthName = Document(
 	"Date.MonthName",
 	"Returns the English month name for a date",
 	"Dates.Date",
-	{[	Description="Get the month name",
+	{[Description="Get the month name",
 		Code="LPQ[Date.MonthName](""9/9/2016"")",
 		Result="September"	 ]},
 	(date as any, optional lang as text) =>
@@ -718,7 +718,7 @@ List.Flatten = Document(
 	"List.Flatten",
 	"Recursively flattens list elements. The end result is a single list",
 	"Lists.Transformation",
-	{[	Description="Flattening nested lists into one",
+	{[Description="Flattening nested lists into one",
 		Code="LPQ[List.Flatten]({ 1, 2, Table.FromRecords({[x=1]}), {3, 4, 5} })",
 		Result="{ 1, 2, Table.FromRecords({[x=1]}), 3, 4, 5}"  ]},
 	(list as list) => List.Accumulate(list, {}, (state, current) =>
@@ -726,11 +726,31 @@ List.Flatten = Document(
 			currentListContent = if current is list then @List.Flatten(current) else {current}
 		in
 			List.Combine({state, currentListContent}))),
+List.FlattenAdvanced = Document(
+	"List.FlattenAdvanced",
+	"Recursively flattens list elements. The end result is a single list",
+	"Lists.Transformation",
+	{[Description="Flatten a nested list with mixed levels into a simple list.",
+		Code="LPQ[List.Flatten]({1, {2, 3}, {1, {2, 3}}})",
+		Result="{1, 2, 3, 1, 2, 3}"  ]},
+	(L as list) as list =>
+		let
+				IsListType = (x) as logical => Value.Type(x) = List.Type,
+				FlattenOneLevel = (L as list) as list =>
+						List.Combine(
+								List.Transform(L, each if IsListType(_) then _ else {_})
+						),
+				FlattenAll = (L as list) as list =>
+						if List.MatchesAny(L, IsListType) // Check if L is nested
+						then @FlattenAll(FlattenOneLevel(L))
+						else L
+		in
+				FlattenAll(L)),
 List.From = Document(
 	"List.From",
 	"Converts a text representation of a list into a list of the elements. Items are considered to be split by ,",
 	"Lists.Transformation",
-	{[	Description="Convert a text list",
+	{[Description="Convert a text list",
 		Code="LPQ[List.From](""{A, B, C}"")",
 		Result="{ ""A"", ""B"", ""C"" }"   ]},
 	(simpleTextList as text) =>
@@ -744,7 +764,7 @@ List.ToText = Document(
 	"List.ToText",
 	"Converts a list to a textual representation. Inverse of List.From",
 	"Lists.Transformation",
-	{[	Description="Conver to text",
+	{[Description="Conver to text",
 		Code="LPQ[List.ToText]({ 1, 2, 3})",
 		Result="""{1, 2, 3}"""	 ]},
 	(list as list) => List.Accumulate(list, "{", (state, current) => current & Text.From(current)) & "}"),
@@ -767,7 +787,7 @@ List.ToRecord = Document(
 	"List.ToRecord",
 	"Transform a list of strings to a record using a given lambda (passed values k). The built-in Record.FromList only takes static lists...",
 	"List.ToRecord",
-	{[	Description="Transform a list of strings to a record using a given lambda (passed values k)",
+	{[Description="Transform a list of strings to a record using a given lambda (passed values k)",
 		Code="LPQ[List.ToRecord]({""a"",""b""}, (k) => Text.Upper(k)))",
 		Result="[a=""A"", b=""B""]"	 ]},
 	(List as list, Lambda as function) as record =>
@@ -784,7 +804,7 @@ Number.ParseText = Document(
 	"Number.ParseText",
 	"Returns the first number (1+ consecutive digits) in the given text. Optionally, provide allowed characters to ignore them",
 	"Numbers.Transformation",
-	{[	Description="Allow commas",
+	{[Description="Allow commas",
 		Code="LPQ[Number.ParseText](""It's over 9,000!"", 0, {"",""})",
 		Result="9000"  ]},
 	(text as text, optional startIndex as number, optional allowCharacters as list) =>
@@ -798,7 +818,7 @@ Number.ToLetters = Document(
 	"Number.ToLetters",
 	"Converts a number (starting at 1) to an alphabet representation. Works like column headers in Excel.",
 	"Numbers.Transformation",
-	{[	Description="Column 27",
+	{[Description="Column 27",
 		Code="LPQ[Number.ToLetters](27)",
 		Result="AB" ]},
 	(value as number) =>
@@ -823,7 +843,7 @@ Number.ProperNumber = Document(
 	"Concerts text as number to proper number type. Also will erase inconvinient thouthands and decimal symbols to regular format. <br>" &
 	"In case of error will return input text",
 	"Numbers.Transformation",
-	{[	Description="Allow commas",
+	{[Description="Allow commas",
 		Code="LPQ[Number.ProperNumber](""It's over 9,000!"", null, {"",""}, 0)",
 		Result="9000"  ]},
 	(text as text, optional digitsAfter as number, optional allowCharacters as list, optional startIndex as number) =>
@@ -842,7 +862,7 @@ Splitter.SplitTextByNonAlpha = Document(
 	"Splitter.SplitTextByNonAlpha",
 	"Splits text by characters that aren't [A-Za-zА-Яа-я]",
 	"Splitter.Transformation",
-	{[	Description="Split text",
+	{[Description="Split text",
 		Code="LPQ[Splitter.SplitTextByNonAlpha](""A1B,C"")",
 		Result="{ ""A"", ""B"", ""C"" }"   ]},
 	(line as text) => Splitter.SplitTextByNotIn(Text.Alphabet)),
@@ -850,7 +870,7 @@ Splitter.SplitTextByNotIn = Document(
 	"Splitter.SplitTextByNotIn",
 	"Splits text on any characters that aren't the provided 'safe' characters",
 	"Splitter.Transformation",
-	{[	Description="Split on non-alphanumeric",
+	{[Description="Split on non-alphanumeric",
 		Code="LPQ[Splitter.SplitTextByNotIn](LPQ[Text.AlphaNumeric])(""Power BI is #1"")",
 		Result="{""Power BI is "", ""1""}"	 ]},
 	(safeCharacters as text) => (line as nullable text) =>
@@ -894,7 +914,7 @@ Table.EnterDataFormula = Document(
 	"Table.EnterDataFormula",
 	"Convert a table into a formula that's compatible with the Enter Data UI. This function returns an expression you can copy and paste to editthe table using Enter Data. Paste the formula, then click the gear icon next to the step name. This is an easy way to allow people to customize a table you've queried",
 	"Table.Convertion",
-	{[	Description="Simple table",
+	{[Description="Simple table",
 		Code="Web.Page(Web.Contents(""https://en.wikipedia.org/wiki/List_of_Super_Bowl_champions"")){3}[Data]",
 		Result="Table.FromRows(Json.Document(Binary.Decompress(Binary.FromText(""jVVtb9s2EP4rRD4aRqI3S9TH2Gm7ZWkb1MGGom6Aq83IhBkyoOik2a8fT6Ski6Fu+yDdWea9Pffc8du3M342P7uVzrU/jrbZs7UTQgnb+q+lfzL/nFeLxIu0ror55pglWcK8viA6J3o96vVwJksSqvNRT5Ognn2fh1yuQClo2cq8/DCvmMbCPzmmUWaLkEYyn2GkNIhFEFUQvBN1FkQexGI2uP8kXtg73SjQO3YLzkrjMEgRn/NFEmrlpL66JLmnRM+JXhC9IvWR82lxWqvQz8KypTV6a9pYJxZ5nlex1mpMg5dEp98p5OR7TWEmqaYLkgY2eQ2avbegt7LdGlbUof1dApgLz/MASQCcF0EEpH3wDuJiNkfXWUAabT9YITRbwqvHeXsIPovBZ4S5jDWl3kdZjbqHfBbKmXUkGd1iA78ae2AfJGg36ZRH46QzTqKIrtLR1Wc4IA82FzemZZe68cRv2ReQu5Bs3vO/7JOt5kixEt886d45Vp1kg8u/oN1L3Tij2Rexaw9ST3qqAj95FIGmPFC4Jhl+lPAo2ZVRT/vgKeuHoeg9pWT2MqLnhCDkO6ccROSWoJx8NFZsLn7XO48pPBklcQCV6yNmdDJKPrbJj+LIejol9UmUj1Jr0RoH7E/pQWnQc9LPXNJ7ronngEkVyFaVszHh48MDKMOWUqlJN3VCZoDAUxMY6pwkiIASCmwu1u6c3ZijRDY8tpFeHQh5nIUq0r4O3Iotw//WApxTgnm5h5fDhHW3DGdhKDtRBOuMdsNHfhZDy7vCYoEdo8dhzkghePQP0C3uT+le2WovxUOfQfqmieX8Hkeuvh8M/eEtNB5XAXbShoesk3JM93YvFewE0hPYO2g8ejHbjHaExxEkha6kXzdag5M+oG5ATRuS9nF+UukKrGeqBr9ftNuHmT3xgDs6LKZ4BaR0g1wL1xdKAUaK3w+n7+DxCbo1tjxut6CFsFNGuAXehvhslfC9YGuQejIOjslogkv4SgrfgNUebDOWk77hNh1f/OfS+RXmx+o9qK3R0zZ8jHIncA5bIdiddPCL8/VpDCv/Nh5nD/jO460mrPBSD1Hw10qJZ9Fdsf5qexmi4IOuUxzXT5uLy8HgSjhrpGM30vyP09f+PmmNfvYLQLBraI5g/9voN3NscS3fiZ/wbzG+/wM="", BinaryEncoding.Base64), Compression.Deflate)), let _t = ((type text) meta [Serialized.Text = true]) in type table [Appearances = _t, Team = _t, Wins = _t, Losses = _t, Winning percentage = _t, Season(s) = _t])" ]},
 	(Table as table) =>
@@ -984,7 +1004,7 @@ Table.RenameColumn = Document(
 	"Table.RenameColumn",
 	"Simple rename 1 column in the table.",
 	"Table.Transformation",
-	{[	Description="Rename a column in table.",
+	{[Description="Rename a column in table.",
 		Code="LPQ[Table.RenameColumn](table, ""old column name"", ""new column name"")",
 		Result="| new column |  column   |#(lf)| ---------- | ---------- |"	 ]},
 	(Table as table, column as text, newName as text) => Table.RenameColumns(Table, {{column, newName}})
@@ -1100,7 +1120,7 @@ Table.SortColumnByList = Document(
 	"Table.SortColumnByList",
 	"Sort table's column text by List.",
 	"Table.Sorting",
-	{[	Description="Sort table's column text by List.",
+	{[Description="Sort table's column text by List.",
 		Code="LPQ[Table.SortColumnByList](Table, ""Category"", ""{""File"",""Edit""}"", True)",
 		Result="Sorted table Table in column 'Category' by List sort order Ascending." ]},
 	(Table as table, ColumnName as text, ListSort as list, Order as logical) =>
@@ -1190,7 +1210,7 @@ fnVlookUp = Document(
 	"fnVlookUp",
 	"LookUp or CheckUp value in other table (return value from other column or just search)",
 	"Tables.Search",
-	{[	Description="Value, Table, Search at Column name, Return Column name.",
+	{[Description="Value, Table, Search at Column name, Return Column name.",
 		Code="LPQ[fnVlookUp]([1], Products, ""ProductKey"", ""Price"")",
 		Result="9000 OR 1" ]},
 	(lookupValue as any, lookupTable as table, lookupColumnName as text, optional returnColumnValue as text) =>
@@ -1207,7 +1227,7 @@ fnCheckInList = Document(
 	"fnCheckInList",
 	"Search word in the list. True - case not sesetive, False - case sensetive.",
 	"Lists.Match",
-	{[	Description="Using separate lists. Params: Word, List, Case sensetive.",
+	{[Description="Using separate lists. Params: Word, List, Case sensetive.",
 		Code="LPQ[fnCheckInList](""Word"", {""Text"", ""Word"", ""Letter""}, true)",
 		Result="TRUE"	 ]},
 	(Name as text, List as list, optional Match as logical) =>
@@ -1390,7 +1410,7 @@ Text.PowerTrim = Document(
 	"Text.PowerTrim",
 	"Power Trim all text.",
 	"Text.Transform",
-	{[	Description="Power Trim all text.",
+	{[Description="Power Trim all text.",
 		Code="LPQ[Text.PowerTrim](""	  A   B  C "")",
 		Result="A B C" ]},
 	(text as text, optional char_to_trim as text) =>
@@ -1407,7 +1427,7 @@ Inno.ParseInnoCom = Document(
 	"Inno.ParseInnoCom",
 	"INNO3D products parser from main site.",
 	"Web.Parser.INNO",
-	{[	Description="Add link to the products category with any filter applied.",
+	{[Description="Add link to the products category with any filter applied.",
 		Code="LPQ[Inno.ParseInnoCom](""https://inno3d.com/en/product_list/index/GRAPHICS%20CARD"")",
 		Result="List of INNO products from site" ]},
 	(url as text) =>
@@ -1430,7 +1450,7 @@ Inno.ParseInnoComSpecs = Document(
 	"Inno.ParseInnoComSpecs",
 	"Get Specs table from the product page at inno3d.com.",
 	"Web.Parser.INNO",
-	{[	Description="Add link to product page at inno3d.com.",
+	{[Description="Add link to product page at inno3d.com.",
 		Code="LPQ[Inno.ParseInnoComSpecs](""https://inno3d.com/en/PRODUCT_INNO3D_GEFORCE_RTX_3060_8GB_TWIN_X2_2"")",
 		Result="Specs table from site" ]},
 	(url as text) =>
@@ -1443,7 +1463,7 @@ Web.GetAllLinks = Document(
 	"Web.GetAllLinks",
 	"Get all hyperlinks from the page.",
 	"Web.Modification",
-	{[	Description="Creates the list with all hyperlinks from the page in <a>.",
+	{[Description="Creates the list with all hyperlinks from the page in <a>.",
 		Code="LPQ[Web.GetAllLinks](""https://inno3d.com/en/product_list/index/GRAPHICS%20CARD"")",
 		Result="https://inno3d.com/en/PRODUCT_INNO3D_GEFORCE_RTX_3070_ICHILL_X3_LHR" ]},
 	(SourceURL as text, optional AttributeDelimiter as text) =>
@@ -1459,7 +1479,7 @@ Web.StripHtmlList = Document(
 	"Web.StripHtmlList",
 	"Cleans all html tags in the column of the table.",
 	"Web.Modification",
-	{[	Description="Cleans all html tags in the column of the table.",
+	{[Description="Cleans all html tags in the column of the table.",
 		Code="LPQ[Web.StripHtmlList](table, ""column name with html"")",
 		Result="https://inno3d.com/en/PRODUCT_INNO3D_GEFORCE_RTX_3070_ICHILL_X3_LHR" ]},
 	(tbl as table, columnName as text) =>
@@ -1500,7 +1520,7 @@ Web.TableToMarkdown = Document(
 	"Web.TableToMarkdown",
 	"Converts table to text table with Markdown syntax.",
 	"Web.Modification",
-	{[	Description="Creates Markdown table.",
+	{[Description="Creates Markdown table.",
 		Code="LPQ[Web.TableToMarkdown](table)",
 		Result="| Опис та коментарь | TODO	|#(lf)| ----------------- | ------- |" ]},
 	(Table as table) =>
@@ -1512,7 +1532,35 @@ Web.TableToMarkdown = Document(
 		in
 			TransferToMarkdown)
 ,
-
+Api.MakeApiCallTemplate = Document(
+	"Api.MakeApiCallTemplate",
+	"Converts table to text table with Markdown syntax.",
+	"Web.Api",
+	{[Description="See code and mofify for running"]},
+	/*	// Define the main function and parameters
+			myFunction = () =>
+			let
+					// Make the API call
+					baseUrl = "https://api.worldbank.org/v2/",
+					response = Json.Document(
+							Web.Contents(baseUrl, [
+									RelativePath = "country",
+									Query = [
+											format="json",
+											per_page = "1000"
+									],
+									Headers = []
+							])
+					),
+					response1 = response{1},
+					#"Converted to Table" = Table.FromList(response1, Splitter.SplitByNothing(), null, null, ExtraValues.Error),
+					#"Expanded Column1" = Table.ExpandRecordColumn(#"Converted to Table", "Column1", 
+			{"id", "iso2Code", "name", "region", "adminregion", "incomeLevel", "lendingType", "capitalCity", "longitude", "latitude"}, 
+			{"ISO 3 code", "ISO 2 code", "Country name", "Region", "Admin region", "Income level", "Lending type", "Capital city", "Longitude", "Latitude"})
+			in
+					#"Expanded Column1")
+    */ (text)=>text)
+,
 
 // #	IMPORT PQ
 // ## 	Minimal script loader
@@ -1520,7 +1568,7 @@ ImportPq = Document(
 	"ImportPq",
 	"Most minimal external PQ script file loader.",
 	"Files.Import",
-	{[	Description="Load PQ file to Excel",
+	{[Description="Load PQ file to Excel",
 		Code="LPQ[ImportPq](""C:\File.pq"")",
 		Result="code from .pq file" ]},
 	(FilePath as text, optional Encoding as nullable number) =>
@@ -1529,7 +1577,7 @@ ImportPq.GitHubRaw = Document(
 	"ImportPq.GitHubRaw",
 	"Import file from GitHub.",
 	"Web.Import",
-	{[	Description="Load file from GitHub",
+	{[Description="Load file from GitHub",
 		Code="LPQ[ImportPq.GitHubRaw](""https://github.com/laktiv/LPQ/blob/40a01a1998f1b88a03502e6f994625b108c8722b/LPQ.pq"")",
 		Result="File from GitHub" ]},
 	(URL as text) =>
@@ -1538,7 +1586,7 @@ ImportPq.GitHubRepo = Document(
 	"ImportPq.GitHubRepo",
 	"Get list of files from GitHub repository.",
 	"Web.Import",
-	{[	Description="Load file from GitHub",
+	{[Description="Load file from GitHub",
 		Code="LPQ[ImportPq.GitHubRepo](""https://github.com/laktiv/LPQ/blob/40a01a1998f1b88a03502e6f994625b108c8722b/LPQ.pq"")",
 		Result="File list from GitHub repository." ]},
 	(GitHubUser as text, GitHubRepo as text) =>
