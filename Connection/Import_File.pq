@@ -1,0 +1,1 @@
+(FilePath as text, optional Encoding as nullable number) as any => try Expression.Evaluate(Text.FromBinary(File.Contents(FilePath),(Encoding??TextEncoding.Utf8)),#shared) otherwise null

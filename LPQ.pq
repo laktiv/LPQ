@@ -520,20 +520,6 @@ Inno.fnGetOcFromName = (Model as any) =>
 		then "OC" 
 		else null
 ,
-// ## 	Checks GPU
-fxGpuSeries = (Product as text) =>
-	let p = Text.Lower(Product), //Text.Remove(, {" "})
-		posG = if Text.Contains(p, "RTX") then Text.PositionOf(p, "RTX")
-				else if Text.Contains(p, "GTX") then Text.PositionOf(p, "GTX")
-				else if Text.Contains(p, "GT") then Text.PositionOf(p, "GT")
-				else 0,
-		posE = if Text.Contains(p, "ti super", Comparer.OrdinalIgnoreCase) then 9
-				else if Text.Contains(p, "ti", Comparer.OrdinalIgnoreCase) then 3
-				else if Text.Contains(p, "super", Comparer.OrdinalIgnoreCase) then 6
-				else 0,
-		gpu = Text.Middle(Product, posG, 4 + 4 + posE)
-	in  Text.Trim(Text.Replace(p,"SUPER","Super"))
-,
 // #	FANS AND TABLES
 // ## 	SEARCH # OF FANS BY FILLED BRAND/SERIES TABLES
 // ## 	Search full product name at Geizhals.eu, scrape result from specs table by coolers
@@ -1736,3 +1722,4 @@ Record.TransformJoin = (Rec as record, Lambda as function, optional Delimiter as
 Result = _extensionLibrary
 
 in Result
+
