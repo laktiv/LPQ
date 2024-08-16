@@ -2,7 +2,7 @@
 
 My favorites:
 
-PBI
+PBI**
 ```
 let
     tnclark8012link = "https://raw.githubusercontent.com/tnclark8012/Power-BI-Desktop-Query-Extensions/master/power-query-extensions.pq",
