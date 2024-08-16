@@ -352,7 +352,7 @@ Inno.Online = Document(
 	{[Description="Margin, VAT, Currencies",
 		Code="Tables",
 		Result="Table"	 ]},
-	ImportPq.GitHubRaw("https://raw.githubusercontent.com/laktiv/LPQ/main/Inno.TablesOnline.pq"))
+	ImportPq.GitHubRaw("https://gist.githubusercontent.com/laktiv/700a6d65e098189881ecd77e585b233a/raw/a6bc2982211aaa7d2f80d410325b28bb409a9416/Online_Tables.pq"))
 ,
 fCur = (cur) => Inno.Online[CUR][Rate]{List.PositionOf(Inno.Online[CUR][Curr], cur)},
 fVat = (vat) => Inno.Online[VAT][k]{List.PositionOf(Inno.Online[VAT][VAT], vat)},
@@ -1468,14 +1468,14 @@ Web.GetAllLinks = Document(
 		Code="LPQ[Web.GetAllLinks](""https://inno3d.com/en/product_list/index/GRAPHICS%20CARD"")",
 		Result="https://inno3d.com/en/PRODUCT_INNO3D_GEFORCE_RTX_3070_ICHILL_X3_LHR" ]},
 	(SourceURL as text, optional AttributeDelimiter as text) =>
-		let
+		"let
 			AttributeDelimiter = if AttributeDelimiter is null then """" else AttributeDelimiter,
 			Source = Text.FromBinary(Web.Contents(SourceURL)),
 			GetLink = (Counter as number) =>
 				let CurrentLink = Text.BetweenDelimiters( Source, "href=" & AttributeDelimiter, AttributeDelimiter, Counter )
 				in  if CurrentLink = "" then {}
 					else List.Combine({{CurrentLink}, @GetLink(Counter + 1)})
-		in  GetLink(0)),
+		in  GetLink(0)),"
 Web.StripHtmlList = Document(
 	"Web.StripHtmlList",
 	"Cleans all html tags in the column of the table.",
