@@ -1,3 +1,4 @@
 ## Other libraries
 
-My favori
+My favorites:
+- 
