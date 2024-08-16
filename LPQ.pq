@@ -1406,7 +1406,22 @@ Text.PowerTrim = Document(
 		in  Text.Combine(removeblanks, char)),
 Text.ReplaceByList = try (txt as text, replacementLists as list) as text => List.Accumulate(replacementLists, txt, (s,x) => Text.Replace(s,x{0},x{1})) otherwise null
 ,
-
+//[ ]: add description
+Text.ContainsList = 	
+	(Text as text, List as list, optional ContainsMatch as logical) =>
+	let
+			match = ContainsMatch ?? {ContainsMatch=""}{1}? ?? false,
+			product = try Text.Trim(Text.BeforeDelimiter(Text.Lower(Text),"(")) otherwise Text.Lower(Text),
+			pList = Text.Split(product, " "),       
+			compareList = List.Transform(List, Text.Lower),
+			result =
+					if match then
+							List.ContainsAny(pList, compareList, (x,y) => Text.Contains(x, y, Comparer.OrdinalIgnoreCase))
+					else
+							List.ContainsAny(pList, compareList, (x,y) => x=y)
+	in
+			try result otherwise null
+,
 
 // #	CODE AND WEB
 Inno.ParseInnoCom = Document(
