@@ -13,3 +13,125 @@ in
 
 **LibPQ**
 https://libpq.ml
+
+
+meta.Category	Domain	Name	meta.Name	meta.Description	meta.LongDescription	meta.Examples
+Web.Api	Api	Api.MakeApiCallTemplate	Api.MakeApiCallTemplate	Converts table to text table with Markdown syntax.		[List]
+  BulkTableReplace	BulkTableReplace				
+Dates.Date	Date	Date.Calendar	Date.Calendar	Generate a calendar table for a given date span - can be text or proper dates. Current columns are Date, DayOfWeek, Month, MonthNum, WeekStartData, WeekStart, Year, YearMonth		[List]
+Dates.Convertasion	Date	Date.DateFromISOwn	Date.DateFromISOwn	Compute date of the first day of the week given an ISO weeknumber. If the Year is not entered, it will default to 'this' year.		[List]
+Dates.Date	Date	Date.DatesBetween	Date.DatesBetween	Returns a list of dates in a given span (inclusive). Start and end parameters can be any order		[List]
+Dates.Date	Date	Date.DayName	Date.DayName	Returns the English day of the week name for a date		[List]
+Dates.Date	Date	Date.MonthName	Date.MonthName	Returns the English month name for a date		[List]
+Date.Transformation	DateTime	DateTime.FromUnix	DateTime.FromUnix	Converts UNIX timestamp to DateTime.		[List]
+Files.Import	File	File.GetExcelDataFile	File.GetExcelDataFile	Call table from excel file in INNO folder.		[List]
+Files.Import	File	File.GetFilesFolder	File.GetFilesFolder	Gets files from folder with parameters.		[List]
+Files.Import	ImportPq	ImportPq	ImportPq	Most minimal external PQ script file loader.		[List]
+Web.Import	ImportPq	ImportPq.GitHubRaw	ImportPq.GitHubRaw	Import file from GitHub.		[List]
+Web.Import	ImportPq	ImportPq.GitHubRepo	ImportPq.GitHubRepo	Get list of files from GitHub repository.		[List]
+  Inno	Inno.CleanTable				
+  Inno	Inno.GetCooler				
+Products.Specs	Inno	Inno.GetGpuCode	Inno.GetGpuCode	Table for calculations.		[List]
+Web.Parser.INNO	Inno	Inno.ParseInnoCom	Inno.ParseInnoCom	INNO3D products parser from main site.		[List]
+Web.Parser.INNO	Inno	Inno.ParseInnoComSpecs	Inno.ParseInnoComSpecs	Get Specs table from the product page at inno3d.com.		[List]
+Table.Transformation	Inno	Inno.SortTablePn	Inno.SortTablePn	Returns sorted table by INNO3D partnumbers in proper order. Also could filter-out old models.		[List]
+Tables.Transformation	Inno	Inno.TableTypes	Inno.TableTypes	Converts types of columns in the table		[List]
+  Inno	Inno.fnGetGpuFromName				
+  Inno	Inno.fnGetMemoryFromName				
+  Inno	Inno.fnGetOcFromName				
+Reference	Inno	Inno.Online	Inno.Online	Table for calculations.		[List]
+  List	List.CompareListsCheck				
+  List	List.CompareListsMatches				
+Lists.Transformation	List	List.Flatten	List.Flatten	Recursively flattens list elements. The end result is a single list		[List]
+Lists.Transformation	List	List.FlattenAdvanced	List.FlattenAdvanced	Recursively flattens list elements. The end result is a single list		[List]
+Lists.Transformation	List	List.From	List.From	Converts a text representation of a list into a list of the elements. Items are considered to be split by ,		[List]
+  List	List.Shuffle				
+  List	List.Swap				
+List.ToRecord	List	List.ToRecord	List.ToRecord	Transform a list of strings to a record using a given lambda (passed values k). The built-in Record.FromList only takes static lists...		[List]
+Lists.Transformation	List	List.ToText	List.ToText	Converts a list to a textual representation. Inverse of List.From		[List]
+  MyFindReplace	MyFindReplace				
+  MyFindReplace	MyFindReplace_InnoSpecs				
+  MyFindReplace	MyFindReplace_Sample				
+Numbers.Transformation	Number	Number.ParseText	Number.ParseText	Returns the first number (1+ consecutive digits) in the given text. Optionally, provide allowed characters to ignore them		[List]
+Numbers.Transformation	Number	Number.ProperNumber	Number.ProperNumber	Concerts text as number to proper number type. Also will erase inconvinient thouthands and decimal symbols to regular format. <br>In case of error will return input text		[List]
+Numbers.Transformation	Number	Number.ToLetters	Number.ToLetters	Converts a number (starting at 1) to an alphabet representation. Works like column headers in Excel.		[List]
+  Number	Number.Digits				
+  Record	Record.TransformJoin				
+Splitter.Transformation	Splitter	Splitter.SplitTextByNonAlpha	Splitter.SplitTextByNonAlpha	Splits text by characters that aren't [A-Za-zА-Яа-я]		[List]
+Splitter.Transformation	Splitter	Splitter.SplitTextByNotIn	Splitter.SplitTextByNotIn	Splits text on any characters that aren't the provided 'safe' characters		[List]
+Development	Switch	Switch	Switch	Given a value, find it's paired item <br>Switch(value as any, cases as list, results as list, optional default as any) <br>Switch(value as any, pairs as list, optional default as any)		[List]
+  Table	Table.AddBlankRow				
+  Table	Table.DrillIntoColumn				
+Table.Convertion	Table	Table.EnterDataFormula	Table.EnterDataFormula	Convert a table into a formula that's compatible with the Enter Data UI. This function returns an expression you can copy and paste to editthe table using Enter Data. Paste the formula, then click the gear icon next to the step name. This is an easy way to allow people to customize a table you've queried		[List]
+  Table	Table.FromListCrossJoin				
+  Table	Table.GroupedRunningTotal				
+  Table	Table.JsonDecode				
+  Table	Table.JsonEncode				
+  Table	Table.NumberColumns				
+  Table	Table.PromoteHeadersNonEmpty				
+  Table	Table.RemoveEmptyColumns				
+  Table	Table.RemoveEmptyRows				
+  Table	Table.RenameAndTransformColumn				
+Table.Transformation	Table	Table.RenameColumn	Table.RenameColumn	Simple rename 1 column in the table.		[List]
+Table.Transformation	Table	Table.RenameColumnsAdv	Table.RenameColumnsAdv	Advanced rename columns in table by Lists and with optional Filter.		[List]
+  Table	Table.RenameColumnsByIndices				
+  Table	Table.RenameColumnsByOrder				
+  Table	Table.ReplaceAllErrorsInTable				
+  Table	Table.ReplaceValueIf				
+  Table	Table.RunningTotalfunction				
+  Table	Table.SelectHeaders				
+Table.Sorting	Table	Table.SortColumnByList	Table.SortColumnByList	Sort table's column text by List.		[List]
+  Table	Table.SplitColumnNames				
+  Table	Table.SplitColumnText				
+  Table	Table.ToXml				
+  Table	Table.TransformColumn				
+  Table	Table.TrimHeader				
+  Table	Table.TrimHeaders				
+  Text	Text.AsciiOnly				
+  Text	Text.Between				
+  Text	Text.ContainsAny				
+  Text	Text.Count				
+  Text	Text.EachBetween				
+  Text	Text.EachFromTo				
+  Text	Text.FromList				
+  Text	Text.FromTo				
+  Text	Text.GetMatch				
+  Text	Text.IsAlpha				
+  Text	Text.IsNumber				
+  Text	Text.IsUpperCase				
+  Text	Text.PositionAfter				
+Text.Transform	Text	Text.PowerTrim	Text.PowerTrim	Power Trim all text.		[List]
+  Text	Text.RegExp				
+  Text	Text.RegexMatch				
+  Text	Text.RemoveExtraWhitespace				
+  Text	Text.RemoveSymbols				
+  Text	Text.ReplaceAll				
+  Text	Text.ReplaceByList				
+  Text	Text.SplitCamelCase				
+  Text	Text.SplitOnNonAlpha				
+  Text	Text.SplitOnNotIn				
+  Text	Text.Substring				
+  Text	Text.Until				
+  Text	Text.AlphaNumeric				
+  Text	Text.Alphabet				
+  Type	Type.ToText				
+  Value	Value.ToText				
+  Value	Value.TypeText				
+  Value	Value.TypeToText				
+  Value	Value.WaitFor				
+Web.Modification	Web	Web.GetAllLinks	Web.GetAllLinks	Get all hyperlinks from the page.		[List]
+Web.Modification	Web	Web.RemoveHtmlTags	Web.RemoveHtmlTags	Cleans all html tags in the text. With trim and clean of whitespace.	Removes all Html tags from a text	[List]
+Web.Modification	Web	Web.StripHtmlList	Web.StripHtmlList	Cleans all html tags in the column of the table.		[List]
+Web.Modification	Web	Web.TableToMarkdown	Web.TableToMarkdown	Converts table to text table with Markdown syntax.		[List]
+  fCur	fCur				
+  fMar	fMar				
+  fVat	fVat				
+Lists.Match	fnCheckInList	fnCheckInList	fnCheckInList	Search word in the list. True - case not sesetive, False - case sensetive.		[List]
+Tables.Search	fnVlookUp	fnVlookUp	fnVlookUp	LookUp or CheckUp value in other table (return value from other column or just search)		[List]
+  fsGeizFans	fsGeizFans				
+  fsGetFans	fsGetFans				
+  fsGetFansAdv	fsGetFansAdv				
+  shortCode	shortCode				
+  tblBrandsFans	tblBrandsFans				
+  tblBrandsFansGrouped	tblBrandsFansGrouped				
+  tblInnoFans	tblInnoFans				
