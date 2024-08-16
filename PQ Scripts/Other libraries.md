@@ -1,3 +1,3 @@
 ## Other libraries
 
-My favi
+My fav
