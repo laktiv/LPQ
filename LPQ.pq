@@ -1002,22 +1002,6 @@ Text.ContainsList =
 ,
 
 // #	CODE AND WEB
-Web.GetAllLinks = Document(
-	"Web.GetAllLinks",
-	"Get all hyperlinks from the page.",
-	"Web.Modification",
-	{[Description="Creates the list with all hyperlinks from the page in <a>.",
-		Code="LPQ[Web.GetAllLinks](""https://inno3d.com/en/product_list/index/GRAPHICS%20CARD"")",
-		Result="https://inno3d.com/en/PRODUCT_INNO3D_GEFORCE_RTX_3070_ICHILL_X3_LHR" ]},
-	(SourceURL as text, optional AttributeDelimiter as text) =>
-		"let
-			AttributeDelimiter = if AttributeDelimiter is null then """" else AttributeDelimiter,
-			Source = Text.FromBinary(Web.Contents(SourceURL)),
-			GetLink = (Counter as number) =>
-				let CurrentLink = Text.BetweenDelimiters( Source, "href=" & AttributeDelimiter, AttributeDelimiter, Counter )
-				in  if CurrentLink = "" then {}
-					else List.Combine({{CurrentLink}, @GetLink(Counter + 1)})
-		in  GetLink(0)),"
 Web.StripHtmlList = Document(
 	"Web.StripHtmlList",
 	"Cleans all html tags in the column of the table.",
@@ -1279,3 +1263,4 @@ Record.TransformJoin = (Rec as record, Lambda as function, optional Delimiter as
 Result = _extensionLibrary
 
 in Result
+
