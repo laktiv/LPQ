@@ -149,7 +149,287 @@ Switch = Document(
 		in 	if hasPairs then usingPairs else usingCases)
 ,
 
+// #	INNO
+// ## 	Constant Tables
+shortCode = Table.FromRows(Json.Document(Binary.Decompress(Binary.FromText("hZQxT8MwEIX/SpS5kc4OObsjSJAFCYlkqFR1Qh26IQT8ftIQ++75TNme/b57PsenHI/tHe2p3bWv86Gx8vHluT3trlCcshOpmb7ezx+1jfu3z8v3OdWQQlACF2YJD9TMlyIf94pSpMwKaTjHHFI/gRSCEjieO8fZZ2hmXTWOx4dKFcWbVbFWdKvC0NQdnEI0vRoFXUeR62mfelik6kFWaXR6GSorBYqSFyEvmrxInfPK16jz6+dCmP6CycB1EqAgnQboNJhOAykTpUAseQx5bPIYbs6k0e3m8EgLn6er5M1cFQBK4AYxS6k4L2/q4U29eVMvvxdf/l5gQxWQ8lEKFCQ1lKmhlhpI+SgFYknlMpVrqUzKR5kgx+sYjIuzyO3z4EqhkzbTeWZDFZDyUQo0SOpQpg611IGUj1KNgeNezFLmMBry9ZdBUtfPK4UqD2ViwnZOUwjVVuj/JVxyUORDKG2jkEZTtFF5NK6/3/Gp8b8nJLHapx8=", BinaryEncoding.Base64), Compression.Deflate)), let _t = ((type nullable text) meta [Serialized.Text=true]) in type table [pn_code=_t,gpu =_t,gpu_short=_t,eol=_t])
+,
+// ## 	Extended script loader with auto data types
+File.GetExcelDataFile = Document(
+	"File.GetExcelDataFile",
+	"Call table from excel file in INNO folder.",
+	"Files.Import",
+	{[Description="File GetExcelDataFile",
+		Code="LPQ[File.GetExcelDataFile](""File name without extension"", ""Table name (table if null)"")",
+		Result="Imported table with types formated." ]},
+	(fileName as text, optional tableName as text) as table =>
+		let
+			folder = "C:\Users\Laktionov.I\OneDrive\INNO\",
+			filepath = folder & fileName & ".xlsx",
+			tblName = tableName ?? "table",
+			data = Excel.Workbook(File.Contents(filepath), null, true),
+			dataTable = data{[Item = tblName, Kind = "Table"]}[Data],
+			fnDetectAndTransformTypes = (SourceTable as table) =>
+			let
+				moneyList = {"amount", "price", "deal", "cost", "rebate", "msrp"},
+				FnDetectType = (SourceTable, ColumnName) =>
+				let
+					ListColumn = Table.Column(SourceTable, ColumnName),
+					Money = List.Contains(moneyList, Text.Trim(ColumnName), (x, y) => Text.StartsWith(y, x, Comparer.OrdinalIgnoreCase)),
+					NumberPercentage = List.Count(List.Select(ListColumn, each _ is number)) / List.Count(ListColumn),
+					IntPercentage = List.Count(List.Select(ListColumn, each _ is number and _ = Number.Round(_, 0))) / List.Count(ListColumn),
+					DatePercentage = List.Count(List.Select(ListColumn, each _ is date)) / List.Count(ListColumn),
+					DateTimePercentage = List.Count(List.Select(ListColumn, each _ is datetime)) / List.Count(ListColumn),
+					Max = List.Max({NumberPercentage, DatePercentage, DateTimePercentage, IntPercentage}),
+					Result =
+						if Money then {ColumnName, Currency.Type}
+						else if Max < .95 then {ColumnName, type any}
+						else if DateTimePercentage = Max then {ColumnName, type datetime}
+						else if DatePercentage = Max then {ColumnName, type date}
+						else if IntPercentage = Max then {ColumnName, Int64.Type}
+						else {ColumnName, type number}
+				in
+					Result,
+				ConvertTypesList = List.Transform(Table.ColumnNames(SourceTable), each FnDetectType(SourceTable, _)),
+				ConvertedTable = Table.TransformColumnTypes(SourceTable, ConvertTypesList)
+			in
+				ConvertedTable,
+			Result = fnDetectAndTransformTypes(dataTable)
+		in
+			Result)
+,
+File.GetFilesFolder = Document(
+	"File.GetFilesFolder",
+	"Gets files from folder with parameters.",
+	"Files.Import",
+	{[Description="File.GetFilesFolder",
+		Code="LPQ[File.GetFilesFolder](""C:\Users\Laktionov.I\OneDrive\INNO\"", ""price"", ""xlsx"", ""INNO3D"", true, true, false)",
+		Result="Table with price lists, only from RootFOlder and latest"   ]},
+	(RootFolder as text, FolderName as text, ExtensionsList as any, FilterNames as any, rootOnly as logical, latestOnly as logical, optional sortNames as logical) =>
+		let
+			Name = Text.Lower(FolderName),
+			Extensions =
+				if Value.Type(ExtensionsList) = "list"
+					then List.Transform(ExtensionsList, each Text.Trim(Text.Lower(_)))
+					else
+						try List.Transform(Text.Split(ExtensionsList, ","), each Text.Trim(Text.Lower(_)))
+						otherwise {""},
+			Filter =
+				if Value.Type(FilterNames) = "list"
+					then List.Transform(FilterNames, each Text.Trim(Text.Lower(_)))
+					else
+						try List.Transform(Text.Split(FilterNames, ","), each Text.Trim(_))
+						otherwise {""},
+			Folder = Folder.Files(if not Text.EndsWith(RootFolder,"\") then RootFolder&"\" else RootFolder & Name),
 
+			Sorted = 
+        if sortNames ?? false
+            then Table.Sort(Folder, {
+                    { each Date.From(Record.Field(_,"Date created")), Order.Descending },
+                    { each Date.From(Record.Field(_,"Date modified")), Order.Descending },
+                    { each Record.Field(_,"Name"), Order.Descending }
+                })
+            else Folder,
+
+			selectExt =
+				Table.SelectRows(Sorted, each
+					List.ContainsAny(
+						List.Transform(Text.Split([Extension], "."), each Text.Trim(Text.Lower(_))),
+						Extensions,
+						(x,y) => x=y
+					)
+				),
+			selectName =
+				Table.SelectRows(selectExt, each
+					List.ContainsAny(
+						List.Transform(Text.Split([Name],"."), each Text.Trim(_)),
+						Filter,
+						(x,y) => Text.Contains(x, y, Comparer.OrdinalIgnoreCase)
+					)
+				),
+			selectRoot =
+				if rootOnly
+					then Table.SelectRows(selectName, each Text.EndsWith([Folder Path], Name &"\"))
+					else selectName,
+			selectLast =
+				if latestOnly
+					then Table.FirstN(selectRoot, 1)
+					else selectRoot,
+
+			Result = Table.SelectColumns(selectLast, {"Folder Path","Name"})
+		in
+			Result)
+,
+Inno.SortTablePn = Document(
+	"Inno.SortTablePn",
+	"Returns sorted table by INNO3D partnumbers in proper order. Also could filter-out old models.",
+	"Table.Transformation",
+	{[Description="Inno.SortTablePn",
+		Code="LPQ[Inno.SortTablePn](Table, ""pn"", true)",
+		Result="New sorted table by column 'pn' with old filtered." ]},
+	(Table as table, PN as text, optional FilterOld as logical) =>
+		let
+			oldList = {"C30", "309", "308", "307", "306T", "20", "16", "10", "M", "R", "73P"},
+			sortList = {"40", "30", "20", "16", "10", "73", "71", "21"},
+			letterList = {"C", "N", "B", "M", "R"},
+
+			fltrV = if (FilterOld ?? {FilterOld=""}{1}?)=null then false else FilterOld,
+
+			Filtered = if fltrV then
+				Table.RemoveColumns(
+					Table.SelectRows(
+						Table.AddColumn(Table, "Filter",
+							(FindStrings) =>
+								List.AnyTrue(List.Transform(oldList, each Text.Contains(Text.Split(Record.Field(FindStrings,PN),"-"){0}, _, Comparer.OrdinalIgnoreCase))))
+						, each ([Filter] = false))
+					, {"Filter"}
+				) else Table,
+
+			ReplaceTable = Table.ReplaceValue(Filtered,
+				each Record.Field(_,PN),
+				each if Record.Field(_,PN)="TBC"
+						or Record.Field(_,PN)=null
+						or Record.Field(_,PN)=""
+							then "A00003-01D5-1234552" else Record.Field(_,PN),
+				Replacer.ReplaceValue, {PN} ),
+
+			Sorting = Table.Sort(ReplaceTable, {
+				{ each List.PositionOf(letterList, Text.Start(Record.Field(_,PN), 1)), Order.Ascending },   // by first letter of PN
+				{ each List.PositionOf(sortList, Text.Range(Record.Field(_,PN), 1,2)), Order.Ascending },   // by series
+				{ each Text.Range(Record.Field(_,PN), 1,4), Order.Descending },							 // by gpu
+				{ each Number.From(Text.Select(Text.Start(Text.Split(Record.Field(_,PN),"-"){1},2),{"0".."9"})), Order.Descending },			// by mem
+				{ each Text.Middle(Text.Split(Record.Field(_,PN),"-"){0}, 5,1), Order.Descending },		 // by fans
+				{ each Text.Select(Text.Split(Record.Field(_,PN),"-"){1}, {"X"}), Order.Descending } })	 // by OC
+		in
+			Sorting)
+,
+Inno.TableTypes = Document(
+	"Inno.TableTypes",
+	"Converts types of columns in the table",
+	"Tables.Transformation",
+	{[Description="TableTypes",
+		Code="LPQ[Inno.TableTypes](Table)",
+		Result="New table"	 ]},
+	(Table as table, optional ToOrder as logical) as table =>
+		let
+			toOrder = if (ToOrder ?? {ToOrder=""}{1}?) = null then false else ToOrder,
+
+			lists = [
+				txt = {"customer", "country", "pn", "product", "gpu", "gpu_deal", "partner", "url", "name"},
+				num = {"quantity", "d_week", "d_month", "d_year", "stock", "VAT", "memory"},
+				dec = {"k"},
+				cur = {"price", "amount", "rebate", "price_ddp", "price_deal", "deal_fob", "deal_ddp"},
+				dat = {"date", "Invoice Date (YYYY/MM/DD)", "short_date", "d_date", "sale_date"},
+				order = {"customer", "country", "pn", "product", "gpu", "quantity", "d_date", "d_week", "d_month", "d_year", "partner"}
+			],
+			headers = Table.ColumnNames(Table),
+			c = List.Combine({
+					List.Transform(lists[txt], each {_, type text}),
+					List.Transform(lists[num], each {_, Int64.Type}),
+					List.Transform(lists[dec], each {_, type number}),
+					List.Transform(lists[cur], each {_, Currency.Type}),
+					List.Transform(lists[dat], each {_, type date})
+				}),
+			cT = List.Transform(c, each _{0}),
+
+			Type = Table.TransformColumnTypes(Table,
+				List.Select(c, each List.ContainsAny(headers, _))
+			),
+
+			Result = if toOrder
+				then Table.SelectColumns(Type,
+						List.RemoveMatchingItems(
+							lists[order],
+							List.Difference(lists[order],headers)
+						)
+					)
+				else Type
+		in  Result)
+,
+Inno.Online = Document(
+	"Inno.Online",
+	"Table for calculations.",
+	"Reference",
+	{[Description="Margin, VAT, Currencies",
+		Code="Tables",
+		Result="Table"	 ]},
+	ImportPq.GitHubRaw("https://gist.githubusercontent.com/laktiv/700a6d65e098189881ecd77e585b233a/raw/a6bc2982211aaa7d2f80d410325b28bb409a9416/Online_Tables.pq"))
+,
+fCur = (cur) => Inno.Online[CUR][Rate]{List.PositionOf(Inno.Online[CUR][Curr], cur)},
+fVat = (vat) => Inno.Online[VAT][k]{List.PositionOf(Inno.Online[VAT][VAT], vat)},
+fMar = (mar) => Inno.Online[MARG][k]{List.PositionOf(Inno.Online[MARG][Marg], mar)},
+
+Inno.GetGpuCode = Document(
+	"Inno.GetGpuCode",
+	"Table for calculations.",
+	"Products.Specs",
+	{[Description="'3060, 3080' - add mem",
+		Code="LPQ[Inno.GetGpuCode](PN, *MemList list, *CoolerList list)",
+		Result="Get pn_code from PN, before first '-'" ]},
+	(PN as text, optional AddMemoryList as text, optional AddCoolerList as text) =>
+		let
+			memList = if AddMemoryList = null or AddMemoryList = ""
+						then false
+						else List.Transform(Text.Split(AddMemoryList, ","), Text.Trim),
+			coolList = if AddCoolerList = null or AddCoolerList = ""
+						then false
+						else List.Transform(Text.Split(AddCoolerList, ","), Text.Trim),
+
+			goodsShort = try shortCode otherwise Table.Buffer(File.GetExcelDataFile("goods", "shortCode")),
+			func = [
+				split = Text.Split(PN, "-"),
+				pn_first = split{0},
+				pn_firstEnds =
+					if List.Contains({"T","0","S"}, Text.End(pn_first, 1)) then 1
+						else if Text.Length(pn_first) > 6 and Text.End(pn_first, 1) = "K" then 3
+					else 2,
+				range = Text.Range(split{0}, 1, Text.Length(pn_first) - pn_firstEnds),
+				cooler = if Text.End(split{0}, 4) = range then "" else Text.Select(Text.End(split{0}, 2), {"1".."9", "B"}),
+				addCool = try List.Contains(coolList, range) otherwise false,
+				memory = Text.Start(split{1}, 2),
+				addMem = try List.Contains(memList, range) otherwise false,
+				code = if addCool then range & "-X" & cooler else if addMem then range & "-" & memory else range
+			],
+
+			position = List.PositionOf(goodsShort[pn_code], func[code]),
+			pos = if position < 0
+					then List.PositionOf(goodsShort[pn_code], Text.Split(func[code],"-"){0})
+					else position,
+
+			result = if position >= 0
+						then goodsShort{pos}[gpu_short]
+						else if pos >= 0
+							then goodsShort{pos}[gpu]
+							else null
+		in 	result)
+,
+Inno.GetCooler = (Product as text) =>
+	let
+		split = Text.Split(Product, " "),
+		cool =  if List.ContainsAny({"Frostbite","Black"}, split, Comparer.OrdinalIgnoreCase) then "WB"
+				else if List.ContainsAny({"X4"}, split, Comparer.OrdinalIgnoreCase) then "X4"
+				else if List.ContainsAny({"X3","GAMING OC","iCHILL"}, split, Comparer.OrdinalIgnoreCase) then "X3"
+				else if List.ContainsAny({"X2","Twin"}, split, Comparer.OrdinalIgnoreCase) then "X2"
+				else if List.ContainsAny({"X1","Compact"}, split, Comparer.OrdinalIgnoreCase) then "X1"
+					else null,
+		oc = if List.ContainsAny({"OC","iCHILL","Pro","Ultra","Frostbite","Black"}, split, Comparer.OrdinalIgnoreCase)
+				then "OC" else null,
+		color = if Text.Contains(Product, "White", Comparer.OrdinalIgnoreCase)
+				then "White" else null,
+		result = [
+			oc = oc,
+			fans = cool,
+			color = color
+		]
+	in
+		result
+,
+Inno.CleanTable = (Table as table) =>
+	let
+		order = {"Name","customer","country","pn","product","gpu","quantity","d_date","d_week","d_month","d_year","partner"},
+		headers = Table.ColumnNames(Table),
+		Quantity = Table.SelectRows(Table, each [quantity]<>0 and [quantity]<>null and [quantity]<>"" )
+	in  Table.SelectColumns(Quantity, List.RemoveMatchingItems(order, List.Difference(order,headers)) )
+,
 // ## 	BULK REPLACE & TABLES
 MyFindReplace =
 	let table = Table.FromRows(Json.Document(Binary.Decompress(Binary.FromText("JcpBDoIwEIXhq5iuJMGF8QRQSpxYW0LHuCAsEFk0Ykuwxus7Lbs33/xdxxBYztCyPu8YOOdPFd2glKYRDX/WxeIOamv4GaQksduIZr7LtBKZWyPaJNy/l2EMZFxfm4Jj0nIexhdZKQt+SVKv/hMeNkykdasNloAiffbHg5l92ImnDda7jIJIUuNOVICgVcb6/g8=", BinaryEncoding.Base64), Compression.Deflate)), let _t = ((type nullable text) meta [Serialized.Text = true]) in type table [Find = _t, Replace = _t])
@@ -196,6 +476,121 @@ BulkTableReplace =
 			Output
 	in
 		BulkReplace
+,
+
+
+// #	GPU AND NV SERIES
+// ## 	Search in the Model Name
+Inno.fnGetGpuFromName = (Model as any) =>
+	let listReplacement = {
+			{"|"," "},{","," "},{","," "},{"-"," "},
+			{"RTX","RTX "},
+			{"2G ","2GB "},{"G ","GB "},
+			{"TI"," TI"},{"TI-","TI "},
+			{"SUPER"," SUPER"}  },
+		ModelRep = Text.ReplaceByList(Text.Upper(Text.BeforeDelimiter(Model,"GB")), listReplacement),
+		List = Text.Split(Text.PowerTrim(ModelRep)," "),
+		ListSearch = List.Select(List, (x) => List.AnyTrue(List.Transform({"RTX","GTX","TI","SUPER"}, each x = _))),
+		iRow = List.Zip({List, {0..-1 + List.Count(List)}}),
+		Filtered = List.Select(iRow, each List.Contains(ListSearch, _{0})),
+		Max = if List.Count(Filtered)>1 then List.Last(Filtered){1} else List.First(Filtered){1} +1,
+		Generate = List.Generate( ()=>List.First(Filtered){1}, each _ <= Max, each _ + 1),
+		SelectL = List.Select(iRow, each List.Contains(Generate, _{1}))
+	in  
+		try Text.ReplaceByList(
+				Text.Combine(
+					List.Transform(SelectL, each _{0})," "), {{"TI","Ti"},{"Ti Ti","Ti"},{"SUPER","Super"},{"Super Super","Super"}}) 
+		otherwise null
+,
+Inno.fnGetMemoryFromName = (Model as any) => 
+	try Number.From(
+			List.RemoveItems(
+				List.Transform(
+					List.Select(
+						Text.Split( Text.ReplaceByList(Model, {{"|"," "},{"-O"," "},{"-8"," 8"},{"G-","G "},{"GB-","GB "},{" GB","GB"},{"ING","IN"}}), " "),
+						(x) => List.AnyTrue(
+							List.Transform( {"GB","G"}, each Text.EndsWith(x,_))
+						)
+					), each Text.Select(_,{"0".."9"})
+				),{"",null}){0})
+	otherwise null
+,
+Inno.fnGetOcFromName = (Model as any) => 
+	if List.CompareListsCheck( Text.Split(Text.Lower(Model)," "), {"oc","ichill","overclock","xtreme","water","aorus"}, false) 
+		then "OC" 
+		else null
+,
+// #	FANS AND TABLES
+// ## 	SEARCH # OF FANS BY FILLED BRAND/SERIES TABLES
+// ## 	Search full product name at Geizhals.eu, scrape result from specs table by coolers
+fsGeizFans = (Product as text) =>
+	let
+		searchstring = "https://geizhals.eu/?fs=" & Uri.EscapeDataString(Product) & "&hloc=pl",
+		Source = Web.BrowserContents(searchstring),
+		Table = Html.Table(Source, {{"Column1","DT"}, {"Column2","DD"}, {"Column3", ".listview__toggle-details-button .visually-hidden"}, {"Column4",".listview__name-link"}, {"Column5",".listview__offercount-link"}}, [RowSelector="DT"]),
+		Cooler = Table.SelectRows(Table, each ([Column1] = "Kühlung"))[Column2]{0},
+		txt = Text.Split(Cooler," "){0},
+		Split = if Text.EndsWith(txt,"x")
+					then "X" & Text.Select(Text.Split(Cooler," "){0},{"0".."9"})
+					else txt
+	in  try Split otherwise null
+,
+// ## 	Search by Matching Series/Brand in the Table 'tblBrandsFans'
+fsGetFansAdv = (Product as text) =>
+	let 
+		srcTable = Table.Buffer( tblBrandsFans ),
+		// small replace
+		listReplace =
+		{   { "Storm X", "StormX" },
+			{ "GAMING BLOCK", "GAMING_BLOCK" },
+			{ "STRIX LC", "STRIX_LC" },
+			{ "GAMING OC", "GAMING_OC" },
+			{ "GAMING SLIM", "GAMING_SLIM" },
+			{ "GAMING X", "GAMING_X" } },
+		mReplace = List.Accumulate(listReplace, Product, (s,x) => Text.Replace(s, x{0}, x{1})),
+		mList = List.Transform(Text.Split(mReplace, " "), each Text.Upper(Text.Trim(_))),
+		brand = mList{0},   // Get Brand
+		fMatchFib = (ml, b, optional i) =>  //Main function
+			let 
+				i = i ?? 0,
+				tbl	  = Table.SelectRows(srcTable, each [brand]=b),
+				listLook = List.Transform(Text.Split(tbl[name]{i}, ","), each Text.Upper(Text.Trim(_))),
+				Matching = if List.ContainsAny(ml, listLook, (x,y) => x=y) then tbl[fans]{i} else null,
+				Checking = Matching ?? {i<Table.RowCount(tbl)}{1}? ?? @fMatchFib(ml, b, i+1) //Recurse
+			in  
+				try Checking otherwise null
+	in  
+		fMatchFib(mList,"") ?? fMatchFib(mList,brand)
+,
+// ## 	Simplier search
+fsGetFans = (Brand as text, Fans as text, Product as text) =>
+	let srcTable = Table.Buffer( tblBrandsFans ),
+		Table = Table.SelectRows(srcTable,
+			each [brand] = Text.Lower(Brand) and Text.Lower([fans]) = Text.Lower(Fans) )
+	in	Result = List.AnyTrue(
+			List.Transform(Table[series], each Text.Contains(Product,_,Comparer.OrdinalIgnoreCase)) )
+,
+// ## 	Flat table # Fans by brands
+tblBrandsFans =
+	let Table = Table.FromRows(Json.Document(Binary.Decompress(Binary.FromText("fZbRcuIgFEB/JeNzZ3aq+wMYMbImIRtIzW6nD9GyNVMNOxhn698vEE2TeuEFkzmHcLnAxefnCWIFmzxM8EcrVFMd9GNUHevmLdge5O59SF4eensz1w1rVf0RxKF5r7QTzG2PgVbOdJNUxtMPSCh5RzMlkWpdlPGclBCc6mZRoNjF1hQij2bAvRQNHI/BvMjnYN/pNxsRL5ZDGiGSblC+6KdTNe1eKK+y1448+pW7GIeKmWC0l6fWJdh5irfqdD6NFBKh+S+ObwtoV+2PVDsBLOFAtjEhnFPHxzpOc5sop4BjYl+cQoQSkkYBDX1SghjHuc94IozQ1GeUPMeJM5RpH4rLMOnVnPg4P6utdA7R7SWMotgdRudsSLpY0jwceSRN6WxxW8b5obIHtVvB1WWr6ldAW4mqPdXN+/Dx3loqva+2dQttid4sv9+a+5C6DM9gZnLL/9WNm9oGYCanoTz+rXatW/ghPNA2PVsv0bTPzOVVSSiBQylDjJEn/DV7V8VOeFYCI3QrXQa6qo7rwphHLrSiSxdizk6MQ8Q0UzBGW07PtvqDDI96JYzcsqV/Y/KzIAtgu4w1hlGwQpu1UxzWABaT5H7EbmpFljuhvi6oA12/DEzEceIHkOtTCKBHoCzeenWn9wmnfFwVM6TLYJ/yLzdYD82XWSvVsfTjAObX0c2Wy7tL3Ofoyz5T0ifpc6Uve1GNLq3flKOwP+tknIYR1P8glDgKJ+eqbur2AnJbDpLMx4JQKvjjduuGcGBQKeqhTTCNP3u+/Ac=", BinaryEncoding.Base64), Compression.Deflate)), let _t = ((type nullable text) meta [Serialized.Text = true]) in type table [brand = _t, fans = _t, series = _t, #"type" = _t]),
+		Lower = Table.TransformColumns(Table, {
+			{"brand", Text.Lower, type text},
+			{"series", Text.Lower, type text} })
+	in  Table.Buffer( Lower )
+,
+// ## 	Grouped table by Brand/Series and # Fans
+tblBrandsFansGrouped =
+	let Table = Table.FromRows(Json.Document(Binary.Decompress(Binary.FromText("fZbRcuIgFEB/JeNzZ3aq+wMYMbImIRtIzW6nD9GyNVMNOxhn698vEE2TeuEFkzmHcLnAxefnCWIFmzxM8EcrVFMd9GNUHevmLdge5O59SF4eensz1w1rVf0RxKF5r7QTzG2PgVbOdJNUxtMPSCh5RzMlkWpdlPGclBCc6mZRoNjF1hQij2bAvRQNHI/BvMjnYN/pNxsRL5ZDGiGSblC+6KdTNe1eKK+y1448+pW7GIeKmWC0l6fWJdh5irfqdD6NFBKh+S+ObwtoV+2PVDsBLOFAtjEhnFPHxzpOc5sop4BjYl+cQoQSkkYBDX1SghjHuc94IozQ1GeUPMeJM5RpH4rLMOnVnPg4P6utdA7R7SWMotgdRudsSLpY0jwceSRN6WxxW8b5obIHtVvB1WWr6ldAW4mqPdXN+/Dx3loqva+2dQttid4sv9+a+5C6DM9gZnLL/9WNm9oGYCanoTz+rXatW/ghPNA2PVsv0bTPzOVVSSiBQylDjJEn/DV7V8VOeFYCI3QrXQa6qo7rwphHLrSiSxdizk6MQ8Q0UzBGW07PtvqDDI96JYzcsqV/Y/KzIAtgu4w1hlGwQpu1UxzWABaT5H7EbmpFljuhvi6oA12/DEzEceIHkOtTCKBHoCzeenWn9wmnfFwVM6TLYJ/yLzdYD82XWSvVsfTjAObX0c2Wy7tL3Ofoyz5T0ifpc6Uve1GNLq3flKOwP+tknIYR1P8glDgKJ+eqbur2AnJbDpLMx4JQKvjjduuGcGBQKeqhTTCNP3u+/Ac=", BinaryEncoding.Base64), Compression.Deflate)), let _t = ((type nullable text) meta [Serialized.Text = true]) in type table [brand = _t, fans = _t, series = _t, #"type" = _t]),
+		Lower = Table.TransformColumns(Table, {
+			{"brand", Text.Lower, type text},
+			{"series", Text.Lower, type text} })
+	in  Table.Buffer( Lower )
+,
+// ## 	INNO FANS
+tblInnoFans =
+	let Tbl = Table.FromRows(Json.Document(Binary.Decompress(Binary.FromText("i45WSspJTM5W0lEKd1KK1YlWSivKLy5JyixJRQgl5+cWJCaXAAUiDMECEUYgthGEbQxiG0PYJiC2iVJsLAA=", BinaryEncoding.Base64), Compression.Deflate)), let _t = ((type nullable text) meta [Serialized.Text = true]) in type table [series = _t, fans = _t]),
+		Type = Table.TransformColumnTypes(Tbl,{{"series", type text}, {"fans", type text}})
+	in  Table.Buffer( Type )
 ,
 
 
@@ -766,7 +1161,34 @@ Table.GroupedRunningTotal = (values as list, grouping as list) as list =>
 	in
 		GRTList
 ,
-
+/*
+Table.GetParameter = (ParameterName as text) =>
+	// Query written by Ken Puls, FCPA, FCMA, MS MVP (Excel) (www.excelguru.ca)
+	// Injected into this workbook via Monkey Tools at the model designer's request
+	// For more information, Or to purchase a copy of this add-in, visit https://monkeytools.ca
+	//// Original source can be found at the following URL:
+	// http://www.excelguru.ca/blog/2014/11/26/building-a-parameter-table-for-power-query/
+	// To use the function you must pass it a 2 column table which contains the Parameters
+	// The header row must contain a "Parameter" and a "Value" column (with those names)
+	// Data rows should list the parameter name in the first column and the value of that
+	// parameter in the second column
+	// Provided you save this query under the name "fnGetParameter", you can then reference
+	// it from other queries as follows:
+	//
+	//  =fnGetParameter("your_parameter_name")
+	// One useful sample to return the current folder:
+	// Parameter Name: File Path
+	// Parameter Value: =LEFT(CELL("filename",A1),FIND("[",CELL("filename",A1),1)-1)
+	// Call as  "fnGetParamater("File Path")
+	let
+		ParamSource = Excel.CurrentWorkbook(){[Name="XLGQuery_Parameters"]}[Content],
+		ParamRow = Table.SelectRows(ParamSource, each ([Parameter]=ParameterName)),
+		Value= if Table.IsEmpty(ParamRow)=true
+				then null
+				else Record.Field(ParamRow{0},"Value")
+	in  Value
+,
+*/
 
 // #	ARRAYS
 // ## 	VLOOKUP in other table
@@ -1002,6 +1424,42 @@ Text.ContainsList =
 ,
 
 // #	CODE AND WEB
+Inno.ParseInnoCom = Document(
+	"Inno.ParseInnoCom",
+	"INNO3D products parser from main site.",
+	"Web.Parser.INNO",
+	{[Description="Add link to the products category with any filter applied.",
+		Code="LPQ[Inno.ParseInnoCom](""https://inno3d.com/en/product_list/index/GRAPHICS%20CARD"")",
+		Result="List of INNO products from site" ]},
+	(url as text) =>
+		let src = Web.BrowserContents(url),
+			GetCounter = (i as number, HtmlOpen, HtmlClose) =>
+				let beetween = (txt) => [
+						pn = Text.Trim(Text.BetweenDelimiters(txt, "Part No.: ", "</p>", 0)),
+						model = Text.Trim(Text.BetweenDelimiters(txt, "<p class=""h4"">", "</p>", 0)),
+						url = Text.BetweenDelimiters(txt, "btn-4"" href=""", """>", 0),
+						img_src  = Text.BetweenDelimiters(txt, "img src=""", """ class", 0) ],
+					CurrentGet = Text.BetweenDelimiters(src, HtmlOpen, HtmlClose, i)
+				in  if CurrentGet="" then {} else List.Combine({{beetween(CurrentGet)}, @GetCounter(i + 1, HtmlOpen, HtmlClose)}),
+			get = GetCounter(0, "col-md-6 col-lg-4 mb-4"">", "<div class=""form-check"),
+			Table = Table.FromList(get, Splitter.SplitByNothing(), {"col"}, null, ExtraValues.Error),
+			Unfold = Table.ExpandRecordColumn(Table, "col", {"pn","model","url","img_src"}),
+			SplitPn = Table.ExpandListColumn(Table.ReplaceValue(Unfold, each [pn], each Text.Split(Text.Remove([pn],{" "}),"/"),Replacer.ReplaceValue,{"pn"}), "pn"),
+			SortTablePn = Inno.SortTablePn(SplitPn,"pn",false)
+		in  SortTablePn),
+Inno.ParseInnoComSpecs = Document(
+	"Inno.ParseInnoComSpecs",
+	"Get Specs table from the product page at inno3d.com.",
+	"Web.Parser.INNO",
+	{[Description="Add link to product page at inno3d.com.",
+		Code="LPQ[Inno.ParseInnoComSpecs](""https://inno3d.com/en/PRODUCT_INNO3D_GEFORCE_RTX_3060_8GB_TWIN_X2_2"")",
+		Result="Specs table from site" ]},
+	(url as text) =>
+		let src = Web.Page( Binary.Buffer( Web.Contents(url) ) ){0}[Data],
+				Rename = Table.RenameColumnsAdv(src,{"GPU Engine Specs:",""}, {"spec","value"}),
+				Replace = BulkTableReplace(Rename, MyFindReplace_InnoSpecs, {"spec","value"})
+		in 	Replace)
+,
 Web.GetAllLinks = Document(
 	"Web.GetAllLinks",
 	"Get all hyperlinks from the page.",
@@ -1279,3 +1737,4 @@ Record.TransformJoin = (Rec as record, Lambda as function, optional Delimiter as
 Result = _extensionLibrary
 
 in Result
+
