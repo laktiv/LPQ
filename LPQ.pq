@@ -1059,6 +1059,24 @@ Web.TableToMarkdown = Document(
 		in
 			TransferToMarkdown)
 ,
+Web.GetAllLinks = (SourceURL as text, optional AttributeDelimiter as text) =>
+	let AttributeDelimiter = if AttributeDelimiter is null then """" else AttributeDelimiter,
+	    //Get HTML source
+	    Source = Text.FromBinary(Web.Contents(SourceURL)),
+	    //Function to find each link
+	    GetLink = (Counter as number) =>
+	        let  CurrentLink = Text.BetweenDelimiters(
+	                Source,
+	                "href=" & AttributeDelimiter,
+	                AttributeDelimiter,
+	                Counter
+	            )
+	        in  if CurrentLink = "" then {}
+	            else List.Combine({{CurrentLink}, @GetLink(Counter + 1)}),
+	    //Call function
+	    Output = GetLink(0)
+	in  Output
+,
 Api.MakeApiCallTemplate = Document(
 	"Api.MakeApiCallTemplate",
 	"Converts table to text table with Markdown syntax.",
