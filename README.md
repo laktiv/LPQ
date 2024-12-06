@@ -12,17 +12,18 @@ Expression.Evaluate(Text.FromBinary(Web.Contents(Json.Document(Web.Contents("htt
 
 2. Перейменуйте підключення і все, можна використовувати. Формат написання такий: `LPQ[List.MyFunction](Param1, Param2)`, де LPQ - як ви назвете своє підключення. Де є опис - внизу буде текст.
 
-![](Assets/lpq01.png) ![](Assets/lpq02.png) ![](Assets/lpq04.png)
-![](Assets/lpq05.png) ![](Assets/lpq04.png)
+<img src="https://github.com/laktiv/LPQ/blob/main/Assets/lpq01.png?raw=true" width="200"/> <img src="https://github.com/laktiv/LPQ/blob/main/Assets/lpq02.png?raw=true" width="220"/>
+<img src="https://github.com/laktiv/LPQ/blob/main/Assets/lpq03.png?raw=true" width="220"/> <img src="https://github.com/laktiv/LPQ/blob/main/Assets/lpq04.png?raw=true" width="220"/>
+<img src="https://github.com/laktiv/LPQ/blob/main/Assets/lpq05.png?raw=true" width="220"/>
 
 Посилання на Gist: [https://api.github.com/gists/700a6d65e098189881ecd77e585b233a](https://gist.github.com/laktiv/700a6d65e098189881ecd77e585b233a)
 Там 3 файла: бібліотека та два різних підключення (локальний файл та з gist). Версії файлів тут і там однакові.
 
 Ще додав пустий файл де є бібліотека, котра розкладана у таблицю, щоб хоч список був перед очами. >:)
 
--->>> [LPQ.xlsx](https://github.com/laktiv/LPQ/blob/main/Assets/LPQ.xlsx)
+**[LPQ.xlsx](https://github.com/laktiv/LPQ/blob/main/Assets/LPQ.xlsx)**
 
-![](Assets/lpq06.png)
+<img src="https://github.com/laktiv/LPQ/blob/main/Assets/lpq06.png?raw=true"/>
 
 
 
