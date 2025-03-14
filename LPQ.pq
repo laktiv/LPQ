@@ -146,8 +146,7 @@ Switch = Document(
 					let cases = casesOrPairs,
 							results = resultsOrDefault
 					in 	if List.IsEmpty(cases) or List.IsEmpty(results) then default else if value = List.First(cases) then List.First(results) else @Switch(value, List.Skip(cases, 1), List.Skip(results, 1), default)
-		in 	if hasPairs then usingPairs else usingCases)
-,
+		in 	if hasPairs then usingPairs else usingCases),
 
 
 // ## 	BULK REPLACE & TABLES
@@ -195,8 +194,7 @@ BulkTableReplace =
 		in
 			Output
 	in
-		BulkReplace
-,
+		BulkReplace,
 
 
 // #	DATE
@@ -204,7 +202,7 @@ BulkTableReplace =
 Date.DateFromISOwn = Document(
 	"Date.DateFromISOwn",
 	"Compute date of the first day of the week given an ISO weeknumber. If the Year is not entered, it will default to 'this' year.",
-	"Dates.Convertasion",
+	"Date.Convertasion",
 	{[Description="Year must be a full year: eg 2021 vs 21. The latter will not be interpreted as the year 2021.",
 		Code="LPQ[Date.DateFromISOwn](""week number"", opt. ""year"")",
 		Result="Date on start of week #"   ]},
@@ -227,7 +225,7 @@ DateTime.FromUnix = Document(
 Date.Calendar = Document(
 	"Date.Calendar",
 	"Generate a calendar table for a given date span - can be text or proper dates. Current columns are Date, DayOfWeek, Month, MonthNum, WeekStartData, WeekStart, Year, YearMonth",
-	"Dates.Date",
+	"Date.Date",
 	{[Description="2024 calendar",
 		Code="LPQ[Date.Calendar](""1/1/2024"", ""12/31/2024""",
 		Result="2024 calendar"	 ]},
@@ -250,7 +248,7 @@ Date.Calendar = Document(
 Date.DatesBetween = Document(
 	"Date.DatesBetween",
 	"Returns a list of dates in a given span (inclusive). Start and end parameters can be any order",
-	"Dates.Date",
+	"Date.Date",
 	{[Description="Date range",
 		Code="LPQ[Date.DatesBetween](""1/1/2016"", ""1/3/2016"")",
 		Result="{""1/1/2016"", ""1/2/2016"", ""1/3/2016""}" ]},
@@ -267,7 +265,7 @@ Date.DatesBetween = Document(
 Date.DayName = Document(
 	"Date.DayName",
 	"Returns the English day of the week name for a date",
-	"Dates.Date",
+	"Date.Date",
 	{[Description="Get the day name",
 		Code="LPQ[Date.DayName](""9/9/2016"")",
 		Result="Friday" ]},
@@ -279,7 +277,7 @@ Date.DayName = Document(
 Date.MonthName = Document(
 	"Date.MonthName",
 	"Returns the English month name for a date",
-	"Dates.Date",
+	"Date.Date",
 	{[Description="Get the month name",
 		Code="LPQ[Date.MonthName](""9/9/2016"")",
 		Result="September"	 ]},
@@ -288,8 +286,7 @@ Date.MonthName = Document(
 			ukr = {"Січень","Лютий","Березень","Квітень","Травень","Червень","Липень","Серпень","Вересень","Жовтень","Листопад","Грудень"},
 			Lang = if lang is null or lang="" then eng else ukr,
 			monthNumber = if date is number then date else Date.Month(DateTime.From(date))
-		in  Switch(monthNumber, {1,2,3,4,5,6,7,8,9,10,11,12}, Lang, null))
-,
+		in  Switch(monthNumber, {1,2,3,4,5,6,7,8,9,10,11,12}, Lang, null)),
 
 
 // #	LIST
@@ -308,7 +305,7 @@ List.CompareListsMatches = (ListSource as list, ListCompare as list, optional Ca
 List.Flatten = Document(
 	"List.Flatten",
 	"Recursively flattens list elements. The end result is a single list",
-	"Lists.Transformation",
+	"List.Transformation",
 	{[Description="Flattening nested lists into one",
 		Code="LPQ[List.Flatten]({ 1, 2, Table.FromRecords({[x=1]}), {3, 4, 5} })",
 		Result="{ 1, 2, Table.FromRecords({[x=1]}), 3, 4, 5}"  ]},
@@ -320,7 +317,7 @@ List.Flatten = Document(
 List.FlattenAdvanced = Document(
 	"List.FlattenAdvanced",
 	"Recursively flattens list elements. The end result is a single list",
-	"Lists.Transformation",
+	"List.Transformation",
 	{[Description="Flatten a nested list with mixed levels into a simple list.",
 		Code="LPQ[List.Flatten]({1, {2, 3}, {1, {2, 3}}})",
 		Result="{1, 2, 3, 1, 2, 3}"  ]},
@@ -332,7 +329,7 @@ List.FlattenAdvanced = Document(
 								List.Transform(L, each if IsListType(_) then _ else {_})
 						),
 				FlattenAll = (L as list) as list =>
-						if List.MatchesAny(L, IsListType) // Check if L is nested
+						if List.MatchesAny(L, IsListType) //Check if L is nested
 						then @FlattenAll(FlattenOneLevel(L))
 						else L
 		in
@@ -340,7 +337,7 @@ List.FlattenAdvanced = Document(
 List.From = Document(
 	"List.From",
 	"Converts a text representation of a list into a list of the elements. Items are considered to be split by ,",
-	"Lists.Transformation",
+	"List.Transformation",
 	{[Description="Convert a text list",
 		Code="LPQ[List.From](""{A, B, C}"")",
 		Result="{ ""A"", ""B"", ""C"" }"   ]},
@@ -354,7 +351,7 @@ List.From = Document(
 List.ToText = Document(
 	"List.ToText",
 	"Converts a list to a textual representation. Inverse of List.From",
-	"Lists.Transformation",
+	"List.Transformation",
 	{[Description="Conver to text",
 		Code="LPQ[List.ToText]({ 1, 2, 3})",
 		Result="""{1, 2, 3}"""	 ]},
@@ -385,8 +382,7 @@ List.ToRecord = Document(
 		let
 			Transformed = List.Transform(List, Lambda)	//each Lambda(_)
 		in
-			Record.FromList(Transformed, List))
-,
+			Record.FromList(Transformed, List)),
 
 
 // #	NUMBERS
@@ -394,7 +390,7 @@ Number.Digits = {0,1,2,3,4,5,6,7,8,9},
 Number.ParseText = Document(
 	"Number.ParseText",
 	"Returns the first number (1+ consecutive digits) in the given text. Optionally, provide allowed characters to ignore them",
-	"Numbers.Transformation",
+	"Number.Transformation",
 	{[Description="Allow commas",
 		Code="LPQ[Number.ParseText](""It's over 9,000!"", 0, {"",""})",
 		Result="9000"  ]},
@@ -408,7 +404,7 @@ Number.ParseText = Document(
 Number.ToLetters = Document(
 	"Number.ToLetters",
 	"Converts a number (starting at 1) to an alphabet representation. Works like column headers in Excel.",
-	"Numbers.Transformation",
+	"Number.Transformation",
 	{[Description="Column 27",
 		Code="LPQ[Number.ToLetters](27)",
 		Result="AB" ]},
@@ -433,7 +429,7 @@ Number.ProperNumber = Document(
 	"Number.ProperNumber",
 	"Concerts text as number to proper number type. Also will erase inconvinient thouthands and decimal symbols to regular format. <br>" &
 	"In case of error will return input text",
-	"Numbers.Transformation",
+	"Number.Transformation",
 	{[Description="Allow commas",
 		Code="LPQ[Number.ProperNumber](""It's over 9,000!"", null, {"",""}, 0)",
 		Result="9000"  ]},
@@ -444,8 +440,7 @@ Number.ProperNumber = Document(
 		_allowCharacters = if allowCharacters is null then {} else allowCharacters,
 		numberSeries = List.FirstN(List.Skip(Text.ToList(consider), each not Text.IsNumber(_)), each Text.IsNumber(_) or List.Contains(_allowCharacters, _))
 	in
-		if text is null then null else Number.Round(Text.FromList(numberSeries), after))
-,
+		if text is null then null else Number.Round(Text.FromList(numberSeries), after)),
 
 
 // #	SPLITTERS
@@ -482,8 +477,7 @@ Splitter.SplitTextByNotIn = Document(
 				else if appendLast then
 					List.Combine({List.RemoveLastN(state, 1), {lastItem & current}})
 				else
-					List.Combine({List.RemoveLastN(state, 1), {current}})))
-,
+					List.Combine({List.RemoveLastN(state, 1), {current}}))),
 
 
 // #	TABLE
@@ -504,7 +498,7 @@ Table.DrillIntoColumn = (table as table, columnName as text) =>
 Table.EnterDataFormula = Document(
 	"Table.EnterDataFormula",
 	"Convert a table into a formula that's compatible with the Enter Data UI. This function returns an expression you can copy and paste to editthe table using Enter Data. Paste the formula, then click the gear icon next to the step name. This is an easy way to allow people to customize a table you've queried",
-	"Table.Convertion",
+	"Table.Convertasion",
 	{[Description="Simple table",
 		Code="Web.Page(Web.Contents(""https://en.wikipedia.org/wiki/List_of_Super_Bowl_champions"")){3}[Data]",
 		Result="Table.FromRows(Json.Document(Binary.Decompress(Binary.FromText(""jVVtb9s2EP4rRD4aRqI3S9TH2Gm7ZWkb1MGGom6Aq83IhBkyoOik2a8fT6Ski6Fu+yDdWea9Pffc8du3M342P7uVzrU/jrbZs7UTQgnb+q+lfzL/nFeLxIu0ror55pglWcK8viA6J3o96vVwJksSqvNRT5Ognn2fh1yuQClo2cq8/DCvmMbCPzmmUWaLkEYyn2GkNIhFEFUQvBN1FkQexGI2uP8kXtg73SjQO3YLzkrjMEgRn/NFEmrlpL66JLmnRM+JXhC9IvWR82lxWqvQz8KypTV6a9pYJxZ5nlex1mpMg5dEp98p5OR7TWEmqaYLkgY2eQ2avbegt7LdGlbUof1dApgLz/MASQCcF0EEpH3wDuJiNkfXWUAabT9YITRbwqvHeXsIPovBZ4S5jDWl3kdZjbqHfBbKmXUkGd1iA78ae2AfJGg36ZRH46QzTqKIrtLR1Wc4IA82FzemZZe68cRv2ReQu5Bs3vO/7JOt5kixEt886d45Vp1kg8u/oN1L3Tij2Rexaw9ST3qqAj95FIGmPFC4Jhl+lPAo2ZVRT/vgKeuHoeg9pWT2MqLnhCDkO6ccROSWoJx8NFZsLn7XO48pPBklcQCV6yNmdDJKPrbJj+LIejol9UmUj1Jr0RoH7E/pQWnQc9LPXNJ7ronngEkVyFaVszHh48MDKMOWUqlJN3VCZoDAUxMY6pwkiIASCmwu1u6c3ZijRDY8tpFeHQh5nIUq0r4O3Iotw//WApxTgnm5h5fDhHW3DGdhKDtRBOuMdsNHfhZDy7vCYoEdo8dhzkghePQP0C3uT+le2WovxUOfQfqmieX8Hkeuvh8M/eEtNB5XAXbShoesk3JM93YvFewE0hPYO2g8ejHbjHaExxEkha6kXzdag5M+oG5ATRuS9nF+UukKrGeqBr9ftNuHmT3xgDs6LKZ4BaR0g1wL1xdKAUaK3w+n7+DxCbo1tjxut6CFsFNGuAXehvhslfC9YGuQejIOjslogkv4SgrfgNUebDOWk77hNh1f/OfS+RXmx+o9qK3R0zZ8jHIncA5bIdiddPCL8/VpDCv/Nh5nD/jO460mrPBSD1Hw10qJZ9Fdsf5qexmi4IOuUxzXT5uLy8HgSjhrpGM30vyP09f+PmmNfvYLQLBraI5g/9voN3NscS3fiZ/wbzG+/wM="", BinaryEncoding.Base64), Compression.Deflate)), let _t = ((type text) meta [Serialized.Text = true]) in type table [Appearances = _t, Team = _t, Wins = _t, Losses = _t, Winning percentage = _t, Season(s) = _t])" ]},
@@ -559,8 +553,7 @@ Table.SplitColumnNames = (table as table) => Table.RenameColumns(table, List.Tra
 // ## 	Splits camelCased and PascalCased text in a column.
 Table.SplitColumnText = (table as table, columns as list) => if List.Count(columns) = 0 then table else Table.TransformColumns(@Table.SplitColumnText(table, List.Skip(columns, 1)), {{List.First(columns), Text.SplitCamelCase}}),
 Table.TransformColumn = (table as table, column as text, transform as function) => Table.TransformColumns(table, {{column, transform}}),
-Table.RenameAndTransformColumn = (table, currentName as text, newName as text, transform as function) => Table.TransformColumn(Table.RenameColumns(table, {currentName, newName}), newName, transform)
-,
+Table.RenameAndTransformColumn = (table, currentName as text, newName as text, transform as function) => Table.TransformColumn(Table.RenameColumns(table, {currentName, newName}), newName, transform),
 Table.ToXml = (t) =>
 		"<table>"&
 		{List.Accumulate(
@@ -577,8 +570,7 @@ Table.ToXml = (t) =>
 				)}
 			&"</row>"
 		)}
-	&"</table>"
-,
+	&"</table>",
 Table.NumberColumns = (table as table, columns as list) as table =>
 	let	NumberTypes = List.Repeat({type number}, List.Count(columns)),
 		DataWithTypes = Table.TransformColumnTypes( table, List.Zip({columns, NumberTypes}) ),
@@ -588,8 +580,7 @@ Table.NumberColumns = (table as table, columns as list) as table =>
 Table.TrimHeader = (Table as table) =>
 	let	hRaw = Table.ColumnNames(Table),
 		hTrim = List.Transform(hRaw, each Text.Trim(_))
-	in	if List.Count(List.Difference(hRaw, hTrim)) > 0 then Table.RenameColumns(Table, List.Zip({hRaw, hTrim})) else Table
-,
+	in	if List.Count(List.Difference(hRaw, hTrim)) > 0 then Table.RenameColumns(Table, List.Zip({hRaw, hTrim})) else Table,
 // ## 	Renaming columns
 Table.RenameColumn = Document(
 	"Table.RenameColumn",
@@ -704,8 +695,7 @@ Table.RemoveEmptyColumns = (tbl as table) =>
 	in
 		Table.SelectColumns(tbl, non_empty_columns(tbl_no_erors)),
 // ## 	return a table with all errors replaced with specified value or null
-Table.ReplaceAllErrorsInTable = (tbl as table, optional replacer_value) => Table.ReplaceErrorValues(tbl, List.Transform(Table.ColumnNames(tbl), each {_, replacer_value}))
-,
+Table.ReplaceAllErrorsInTable = (tbl as table, optional replacer_value) => Table.ReplaceErrorValues(tbl, List.Transform(Table.ColumnNames(tbl), each {_, replacer_value})),
 // ## 	Sort table
 Table.SortColumnByList = Document(
 	"Table.SortColumnByList",
@@ -764,8 +754,7 @@ Table.GroupedRunningTotal = (values as list, grouping as list) as list =>
 			each [GRT]
 		)
 	in
-		GRTList
-,
+		GRTList,
 
 
 // #	ARRAYS
@@ -773,7 +762,7 @@ Table.GroupedRunningTotal = (values as list, grouping as list) as list =>
 fnVlookUp = Document(
 	"fnVlookUp",
 	"LookUp or CheckUp value in other table (return value from other column or just search)",
-	"Tables.Search",
+	"Table.Search",
 	{[Description="Value, Table, Search at Column name, Return Column name.",
 		Code="LPQ[fnVlookUp]([1], Products, ""ProductKey"", ""Price"")",
 		Result="9000 OR 1" ]},
@@ -784,13 +773,12 @@ fnVlookUp = Document(
 		in  if count then
 				if returnColumnValue is null then 1
 					else Table.Column(lookupTable, returnColumnValue){lookup}
-				else null)
-,
+				else null),
 // ## 	Search Name in List
 fnCheckInList = Document(
 	"fnCheckInList",
 	"Search word in the list. True - case not sesetive, False - case sensetive.",
-	"Lists.Match",
+	"List.Match",
 	{[Description="Using separate lists. Params: Word, List, Case sensetive.",
 		Code="LPQ[fnCheckInList](""Word"", {""Text"", ""Word"", ""Letter""}, true)",
 		Result="TRUE"	 ]},
@@ -803,8 +791,7 @@ fnCheckInList = Document(
 				then List.ContainsAny(pList, List, (x,y) => Text.Contains(x,y,Comparer.OrdinalIgnoreCase))
 				else List.ContainsAny(pList, List, (x,y) => x=y)
 		in
-			try result otherwise null)
-,
+			try result otherwise null),
 Text.RegExp = (txt as text, regex as text, delim as text) =>
 	let RegExp =
 		Web.Page(
@@ -819,31 +806,26 @@ Text.RegExp = (txt as text, regex as text, delim as text) =>
 		[Data]{0}[Children]{0}[Children]{1}[Text]{0},
 		return = try RegExp otherwise null
 	in
-		return
-,
+		return,
 Text.RegexMatch = (txt as text, regex as text, delim as text) => try
 	Web.Page("<script>var x='"&txt&"';var delim='"&delim&"';var regex=/"&regex&"/gi;var result=x.match(regex).join(delim);document.write(result);</script>")[Data]{0}[Children]{0}[Children]{1}[Text]{0}
-	otherwise null
-,
+	otherwise null,
 Text.GetMatch = (Text as text, List as list) =>
 	try List.Select(Text.Split(Text," "),
 			each List.ContainsAny(List.LastN(Text.Split(_," "),1), List, (x,y) => Text.Contains(x,y,Comparer.OrdinalIgnoreCase))
 		){0}
-	otherwise null
-,
+	otherwise null,
 
 
 // #	TEXT
 Text.Alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz" & "АБВГДЕЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯабвгдежзийклмнопрстуфхцчшщъыьэюя",
 Text.AlphaNumeric = Text.Alphabet & "0123456789",
 Text.FromList = (list as list) => List.Accumulate(list, "", (state, current) => state & Text.From(current)),
-Text.IsNumber = (text as text) => try Number.FromText(text) is number otherwise false
-,
+Text.IsNumber = (text as text) => try Number.FromText(text) is number otherwise false,
 // ## 	Is text all uppercase? returns false if any non-alpha characters are present
 Text.IsUpperCase = (text as text) => List.AllTrue(List.Transform(Text.ToList(text), (letter)=>Text.Contains(Text.Alphabet, letter) and letter = Text.Upper(letter))),
 Text.IsAlpha = (text as text) => List.MatchesAll(Text.ToList(text), each Text.Contains(Text.Alphabet, _)),
-Text.RemoveExtraWhitespace = (text as text) => Text.Combine(Splitter.SplitTextByWhitespace()(text)," ")
-,
+Text.RemoveExtraWhitespace = (text as text) => Text.Combine(Splitter.SplitTextByWhitespace()(text)," "),
 // ## 	Splits camelCased and PascalCased text and separates by a space. Ex: "thisIsAColumn" -> "this Is A Column"
 Text.SplitCamelCase = (text as nullable text) => if text is null then null else List.Accumulate(Text.ToList(text),"", (state, current) =>
 	let
@@ -973,7 +955,7 @@ Text.ReplaceAll = (str as text, Replacements as list) as text =>
 Text.PowerTrim = Document(
 	"Text.PowerTrim",
 	"Power Trim all text.",
-	"Text.Transform",
+	"Text.Transformation",
 	{[Description="Power Trim all text.",
 		Code="LPQ[Text.PowerTrim](""	  A   B  C "")",
 		Result="A B C" ]},
@@ -982,8 +964,7 @@ Text.PowerTrim = Document(
 			split = Text.Split(text, char),
 			removeblanks = List.Select(split, each _ <> "")
 		in  Text.Combine(removeblanks, char)),
-Text.ReplaceByList = try (txt as text, replacementLists as list) as text => List.Accumulate(replacementLists, txt, (s,x) => Text.Replace(s,x{0},x{1})) otherwise null
-,
+Text.ReplaceByList = try (txt as text, replacementLists as list) as text => List.Accumulate(replacementLists, txt, (s,x) => Text.Replace(s,x{0},x{1})) otherwise null,
 //[ ]: add description
 Text.ContainsList = 	
 	(Text as text, List as list, optional ContainsMatch as logical) =>
@@ -998,10 +979,9 @@ Text.ContainsList =
 					else
 							List.ContainsAny(pList, compareList, (x,y) => x=y)
 	in
-			try result otherwise null
-,
+			try result otherwise null,
 
-// #	CODE AND WEB
+// # CODE AND WEB
 Web.StripHtmlList = Document(
 	"Web.StripHtmlList",
 	"Cleans all html tags in the column of the table.",
@@ -1057,8 +1037,7 @@ Web.TableToMarkdown = Document(
 			CombineList = List.Combine({{Text.Combine(Table.ColumnNames(Table), " | ")}, {HyphenLine}, TableValues[Custom]}),
 			TransferToMarkdown = Text.Combine(CombineList, "#(lf)")
 		in
-			TransferToMarkdown)
-,
+			TransferToMarkdown),
 Web.GetAllLinks = (SourceURL as text, optional AttributeDelimiter as text) =>
 	let AttributeDelimiter = if AttributeDelimiter is null then """" else AttributeDelimiter,
 	    //Get HTML source
@@ -1075,8 +1054,7 @@ Web.GetAllLinks = (SourceURL as text, optional AttributeDelimiter as text) =>
 	            else List.Combine({{CurrentLink}, @GetLink(Counter + 1)}),
 	    //Call function
 	    Output = GetLink(0)
-	in  Output
-,
+	in  Output,
 Api.MakeApiCallTemplate = Document(
 	"Api.MakeApiCallTemplate",
 	"Converts table to text table with Markdown syntax.",
@@ -1104,15 +1082,14 @@ Api.MakeApiCallTemplate = Document(
 			{"ISO 3 code", "ISO 2 code", "Country name", "Region", "Admin region", "Income level", "Lending type", "Capital city", "Longitude", "Latitude"})
 			in
 					#"Expanded Column1")
-    */ (text)=>text)
-,
+    */ (text)=>text),
 
 // #	IMPORT PQ
 // ## 	Minimal script loader
 ImportPq = Document(
 	"ImportPq",
 	"Most minimal external PQ script file loader.",
-	"Files.Import",
+	"File.Import",
 	{[Description="Load PQ file to Excel",
 		Code="LPQ[ImportPq](""C:\File.pq"")",
 		Result="code from .pq file" ]},
@@ -1151,8 +1128,7 @@ ImportPq.GitHubRepo = Document(
 				TreeTble = Json[tree],
 				Converted= Table.FromList(TreeTble, Splitter.SplitByNothing(), null, null, ExtraValues.Error),
 				Expanded = Table.ExpandRecordColumn(Converted, "Column1", {"path","mode","type","sha","url","size"})
-		in  Expanded)
-,
+		in  Expanded),
 
 
 // #	VALUE
@@ -1228,8 +1204,7 @@ Value.WaitFor = (producer as function, interval as function, optional count as n
 				else {1 + state{0}, Function.InvokeAfter(() => producer(state{0}), interval(state{0}))},
 			//transformer: only return the result, not try tally
 			(state) => state{1})
-	in  List.Last(list)
-,
+	in  List.Last(list),
 
 
 // #	OTHER
@@ -1281,4 +1256,3 @@ Record.TransformJoin = (Rec as record, Lambda as function, optional Delimiter as
 Result = _extensionLibrary
 
 in Result
-

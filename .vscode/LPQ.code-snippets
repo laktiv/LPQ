@@ -1,0 +1,20 @@
+{
+  "#lpq": {
+    "scope": "powerquery",
+    "prefix": "#lpq",
+    "description": "Add new function to library",
+    "body": [
+      "${1:name} = Document(",
+      "\t\"${name}\",",
+      "\t\"${2:description}\",",
+      "\t\"${3|Date,Development,File,List,Number,Products,Reference,Splitter,Table,Text,Web|}.${4|Api,Convertasion,Date,Import,Match,Modification,Parser,Search,Sorting,Specs,ToRecord,Transformation, |}\",",
+      "\t{[",
+      "\t\tDescription=\"\",",
+      "\t\tCode=\"\",",
+      "\t\tResult=\"\"",
+      "\t]},",
+      "\t${5:Function}",
+      "),"
+    ]
+  }
+}
