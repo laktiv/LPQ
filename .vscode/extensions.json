@@ -1,0 +1,9 @@
+{
+  "recommendations": [
+    "PKief.material-icon-theme", 
+    "PowerQuery.vscode-powerquery", 
+    "aaron-bond.better-comments",
+    "naumovs.color-highlight",
+    "yzhang.markdown-all-in-one"
+  ]
+}
